@@ -1,0 +1,56 @@
+// ── Application Route Constants ────────────────────────
+
+export const ROUTES = {
+  // Public
+  HOME: "/",
+  ABOUT: "/about",
+  SERVICES: "/services",
+  PRICING: "/pricing",
+  CONTACT: "/contact",
+  PRIVACY_POLICY: "/privacy-policy",
+  TERMS: "/terms-and-conditions",
+
+  // Auth
+  LOGIN: "/login",
+  REGISTER: "/register",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
+
+  // Protected
+  DASHBOARD: "/dashboard",
+  CLIENTS: "/clients",
+  PAYMENTS: "/payments",
+  TRACKING: "/tracking",
+  REPORTS: "/reports",
+  NOTIFICATIONS: "/notifications",
+  PROFILE: "/profile",
+  SETTINGS: "/settings",
+} as const;
+
+export const PUBLIC_ROUTES = [
+  ROUTES.HOME,
+  ROUTES.ABOUT,
+  ROUTES.SERVICES,
+  ROUTES.PRICING,
+  ROUTES.CONTACT,
+  ROUTES.PRIVACY_POLICY,
+  ROUTES.TERMS,
+] as const;
+
+export const AUTH_ROUTES = [
+  ROUTES.LOGIN,
+  ROUTES.REGISTER,
+  ROUTES.FORGOT_PASSWORD,
+  ROUTES.RESET_PASSWORD,
+] as const;
+
+export const PROTECTED_ROUTES = [
+  ROUTES.DASHBOARD,
+  ROUTES.CLIENTS,
+  ROUTES.PAYMENTS,
+  ROUTES.TRACKING,
+  ROUTES.REPORTS,
+  ROUTES.NOTIFICATIONS,
+  ROUTES.PROFILE,
+  ROUTES.SETTINGS,
+] as const;
