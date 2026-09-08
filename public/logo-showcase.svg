@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" fill="none" width="100%" height="100%">
+  <!-- Clean White Canvas -->
+  <rect width="700" height="240" fill="#FFFFFF" />
+
+  <!-- LEFT: Horizontal Website Logo Lockup -->
+  <g transform="translate(40, 60)">
+    <!-- PT Icon -->
+    <g transform="translate(0, 5) scale(1)">
+      <!-- Navy P Loop -->
+      <path d="M12 14 H56 C71.5 14 84 26.5 84 42 C84 57.5 71.5 70 56 70 H38 V58 H56 C64.8 58 72 50.8 72 42 C72 33.2 64.8 26 56 26 H12 V14 Z" fill="#092244" />
+      <!-- Gold T with Upward Growth Arrow -->
+      <path d="M24 34 L12 46 V58 L24 46 V90 L36 78 V50 H54 V38 H36 L24 34 Z" fill="#F3A712" />
+    </g>
+
+    <!-- Typography -->
+    <text x="100" y="58" font-family="system-ui, -apple-system, 'Inter', 'Outfit', 'Montserrat', sans-serif" font-size="46" font-weight="800" letter-spacing="-0.5" fill="#092244">
+      PayTrack<tspan fill="#F3A712" font-weight="800"> AI</tspan>
+    </text>
+    <text x="230" y="88" font-family="system-ui, -apple-system, 'Inter', 'Outfit', 'Montserrat', sans-serif" font-size="20" font-weight="400" letter-spacing="4" fill="#092244">
+      by AdSkill
+    </text>
+  </g>
+
+  <!-- CENTER: Vertical Divider -->
+  <line x1="470" y1="40" x2="470" y2="200" stroke="#E2E8F0" stroke-width="1.5" />
+
+  <!-- RIGHT: Squircle App Icon -->
+  <g transform="translate(505, 45)">
+    <rect width="150" height="150" rx="38" fill="#092244" />
+    <g transform="translate(23, 20) scale(1.05)">
+      <!-- White P Loop -->
+      <path d="M12 14 H56 C71.5 14 84 26.5 84 42 C84 57.5 71.5 70 56 70 H38 V58 H56 C64.8 58 72 50.8 72 42 C72 33.2 64.8 26 56 26 H12 V14 Z" fill="#FFFFFF" />
+      <!-- Gold T with Upward Growth Arrow -->
+      <path d="M24 34 L12 46 V58 L24 46 V90 L36 78 V50 H54 V38 H36 L24 34 Z" fill="#F3A712" />
+    </g>
+  </g>
+</svg>

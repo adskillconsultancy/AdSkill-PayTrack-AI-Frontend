@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Navy P Loop -->
+  <path d="M12 14 H56 C71.5 14 84 26.5 84 42 C84 57.5 71.5 70 56 70 H38 V58 H56 C64.8 58 72 50.8 72 42 C72 33.2 64.8 26 56 26 H12 V14 Z" fill="#092244" />
+
+  <!-- Gold T with Upward Growth Arrow -->
+  <path d="M24 34 L12 46 V58 L24 46 V90 L36 78 V50 H54 V38 H36 L24 34 Z" fill="#F3A712" />
+</svg>

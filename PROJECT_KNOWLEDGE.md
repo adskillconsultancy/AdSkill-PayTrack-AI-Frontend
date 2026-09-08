@@ -73,7 +73,7 @@ src/
 │   ├── QueryProvider.tsx # Wraps Redux store for RTK Query
 │   └── ThemeProvider.tsx # Dark/light theme provider
 │
-└── middleware.ts         # Edge Route Protection & Auth Redirects
+└── proxy.ts              # Edge Route Protection & Auth Redirects (Next.js 16+ convention)
 ```
 
 ---
