@@ -46,11 +46,12 @@ export function LoginForm() {
 
   const onSubmit = (data: LoginFormValues) => {
     setIsLoading(true);
-    // Simulated authentication
+    // Simulated authentication with token cookie for proxy edge middleware
+    document.cookie = "accessToken=demo_token; path=/; max-age=86400";
     setTimeout(() => {
       setIsLoading(false);
       router.push(ROUTES.DASHBOARD);
-    }, 600);
+    }, 400);
   };
 
   return (

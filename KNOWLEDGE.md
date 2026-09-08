@@ -124,6 +124,8 @@ Use this quick-reference table whenever adding new functionality:
 | **`Table`** | `{ Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from "@/components/common"` | Full semantic HTML table wrapper components with responsive container | Standard ledger and milestone tables. Consistent border, font, and row styling across all modules. |
 | **`Loader`** | `{ Loader } from "@/components/common"` | `size`: `sm`, `default`, `lg`<br>`className` | Circular animated loading indicator with branding colors for async states. |
 | **`EmptyState`** | `{ EmptyState } from "@/components/common"` | `icon`, `title`, `description`, `action` | Clean, high-polish placeholder rendered when lists, tables, or search filters return 0 results. |
+| **`ApplicationsTable`** | `{ ApplicationsTable } from "@/components/common"` | `title`, `data?: ApplicationItem[]`, `totalCount`, `currentPage`, `totalPages`, `sortBy`, `onView`, `onMore`, `onPageChange`, `onSortChange` | Standard reusable data table matching the approved UI design with client avatar, destination, visa category, submission date, status pills, and action buttons. Falls back to hardcoded mock data if no prop is supplied. |
+
 
 ---
 

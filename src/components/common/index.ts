@@ -17,3 +17,11 @@ export {
   TableCell,
   TableCaption,
 } from "./Table";
+
+export { ApplicationsTable } from "./ApplicationsTable";
+export type {
+  ApplicationsTableProps,
+  ApplicationItem,
+  ApplicationStatus,
+} from "./ApplicationsTable";
+
