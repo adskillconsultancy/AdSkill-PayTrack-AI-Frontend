@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
+import { Button } from "@/components/common";
 import {
   FileCheck,
   Award,
@@ -179,13 +180,12 @@ export default function ServicesPage() {
                   </div>
                 </div>
 
-                <Link
-                  href={ROUTES.LOGIN}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#092244] py-3 text-xs font-bold text-white transition-all hover:bg-[#0d2e5a]"
-                >
-                  <span>View Case Plan in Portal</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                <Button asChild className="w-full rounded-xl bg-[#092244] py-3 h-10 text-xs font-bold text-white hover:bg-[#0d2e5a]">
+                  <Link href={ROUTES.LOGIN}>
+                    <span>View Case Plan in Portal</span>
+                    <ArrowRight className="h-3.5 w-3.5 ml-2" />
+                  </Link>
+                </Button>
               </div>
             ))}
           </div>
@@ -202,13 +202,12 @@ export default function ServicesPage() {
             Log in to the client portal using your credentials to view your personalized installment dates, remaining balances, and payment receipts.
           </p>
           <div className="pt-2">
-            <Link
-              href={ROUTES.LOGIN}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#092244] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a] transition-all"
-            >
-              <span>Go to Client Portal</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            <Button asChild className="rounded-xl bg-[#092244] px-6 h-11 text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a]">
+              <Link href={ROUTES.LOGIN}>
+                <span>Go to Client Portal</span>
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

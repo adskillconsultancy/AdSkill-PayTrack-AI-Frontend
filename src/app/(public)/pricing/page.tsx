@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
+import { Button } from "@/components/common";
 import {
   Check,
   ShieldCheck,
@@ -77,13 +78,12 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <Link
-                href={ROUTES.LOGIN}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#092244] py-3 text-xs font-bold text-white hover:bg-[#0d2e5a] transition-all"
-              >
-                <span>Select Milestone Model</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+              <Button asChild className="w-full rounded-xl bg-[#092244] h-10 text-xs font-bold text-white hover:bg-[#0d2e5a]">
+                <Link href={ROUTES.LOGIN} className="gap-2">
+                  <span>Select Milestone Model</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
             </div>
 
             {/* Model 2: Monthly Recurring */}
@@ -115,13 +115,12 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <Link
-                href={ROUTES.LOGIN}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#092244] bg-white py-3 text-xs font-bold text-[#092244] hover:bg-[#FAF8F5] transition-all"
-              >
-                <span>Inquire About Monthly Plan</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+              <Button asChild variant="outline" className="w-full rounded-xl border-[#092244] bg-white h-10 text-xs font-bold text-[#092244] hover:bg-[#FAF8F5]">
+                <Link href={ROUTES.LOGIN} className="gap-2">
+                  <span>Inquire About Monthly Plan</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
             </div>
 
             {/* Model 3: Custom Retainer */}
@@ -153,13 +152,12 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <Link
-                href={ROUTES.CONTACT}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#092244] bg-white py-3 text-xs font-bold text-[#092244] hover:bg-[#FAF8F5] transition-all"
-              >
-                <span>Request Custom Agreement</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+              <Button asChild variant="outline" className="w-full rounded-xl border-[#092244] bg-white h-10 text-xs font-bold text-[#092244] hover:bg-[#FAF8F5]">
+                <Link href={ROUTES.CONTACT} className="gap-2">
+                  <span>Request Custom Agreement</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
             </div>
 
           </div>

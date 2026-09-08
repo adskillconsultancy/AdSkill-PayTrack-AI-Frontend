@@ -3,14 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
+import { Button, Input } from "@/components/common";
 import {
   Mail,
   Phone,
   Clock,
-  MapPin,
   Send,
   CheckCircle,
-  HelpCircle,
   ShieldCheck,
   MessageSquare,
 } from "lucide-react";
@@ -134,13 +133,13 @@ export default function ContactPage() {
                     <p className="text-sm text-[#475569] max-w-md mx-auto">
                       Thank you, {formData.name}. An AdSkill case coordinator will review your request and contact you shortly.
                     </p>
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setSubmitted(false)}
-                      className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#092244] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#0d2e5a]"
+                      className="mt-4 rounded-xl bg-[#092244] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#0d2e5a]"
                     >
                       Send Another Message
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-5">
@@ -158,13 +157,13 @@ export default function ContactPage() {
                         <label className="text-xs font-bold text-[#092244]">
                           Full Name *
                         </label>
-                        <input
+                        <Input
                           type="text"
                           required
                           placeholder="e.g. Dr. Jane Smith"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] px-3.5 py-2.5 text-sm text-[#092244] placeholder:text-[#94A3B8] focus:border-[#F3A712] focus:bg-white focus:outline-none"
+                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
                         />
                       </div>
 
@@ -172,13 +171,13 @@ export default function ContactPage() {
                         <label className="text-xs font-bold text-[#092244]">
                           Email Address *
                         </label>
-                        <input
+                        <Input
                           type="email"
                           required
                           placeholder="jane@example.com"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] px-3.5 py-2.5 text-sm text-[#092244] placeholder:text-[#94A3B8] focus:border-[#F3A712] focus:bg-white focus:outline-none"
+                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
                         />
                       </div>
                     </div>
@@ -188,12 +187,12 @@ export default function ContactPage() {
                         <label className="text-xs font-bold text-[#092244]">
                           WhatsApp / Phone
                         </label>
-                        <input
+                        <Input
                           type="tel"
                           placeholder="+1 (555) 000-0000"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] px-3.5 py-2.5 text-sm text-[#092244] placeholder:text-[#94A3B8] focus:border-[#F3A712] focus:bg-white focus:outline-none"
+                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
                         />
                       </div>
 
@@ -204,7 +203,7 @@ export default function ContactPage() {
                         <select
                           value={formData.service}
                           onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                          className="w-full rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] px-3.5 py-2.5 text-sm text-[#092244] focus:border-[#F3A712] focus:bg-white focus:outline-none"
+                          className="w-full h-10 rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] px-3.5 text-sm text-[#092244] focus:border-[#F3A712] focus:bg-white focus:outline-none"
                         >
                           <option value="EB-2 NIW">EB-2 NIW (National Interest Waiver)</option>
                           <option value="EB-1A">EB-1A (Extraordinary Ability)</option>
@@ -230,13 +229,13 @@ export default function ContactPage() {
                       />
                     </div>
 
-                    <button
+                    <Button
                       type="submit"
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#092244] py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#0d2e5a] active:scale-[0.98]"
+                      className="w-full h-11 gap-2 rounded-xl bg-[#092244] text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a] active:scale-[0.98]"
                     >
                       <Send className="h-4 w-4 text-[#F3A712]" />
                       <span>Submit Advisory Inquiry</span>
-                    </button>
+                    </Button>
                   </form>
                 )}
               </div>

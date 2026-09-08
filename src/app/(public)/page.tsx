@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
+import { Button } from "@/components/common";
 import {
   ShieldCheck,
   CreditCard,
@@ -8,11 +9,9 @@ import {
   ArrowRight,
   CheckCircle2,
   Lock,
-  Clock,
   FileText,
   BadgePercent,
   Check,
-  Building2,
   ChevronRight,
   TrendingUp,
 } from "lucide-react";
@@ -61,21 +60,28 @@ export default function HomePage() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2">
-                <Link
-                  href={ROUTES.LOGIN}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#092244] px-6 py-3.5 text-base font-bold text-white shadow-md shadow-[#092244]/15 transition-all hover:bg-[#0d2e5a] hover:shadow-lg hover:shadow-[#092244]/20 active:scale-[0.98]"
+                <Button
+                  asChild
+                  size="lg"
+                  className="rounded-xl bg-[#092244] px-6 h-13 text-base font-bold text-white shadow-md shadow-[#092244]/15 hover:bg-[#0d2e5a] hover:shadow-lg hover:shadow-[#092244]/20 active:scale-[0.98]"
                 >
-                  <ShieldCheck className="h-5 w-5 text-[#F3A712]" />
-                  <span>Access Client Portal</span>
-                  <ArrowRight className="h-4 w-4 opacity-80" />
-                </Link>
+                  <Link href={ROUTES.LOGIN}>
+                    <ShieldCheck className="h-5 w-5 text-[#F3A712] mr-2" />
+                    <span>Access Client Portal</span>
+                    <ArrowRight className="h-4 w-4 opacity-80 ml-2" />
+                  </Link>
+                </Button>
 
-                <Link
-                  href={ROUTES.SERVICES}
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#EAE6DF] bg-white px-6 py-3.5 text-base font-semibold text-[#092244] shadow-xs transition-all hover:bg-[#F5F2EC] active:scale-[0.98]"
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="rounded-xl border-[#EAE6DF] bg-white px-6 h-13 text-base font-semibold text-[#092244] shadow-xs hover:bg-[#F5F2EC] active:scale-[0.98]"
                 >
-                  <span>Explore Supported Cases</span>
-                </Link>
+                  <Link href={ROUTES.SERVICES}>
+                    <span>Explore Supported Cases</span>
+                  </Link>
+                </Button>
               </div>
 
               {/* Trust Badges */}
@@ -181,13 +187,15 @@ export default function HomePage() {
 
                 {/* Instant Pay with Stripe CTA */}
                 <div className="mt-5 pt-4 border-t border-[#EAE6DF]">
-                  <Link
-                    href={ROUTES.LOGIN}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#092244] py-3 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#0d2e5a]"
+                  <Button
+                    asChild
+                    className="w-full h-11 gap-2 rounded-xl bg-[#092244] text-xs font-bold text-white shadow-sm hover:bg-[#0d2e5a]"
                   >
-                    <CreditCard className="h-4 w-4 text-[#F3A712]" />
-                    <span>Pay Milestone 2 via Secure Hosted Portal</span>
-                  </Link>
+                    <Link href={ROUTES.LOGIN}>
+                      <CreditCard className="h-4 w-4 text-[#F3A712]" />
+                      <span>Pay Milestone 2 via Secure Hosted Portal</span>
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -263,7 +271,7 @@ export default function HomePage() {
                 Strict Fee Separation
               </h3>
               <p className="text-sm leading-relaxed text-[#475569]">
-                AdSkill professional fees are cleanly separated from USCIS filing fees, attorney fees, evaluation costs, and translations. 100% financial clarity.
+                AdSkill professional fees are cleanly separated from USCIS government fees, attorney fees, evaluation costs, and translations. 100% financial clarity.
               </p>
             </div>
 
@@ -308,13 +316,12 @@ export default function HomePage() {
                 Supported Advisory & Visa Cases
               </h2>
             </div>
-            <Link
-              href={ROUTES.SERVICES}
-              className="mt-4 md:mt-0 inline-flex items-center gap-1 text-sm font-bold text-[#092244] hover:text-[#B47B00] transition-colors"
-            >
-              <span>View all service fee schedules</span>
-              <ChevronRight className="h-4 w-4" />
-            </Link>
+            <Button asChild variant="link" className="text-[#092244] font-bold hover:text-[#B47B00] p-0 h-auto gap-1">
+              <Link href={ROUTES.SERVICES}>
+                <span>View all service fee schedules</span>
+                <ChevronRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -395,19 +402,24 @@ export default function HomePage() {
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-2">
-                <Link
-                  href={ROUTES.LOGIN}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#F3A712] px-6 py-3.5 text-sm font-bold text-[#092244] shadow-md transition-all hover:bg-[#ffb526] active:scale-[0.98]"
+                <Button
+                  asChild
+                  className="rounded-xl bg-[#F3A712] px-6 h-12 text-sm font-bold text-[#092244] shadow-md hover:bg-[#ffb526] active:scale-[0.98]"
                 >
-                  <ShieldCheck className="h-4 w-4" />
-                  <span>Enter Client Portal</span>
-                </Link>
-                <Link
-                  href={ROUTES.CONTACT}
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+                  <Link href={ROUTES.LOGIN}>
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    <span>Enter Client Portal</span>
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="rounded-xl border-white/20 bg-white/5 px-6 h-12 text-sm font-semibold text-white hover:bg-white/10 hover:text-white"
                 >
-                  <span>Contact Billing Support</span>
-                </Link>
+                  <Link href={ROUTES.CONTACT}>
+                    <span>Contact Billing Support</span>
+                  </Link>
+                </Button>
               </div>
             </div>
           </div>

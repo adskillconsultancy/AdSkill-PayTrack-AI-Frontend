@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ROUTES } from "@/constants";
+import { Button } from "@/components/common";
 import { Menu, X, ArrowRight, ShieldCheck } from "lucide-react";
 
 export function Header() {
@@ -67,32 +68,33 @@ export function Header() {
         </nav>
 
         {/* Right CTA Actions */}
-        <div className="hidden md:flex items-center gap-4">
-          <Link
-            href={ROUTES.LOGIN}
-            className="text-sm font-semibold text-[#092244] transition-colors hover:text-[#092244]/80 px-3 py-2"
-          >
-            Sign In
-          </Link>
-          <Link
-            href={ROUTES.LOGIN}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#092244] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0d2e5a] hover:shadow-md hover:shadow-[#092244]/15 active:scale-[0.98]"
-          >
-            <ShieldCheck className="h-4 w-4 text-[#F3A712]" />
-            <span>Client Portal</span>
-            <ArrowRight className="h-3.5 w-3.5 opacity-70" />
-          </Link>
+        <div className="hidden md:flex items-center gap-3">
+          <Button asChild variant="ghost" size="sm" className="text-sm font-semibold text-[#092244] hover:bg-[#EFECE6] h-10 px-4">
+            <Link href={ROUTES.LOGIN}>
+              Sign In
+            </Link>
+          </Button>
+
+          <Button asChild className="gap-2 rounded-xl bg-[#092244] px-5 h-10 text-sm font-semibold text-white shadow-sm hover:bg-[#0d2e5a] active:scale-[0.98]">
+            <Link href={ROUTES.LOGIN}>
+              <ShieldCheck className="h-4 w-4 text-[#F3A712]" />
+              <span>Client Portal</span>
+              <ArrowRight className="h-3.5 w-3.5 opacity-70 ml-0.5" />
+            </Link>
+          </Button>
         </div>
 
         {/* Mobile Menu Button */}
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden inline-flex p-2 rounded-lg text-[#092244] hover:bg-[#EFECE6] transition-colors"
+          className="md:hidden text-[#092244] hover:bg-[#EFECE6] h-10 w-10"
           aria-label="Toggle navigation"
         >
           {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        </Button>
       </div>
 
       {/* Mobile Drawer */}
@@ -111,20 +113,16 @@ export function Header() {
             ))}
           </nav>
           <div className="pt-4 border-t border-[#EAE6DF] flex flex-col gap-2.5">
-            <Link
-              href={ROUTES.LOGIN}
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-2.5 text-sm font-semibold text-[#092244] border border-[#092244]/20 rounded-xl"
-            >
-              Sign In
-            </Link>
-            <Link
-              href={ROUTES.LOGIN}
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center py-2.5 text-sm font-semibold text-white bg-[#092244] rounded-xl"
-            >
-              Client Portal
-            </Link>
+            <Button asChild variant="outline" className="w-full h-10 rounded-xl border-[#092244]/20 text-[#092244]">
+              <Link href={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
+                Sign In
+              </Link>
+            </Button>
+            <Button asChild className="w-full h-10 rounded-xl bg-[#092244] text-white">
+              <Link href={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
+                Client Portal
+              </Link>
+            </Button>
           </div>
         </div>
       )}

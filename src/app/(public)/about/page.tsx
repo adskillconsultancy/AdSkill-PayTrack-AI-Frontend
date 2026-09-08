@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
+import { Button } from "@/components/common";
 import {
   ShieldCheck,
   Building2,
@@ -141,13 +142,12 @@ export default function AboutPage() {
             Log in with your assigned client ID to check your active case status and receipts.
           </p>
           <div className="pt-2">
-            <Link
-              href={ROUTES.LOGIN}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#092244] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a] transition-all"
-            >
-              <span>Access Portal</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            <Button asChild className="rounded-xl bg-[#092244] px-6 h-11 text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a]">
+              <Link href={ROUTES.LOGIN} className="gap-2">
+                <span>Access Portal</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

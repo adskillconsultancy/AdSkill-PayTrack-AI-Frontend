@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar.store";
 import { ROUTES } from "@/constants";
+import { Button } from "@/components/common";
 import {
   LayoutDashboard,
   Users,
@@ -77,9 +78,11 @@ export function Sidebar() {
 
       {/* Collapse Toggle */}
       <div className="border-t p-2">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={toggleSidebar}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-sidebar-foreground/70 hover:bg-sidebar-accent transition-colors"
+          className="flex w-full items-center justify-center p-2 text-sidebar-foreground/70 hover:bg-sidebar-accent"
         >
           <ChevronLeft
             className={cn(
@@ -87,7 +90,7 @@ export function Sidebar() {
               !isOpen && "rotate-180"
             )}
           />
-        </button>
+        </Button>
       </div>
     </aside>
   );
