@@ -2,27 +2,29 @@
 
 import { Button } from "@/components/common";
 import { ROUTES } from "@/constants";
+import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar.store";
 import {
-  Activity,
-  BadgeDollarSign,
-  Building2,
-  Calendar,
+  Bell,
+  Briefcase,
+  CalendarRange,
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   CreditCard,
   FileBarChart,
   FileText,
-  Folder,
-  Globe,
-  IdCard,
+  FolderKanban,
+  History,
   LayoutGrid,
   LogOut,
   MessageSquare,
-  Ticket,
-  UserCog,
+  Receipt,
+  ShieldAlert,
+  Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -32,6 +34,8 @@ import * as React from "react";
 interface NavSubItem {
   title: string;
   href: string;
+  requiredPermission?: string;
+  requiredAnyPermissions?: string[];
 }
 
 interface NavItem {
@@ -39,17 +43,34 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   subItems?: NavSubItem[];
+  requiredPermission?: string;
+  requiredAnyPermissions?: string[];
 }
 
 interface NavSection {
   sectionTitle: string;
+  portalType?: "MANAGEMENT" | "CLIENT" | "COMMON";
   items: NavItem[];
 }
 
-// ── 14 ITEMS MATCHING BOTH OPEN & COLLAPSED SCREENSHOT SPEC ──
+// 🛡️ PROJECT SPECIFICATION MASTER NAVIGATION
+// Fully aligned with PROJECT_SPECIFICATION.md & FEATURES_TRACKER.md:
+// - Section 1: Role-Based Feature Matrix (Client, Consultant, Manager, Super Admin)
+// - Section 4: Client Profile (ASK-YYYY-XXXX, Directory, Case Info)
+// - Section 5: Service Catalog & Strict Fee Separation (Pass-Through vs Professional)
+// - Section 6: Payment Plan Creation & Milestone Schedules (Deterministic Math)
+// - Section 7: Payment Records, Statuses & Offline Verification Workflow
+// - Section 9: Management Dashboard & Financial Reports (Receivables Aging, Service Revenue)
+// - Section 10: Client Dashboard (Service Standing, Milestones, One-Click Pay)
+// - Section 11: Branded Invoices & Payment Receipts (Sequential INV-YYYY-XXXX)
+// - Section 12: Automated Milestone Reminders & Notes
+// - Section 13: Stripe Hosted Checkout & Offline Proofs
+// - Section 17: Immutable Audit Log Oversight
 const navSections: NavSection[] = [
+  // ==================== MANAGEMENT PORTAL (STAFF / ADMIN) ====================
   {
-    sectionTitle: "OPERATIONS",
+    sectionTitle: "FINANCIAL INTELLIGENCE",
+    portalType: "MANAGEMENT",
     items: [
       {
         title: "Dashboard",
@@ -57,103 +78,211 @@ const navSections: NavSection[] = [
         icon: LayoutGrid,
         subItems: [
           { title: "Overview", href: ROUTES.DASHBOARD },
-          { title: "Analytics", href: ROUTES.REPORTS },
-        ],
-      },
-    ],
-  },
-  {
-    sectionTitle: "APPLICATIONS",
-    items: [
-      {
-        title: "Visa Applications",
-        href: ROUTES.TRACKING,
-        icon: IdCard,
-        subItems: [
-          { title: "Active Applications", href: ROUTES.TRACKING },
-          { title: "Draft Petitions", href: `${ROUTES.TRACKING}?status=draft` },
-        ],
-      },
-      {
-        title: "Documents",
-        href: `${ROUTES.TRACKING}?tab=documents`,
-        icon: FileText,
-      },
-      {
-        title: "Rule Center",
-        href: `${ROUTES.TRACKING}?tab=rules`,
-        icon: Globe,
-      },
-      {
-        title: "Offers & LOA",
-        href: `${ROUTES.TRACKING}?tab=offers`,
-        icon: Ticket,
-      },
-      {
-        title: "Universities",
-        href: `${ROUTES.TRACKING}?tab=universities`,
-        icon: Building2,
-      },
-      {
-        title: "Client Profiles",
-        href: ROUTES.CLIENTS,
-        icon: UserCog,
-        subItems: [
-          { title: "All Clients", href: ROUTES.CLIENTS },
-          { title: "New Client", href: `${ROUTES.CLIENTS}?action=new` },
-        ],
-      },
-      {
-        title: "Interviews",
-        href: `${ROUTES.TRACKING}?tab=interviews`,
-        icon: Calendar,
-      },
-      {
-        title: "App Status",
-        href: `${ROUTES.TRACKING}?tab=status`,
-        icon: Activity,
-      },
-    ],
-  },
-  {
-    sectionTitle: "FINANCIALS",
-    items: [
-      {
-        title: "Fees & Payments",
-        href: ROUTES.PAYMENTS,
-        icon: BadgeDollarSign,
-        subItems: [
-          { title: "Milestone Payments", href: ROUTES.PAYMENTS },
           {
-            title: "Invoices & Receipts",
-            href: `${ROUTES.PAYMENTS}?tab=invoices`,
+            title: "Financial Analytics",
+            href: ROUTES.REPORTS,
+            requiredPermission: "report:view",
           },
         ],
       },
       {
-        title: "Cards & Accounts",
-        href: `${ROUTES.PAYMENTS}?tab=cards`,
-        icon: CreditCard,
+        title: "Financial Reports",
+        href: ROUTES.REPORTS,
+        icon: FileBarChart,
+        requiredPermission: "report:export",
+        subItems: [
+          { title: "Receivables Aging", href: `${ROUTES.REPORTS}?tab=aging` },
+          { title: "Revenue by Service", href: `${ROUTES.REPORTS}?tab=services` },
+          { title: "Consultant Breakdown", href: `${ROUTES.REPORTS}?tab=consultants` },
+        ],
       },
     ],
   },
   {
-    sectionTitle: "SYSTEM",
+    sectionTitle: "CLIENTS & SERVICES",
+    portalType: "MANAGEMENT",
     items: [
       {
-        title: "Reports & Analytics",
-        href: ROUTES.REPORTS,
-        icon: FileBarChart,
+        title: "Client Profiles",
+        href: ROUTES.CLIENTS,
+        icon: Users,
+        requiredPermission: "user:read",
+        subItems: [
+          { title: "All Clients", href: ROUTES.CLIENTS },
+          {
+            title: "New Client",
+            href: `${ROUTES.CLIENTS}?action=new`,
+            requiredPermission: "user:create",
+          },
+        ],
       },
       {
-        title: "Messages & Support",
+        title: "Service Catalog",
+        href: `${ROUTES.TRACKING}?tab=services`,
+        icon: Briefcase,
+        requiredPermission: "service:read",
+        subItems: [
+          { title: "Service Offerings", href: `${ROUTES.TRACKING}?tab=services` },
+          {
+            title: "Fee Separation",
+            href: `${ROUTES.TRACKING}?tab=fees`,
+            requiredPermission: "service:manage",
+          },
+        ],
+      },
+      {
+        title: "Case Tracking",
+        href: ROUTES.TRACKING,
+        icon: FolderKanban,
+        requiredPermission: "service:read",
+        subItems: [
+          { title: "Active Cases", href: ROUTES.TRACKING },
+          { title: "Case Documents", href: `${ROUTES.TRACKING}?tab=documents` },
+          { title: "Milestones", href: `${ROUTES.TRACKING}?tab=milestones` },
+        ],
+      },
+    ],
+  },
+  {
+    sectionTitle: "PAYMENTS & BILLING",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "Payment Plans",
+        href: `${ROUTES.PAYMENTS}?tab=plans`,
+        icon: CalendarRange,
+        requiredPermission: "plan:read",
+        subItems: [
+          { title: "Milestone Schedules", href: `${ROUTES.PAYMENTS}?tab=plans` },
+          {
+            title: "Create Payment Plan",
+            href: `${ROUTES.PAYMENTS}?action=new-plan`,
+            requiredPermission: "plan:create",
+          },
+        ],
+      },
+      {
+        title: "Transactions Ledger",
+        href: ROUTES.PAYMENTS,
+        icon: Receipt,
+        requiredPermission: "payment:read",
+        subItems: [
+          { title: "All Payments", href: ROUTES.PAYMENTS },
+          {
+            title: "Record Manual Payment",
+            href: `${ROUTES.PAYMENTS}?action=record`,
+            requiredPermission: "payment:record",
+          },
+        ],
+      },
+      {
+        title: "Pending Verifications",
+        href: `${ROUTES.PAYMENTS}?tab=verify`,
+        icon: CheckCircle2,
+        requiredPermission: "payment:verify",
+      },
+      {
+        title: "Invoices & Receipts",
+        href: `${ROUTES.PAYMENTS}?tab=invoices`,
+        icon: FileText,
+        requiredAnyPermissions: ["invoice:read", "receipt:read"],
+        subItems: [
+          {
+            title: "Invoices",
+            href: `${ROUTES.PAYMENTS}?tab=invoices`,
+            requiredPermission: "invoice:read",
+          },
+          {
+            title: "Payment Receipts",
+            href: `${ROUTES.PAYMENTS}?tab=receipts`,
+            requiredPermission: "receipt:read",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    sectionTitle: "COMMUNICATIONS",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "Reminders & Alerts",
         href: ROUTES.NOTIFICATIONS,
-        icon: MessageSquare,
+        icon: Bell,
+        requiredPermission: "note:read",
+        subItems: [
+          { title: "Scheduled Reminders", href: ROUTES.NOTIFICATIONS },
+          { title: "Outbound History", href: `${ROUTES.NOTIFICATIONS}?tab=logs` },
+        ],
       },
       {
-        title: "Document Storage",
-        href: `${ROUTES.TRACKING}?tab=archive`,
-        icon: Folder,
+        title: "Case Notes",
+        href: `${ROUTES.NOTIFICATIONS}?tab=notes`,
+        icon: MessageSquare,
+        requiredPermission: "note:read",
+      },
+    ],
+  },
+  {
+    sectionTitle: "SYSTEM & GOVERNANCE",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "Role & PBAC Settings",
+        href: ROUTES.SETTINGS,
+        icon: ShieldAlert,
+        requiredPermission: "user:manage-role",
+        subItems: [
+          { title: "Dynamic Roles", href: `${ROUTES.SETTINGS}?tab=roles` },
+          { title: "Permissions Matrix", href: `${ROUTES.SETTINGS}?tab=permissions` },
+          { title: "Staff Management", href: `${ROUTES.SETTINGS}?tab=users` },
+        ],
+      },
+      {
+        title: "Audit Trail",
+        href: `${ROUTES.SETTINGS}?tab=audit`,
+        icon: History,
+        requiredPermission: "user:manage-role",
+      },
+    ],
+  },
+
+  // ==================== DEDICATED CLIENT PORTAL ====================
+  {
+    sectionTitle: "CLIENT PORTAL",
+    portalType: "CLIENT",
+    items: [
+      {
+        title: "My Dashboard",
+        href: ROUTES.DASHBOARD,
+        icon: LayoutGrid,
+      },
+      {
+        title: "Payment Schedule",
+        href: ROUTES.PAYMENTS,
+        icon: CalendarRange,
+        requiredPermission: "plan:read",
+      },
+      {
+        title: "Pay Installment",
+        href: `${ROUTES.PAYMENTS}?action=pay`,
+        icon: CreditCard,
+        requiredPermission: "payment:pay",
+      },
+      {
+        title: "Invoices & Receipts",
+        href: `${ROUTES.PAYMENTS}?tab=invoices`,
+        icon: FileText,
+        requiredAnyPermissions: ["invoice:read", "receipt:read"],
+        subItems: [
+          { title: "Invoices", href: `${ROUTES.PAYMENTS}?tab=invoices` },
+          { title: "Payment Receipts", href: `${ROUTES.PAYMENTS}?tab=receipts` },
+        ],
+      },
+      {
+        title: "Profile & Support",
+        href: ROUTES.PROFILE,
+        icon: Users,
       },
     ],
   },
@@ -161,15 +290,23 @@ const navSections: NavSection[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, hasPermission, hasAnyPermission, isClientAccount } = usePermissions();
+  const { logout } = useAuth();
   const { isOpen, isMobileOpen, toggleSidebar, setMobileOpen } =
     useSidebarStore();
+
   const [expandedItems, setExpandedItems] = React.useState<
     Record<string, boolean>
   >({
     Dashboard: false,
-    "Visa Applications": true,
     "Client Profiles": false,
-    "Fees & Payments": false,
+    "Service Catalog": false,
+    "Case Tracking": false,
+    "Payment Plans": false,
+    "Transactions Ledger": false,
+    "Invoices & Receipts": false,
+    "Reminders & Alerts": false,
+    "Role & PBAC Settings": false,
   });
 
   const toggleExpand = (title: string, e: React.MouseEvent) => {
@@ -182,13 +319,84 @@ export function Sidebar() {
   };
 
   const handleLogout = () => {
+    logout();
     document.cookie =
       "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     window.location.href = ROUTES.LOGIN;
   };
 
+  // Pure Capability & Portal Type Filter: evaluate every item strictly against user permissions and portal scope
+  const filteredNavSections = React.useMemo(() => {
+    return navSections
+      .map((section) => {
+        // Portal type gating: Clients see CLIENT or COMMON; Staff see MANAGEMENT or COMMON
+        if (isClientAccount && section.portalType === "MANAGEMENT") return null;
+        if (!isClientAccount && section.portalType === "CLIENT") return null;
+
+        const visibleItems = section.items
+          .map((item) => {
+            // Check top-level item capability
+            if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
+              return null;
+            }
+            if (
+              item.requiredAnyPermissions &&
+              !hasAnyPermission(item.requiredAnyPermissions)
+            ) {
+              return null;
+            }
+
+            // Filter subItems by capability if any
+            const visibleSubItems = item.subItems?.filter((sub) => {
+              if (sub.requiredPermission && !hasPermission(sub.requiredPermission)) {
+                return false;
+              }
+              if (
+                sub.requiredAnyPermissions &&
+                !hasAnyPermission(sub.requiredAnyPermissions)
+              ) {
+                return false;
+              }
+              return true;
+            });
+
+            return {
+              ...item,
+              subItems: visibleSubItems,
+            };
+          })
+          .filter(Boolean) as NavItem[];
+
+        if (visibleItems.length === 0) return null;
+
+        return {
+          ...section,
+          items: visibleItems,
+        };
+      })
+      .filter(Boolean) as NavSection[];
+  }, [hasPermission, hasAnyPermission, isClientAccount]);
+
   // Flattened items for pure icon column in collapsed mode
-  const allItems = React.useMemo(() => navSections.flatMap((s) => s.items), []);
+  const allItems = React.useMemo(
+    () => filteredNavSections.flatMap((s) => s.items),
+    [filteredNavSections],
+  );
+
+  const userInitials = React.useMemo(() => {
+    if (!user?.name) return "AS";
+    return user.name
+      .split(" ")
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  }, [user?.name]);
+
+  const userRoleDisplay = React.useMemo(() => {
+    if (!user?.role?.name) return "AdSkill User";
+    return user.role.name.replace(/_/g, " ");
+  }, [user?.role?.name]);
 
   return (
     <>
@@ -208,7 +416,7 @@ export function Sidebar() {
             : "top-16 sm:top-18 h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] w-15 border-r border-[#EAE6DF]",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}>
-        {/* ── 1. HEADER (SHOWN ONLY WHEN SIDEBAR IS OPEN - COMPLETELY BORDERLESS) ── */}
+        {/* 🏢 1. HEADER (SHOWN ONLY WHEN SIDEBAR IS OPEN - COMPLETELY BORDERLESS) 🏢 */}
         {isOpen && (
           <div className="h-16 sm:h-18 shrink-0 flex items-center justify-between px-3.5 transition-all">
             {/* Full Brand Lockup when Open */}
@@ -249,14 +457,13 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* ── 2. NAVIGATION BODY ── */}
+        {/* 🧭 2. NAVIGATION LINKS (OPEN OR COLLAPSED) 🧭 */}
         {isOpen ? (
-          /* EXPANDED VIEW WITH SECTIONS & LABELS */
-          <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-5 scrollbar-thin scrollbar-thumb-slate-200 border-r border-[#EAE6DF]">
-            {/* Navigation Sections */}
-            {navSections.map((section) => (
-              <div key={section.sectionTitle} className="space-y-1">
-                <div className="px-3 pb-1 text-[11px] font-extrabold uppercase tracking-wider text-[#7B8B9E]">
+          /* EXPANDED VIEW: ACCORDION LIST GROUPED BY SECTIONS */
+          <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6 scrollbar-none">
+            {filteredNavSections.map((section) => (
+              <div key={section.sectionTitle} className="space-y-2">
+                <div className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">
                   {section.sectionTitle}
                 </div>
 
@@ -342,9 +549,8 @@ export function Sidebar() {
             ))}
           </div>
         ) : (
-          /* COLLAPSED VIEW: (>) EXPAND BUTTON AT TOP + PURE VERTICAL COLUMN OF 14 ICONS (EXACT MATCH TO SCREENSHOT) */
+          /* COLLAPSED VIEW: (>) EXPAND BUTTON AT TOP + PURE VERTICAL COLUMN OF ICONS */
           <div className="flex-1 overflow-y-auto pt-3 pb-4 px-1.5 flex flex-col items-center space-y-3.5 scrollbar-none">
-            {/* Expand Button (>) sitting directly at the top of collapsed rail (Exact match to screenshot 2) */}
             <Button
               type="button"
               variant="ghost"
@@ -389,7 +595,7 @@ export function Sidebar() {
           </div>
         )}
 
-        {/* ── 3. USER PROFILE FOOTER ── */}
+        {/* 👤 3. DYNAMIC USER PROFILE FOOTER 👤 */}
         <div
           className={cn(
             "border-t border-[#F0ECE6] bg-[#FAF8F5]/50 shrink-0",
@@ -399,14 +605,14 @@ export function Sidebar() {
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#092244] text-[#F3A712] font-black text-sm shadow-xs border border-[#F3A712]/30">
-                  AS
+                  {userInitials}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold text-[#092244] truncate leading-tight">
-                    M. Abir Alam
+                    {user?.name || "Staff Member"}
                   </div>
-                  <div className="text-xs text-[#64748B] truncate mt-0.5 font-medium">
-                    AdSkill Lead Consultant
+                  <div className="text-xs text-[#64748B] truncate mt-0.5 font-medium capitalize">
+                    {userRoleDisplay.toLowerCase()}
                   </div>
                 </div>
               </div>
@@ -417,16 +623,16 @@ export function Sidebar() {
                 size="icon"
                 onClick={handleLogout}
                 title="Sign Out"
-                className="h-8 w-8 rounded-xl text-[#94A3B8] hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0">
+                className="h-8 w-8 rounded-xl text-[#94A3B8] hover:text-rose-600 hover:bg-rose-50 transition-colors shrink-0 cursor-pointer">
                 <LogOut className="h-4 w-4" />
                 <span className="sr-only">Logout</span>
               </Button>
             </div>
           ) : (
             <div
-              title="M. Abir Alam (AdSkill Consultant)"
+              title={`${user?.name || "Staff Member"} (${userRoleDisplay})`}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#092244] text-[#F3A712] font-black text-xs shadow-xs border border-[#F3A712]/30">
-              AS
+              {userInitials}
             </div>
           )}
         </div>

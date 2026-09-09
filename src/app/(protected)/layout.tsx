@@ -82,7 +82,7 @@ export default function ProtectedLayout({
             {/* Brand Title on Left */}
             <div className="flex items-center gap-2">
               <span className="text-base sm:text-lg font-black tracking-tight text-[#092244]">
-                AdSkill PayTrack CRM
+                AdSkill PayTrack AI
               </span>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function ProtectedLayout({
                 type="text"
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
-                placeholder="Search clients, visas..."
+                placeholder="Search clients, invoices, payments..."
                 className="pl-9 pr-3 h-9 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs text-[#092244] placeholder:text-[#94A3B8] shadow-2xs focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#94A3B8]" />

@@ -253,3 +253,43 @@ export const useSidebarStore = create<SidebarState>((set) => ({
 6. **Centralize Routes**: Always reference `ROUTES` from `@/constants`.
 7. **Always Verify**: Ensure all TypeScript types and builds pass (`npm run build`) without errors.
 8. **Maintain this Document**: If you create a new root folder, feature module, or architectural pattern, update this file so future AI sessions stay synchronized.
+
+---
+
+## 7. Permission-Based Access Control (PBAC) & Dynamic Navigation
+
+### Philosophy: Zero Hardcoded Role Strings
+- **Never** write: `if (user.role === 'CLIENT')` or `if (user.role === 'MANAGER')` in UI rendering logic.
+- **Always** write: `if (hasPermission('payment:verify'))` or `if (hasPermission('report:view'))`.
+
+### Core Hook: `usePermissions()`
+Located at `src/hooks/usePermissions.ts`:
+- `hasPermission(key)`: Returns `true` if user has capability (or if `SUPER_ADMIN`).
+- `hasAnyPermission([keys])`: Returns `true` if user has at least one of the capabilities.
+- `hasAllPermissions([keys])`: Returns `true` if user has all capabilities.
+- `isSuperAdmin`: Flag for administrative superuser bypass.
+- `isClientAccount`: Attribute check (`Boolean(user.clientId)`).
+
+### Dynamic Sidebar: `Sidebar.tsx`
+Located at `src/components/layouts/Sidebar.tsx`:
+- Every navigation section and sub-item defines `requiredPermission` or `requiredAnyPermissions`.
+- Menu items automatically show/hide based on the logged-in user's granted permissions.
+- Empty sections automatically disappear if all items inside are unauthorized.
+
+### Real-World Example: Individual Client Capability Override (IAM Style)
+- **Standard Client (Alice)**: Has role `CLIENT` with base client permissions (`payment:view_own`, `invoice:view_own`). Her sidebar only shows "Dashboard", "My Payments", and "Invoices".
+- **Special Client (Bob)**: Has role `CLIENT` + direct capability override `payment:verify` granted individually.
+- **Dynamic UI Behavior**: When Bob logs in, `usePermissions().hasPermission('payment:verify')` evaluates to `true`. The sidebar automatically displays the **"Pending Verifications"** item under Operations exclusively for Bob, without changing Alice's menu and without requiring a new role.
+
+### ⏳ Pending Frontend Deliverables (Roadmap)
+1. **RTK Query Role API Slice**: Create `src/services/api/roles/roleApi.ts` injecting endpoints:
+   - `getRoles`: `GET /api/v1/roles`
+   - `getPermissions`: `GET /api/v1/roles/permissions/all`
+   - `createRole`: `POST /api/v1/roles`
+   - `updateRolePermissions`: `PATCH /api/v1/roles/:id/permissions`
+   - `getUserPermissions`: `GET /api/v1/users/:id/permissions`
+   - `updateUserPermissions`: `PATCH /api/v1/users/:id/permissions`
+2. **Role Management Page (`/settings/roles`)**:
+   - Super Admin matrix table with checkboxes to toggle role capabilities dynamically.
+3. **User Direct Capability Modal**:
+   - Dialog on User/Client profile to grant individual overrides (e.g. granting a single client `payment:verify`).
