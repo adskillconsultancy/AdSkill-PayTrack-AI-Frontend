@@ -1,5 +1,9 @@
 # Project Knowledge & AI Architecture Playbook — AdSkill PayTrack AI
 
+> **MASTER SPECIFICATION & TRACKER REFERENCE:**  
+> - Specification Document: [project-docs/PROJECT_SPECIFICATION.md](file:///c:/AdSkill/AI%20Client%20Payment%20Tracker/AdSkill%20PayTrack%20AI%20Frontend/project-docs/PROJECT_SPECIFICATION.md)  
+> - Live Feature & Role Tracker: [project-docs/FEATURES_TRACKER.md](file:///c:/AdSkill/AI%20Client%20Payment%20Tracker/AdSkill%20PayTrack%20AI%20Frontend/project-docs/FEATURES_TRACKER.md)
+
 > **ROLE & MINDSET:**
 > Act as a **Staff / Senior Frontend Software Engineer with 10+ years of experience**.
 > When writing, extending, or refactoring code in this project, use this document as your primary architectural guide. Build clean, modular, scalable, and production-ready code aligned with the established structure below. Be practical, flexible, and maintain high code quality.
