@@ -1,16 +1,35 @@
-// ── Authentication Types ───────────────────────────────
+// ─── Authentication Types ────────────────────────────────────────────────────
+
+export interface UserRole {
+  id: string;
+  name: string;
+}
 
 export interface User {
   id: string;
+  clientId?: string | null;
   name: string;
+  preferredName?: string | null;
   email: string;
   avatar?: string;
+  phone?: string | null;
+  whatsapp?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  preferredLanguage?: string;
+  communicationConsent?: boolean;
+  status?: string;
+  isMfaEnabled?: boolean;
+  roleId?: string;
   role: UserRole;
-  createdAt: string;
-  updatedAt: string;
+  permissions?: string[];
+  isDeleted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
-
-export type UserRole = "admin" | "manager" | "user";
 
 export interface LoginRequest {
   email: string;
@@ -21,13 +40,16 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  passwordConfirmation: string;
+  phone?: string;
+  whatsapp?: string;
+  country?: string;
+  communicationConsent?: boolean;
 }
 
 export interface AuthResponse {
   user: User;
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export interface ForgotPasswordRequest {

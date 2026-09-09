@@ -1,10 +1,11 @@
-// ── Auth Validation Schemas (Zod) ──────────────────────
+// ─── Auth Validation Schemas (Zod) ───────────────────────────────────────────
 import { z } from "zod";
 
 export const loginSchema = z.object({
   email: z
     .string()
-    .min(1, "Email or Client ID is required"),
+    .min(1, "Email address is required")
+    .email("Please enter a valid email address"),
   password: z
     .string()
     .min(1, "Password is required")
@@ -14,25 +15,23 @@ export const loginSchema = z.object({
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  fullName: z
+  name: z
     .string()
     .min(2, "Full legal name is required"),
   email: z
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .min(6, "Password must be at least 6 characters"),
   phone: z
     .string()
-    .min(7, "Please enter a valid phone or WhatsApp number"),
+    .optional(),
   country: z
     .string()
-    .min(2, "Country is required"),
-  service: z
-    .string()
-    .min(1, "Please select an advisory service"),
-  language: z
-    .string()
-    .min(1, "Language is required"),
+    .optional(),
   consent: z
     .boolean()
     .refine((val) => val === true, "You must consent to electronic billing and schedule notices"),

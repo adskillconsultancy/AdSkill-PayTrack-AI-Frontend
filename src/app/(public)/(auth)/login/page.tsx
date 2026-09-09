@@ -5,7 +5,7 @@ import { ROUTES } from "@/constants";
 import { LoginForm } from "@/features/auth/components";
 
 export const metadata: Metadata = {
-  title: "Client & Staff Login",
+  title: "Account Sign In",
   description: "Sign in to your AdSkill PayTrack AI account to manage case milestone payments and receipts.",
 };
 
@@ -13,7 +13,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-[calc(100vh-5rem)] bg-[#FAF8F5] text-[#092244] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-6">
-        {/* Logo Card Header */}
+        {/* Logo Header */}
         <div className="text-center space-y-3">
           <Link href={ROUTES.HOME} className="inline-block transition-transform hover:scale-102">
             <div className="relative h-12 w-56 mx-auto">
@@ -36,12 +36,12 @@ export default function LoginPage() {
 
         {/* Footer Link */}
         <div className="text-center text-xs text-[#64748B]">
-          New client starting an immigration case?{" "}
+          Don't have an account yet?{" "}
           <Link
             href={ROUTES.REGISTER}
             className="font-bold text-[#092244] hover:underline"
           >
-            Submit Case Registration
+            Create an Account
           </Link>
         </div>
       </div>
