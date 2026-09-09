@@ -32,9 +32,6 @@ export const registerSchema = z.object({
   country: z
     .string()
     .optional(),
-  consent: z
-    .boolean()
-    .refine((val) => val === true, "You must consent to electronic billing and schedule notices"),
 });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;

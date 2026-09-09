@@ -47,7 +47,6 @@ export function RegisterForm() {
       password: "",
       phone: "",
       country: "",
-      consent: true,
     },
   });
 
@@ -60,7 +59,6 @@ export function RegisterForm() {
         password: data.password,
         phone: data.phone?.trim() || undefined,
         country: data.country?.trim() || undefined,
-        communicationConsent: data.consent,
       }).unwrap();
 
       const { user, accessToken } = response.data;
@@ -259,24 +257,7 @@ export function RegisterForm() {
             </div>
           </div>
 
-          {/* Consent Checkbox */}
-          <div className="pt-2">
-            <label className="flex items-start gap-2.5 cursor-pointer text-xs text-[#475569]">
-              <input
-                type="checkbox"
-                {...register("consent")}
-                className="h-4 w-4 mt-0.5 rounded border-[#EAE6DF] text-[#092244] focus:ring-[#F3A712]"
-              />
-              <span>
-                I consent to receiving electronic invoices, receipt notices, and payment schedule updates from AdSkill Consultancy Inc.
-              </span>
-            </label>
-            {errors.consent && (
-              <p className="text-[11px] font-medium text-rose-500 mt-1">
-                {errors.consent.message}
-              </p>
-            )}
-          </div>
+
 
           {/* Privacy Note */}
           <div className="rounded-xl bg-[#FAF8F5] p-3 text-[11px] text-[#64748B] flex items-center gap-2 border border-[#EAE6DF]">

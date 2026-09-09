@@ -19,8 +19,6 @@ export interface User {
   state?: string | null;
   postalCode?: string | null;
   country?: string | null;
-  preferredLanguage?: string;
-  communicationConsent?: boolean;
   status?: string;
   isMfaEnabled?: boolean;
   roleId?: string;
@@ -43,7 +41,6 @@ export interface RegisterRequest {
   phone?: string;
   whatsapp?: string;
   country?: string;
-  communicationConsent?: boolean;
 }
 
 export interface AuthResponse {
