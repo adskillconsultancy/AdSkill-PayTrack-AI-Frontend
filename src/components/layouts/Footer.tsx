@@ -46,27 +46,27 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm text-[#475569]">
               <li>
-                <Link href={ROUTES.SERVICES} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
                   EB-2 NIW National Interest Waiver
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.SERVICES} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
                   EB-1A Extraordinary Ability
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.SERVICES} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
                   EB-3 Employment-Based Petitions
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.SERVICES} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
                   E-2 & L-1 Business & Investor Visas
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.SERVICES} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
                   Corporate Formation & DMV/PSB
                 </Link>
               </li>

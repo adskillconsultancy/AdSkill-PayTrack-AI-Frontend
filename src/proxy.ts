@@ -15,6 +15,8 @@ const protectedPaths = [
   "/notifications",
   "/profile",
   "/settings",
+  "/users",
+  "/services",
 ];
 
 // Routes only for unauthenticated users

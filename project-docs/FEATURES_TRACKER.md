@@ -57,10 +57,10 @@
   - [x] Instant account deactivation / suspension toggle with status badge indicators.
   - [x] Direct WhatsApp contact integration with country code selector and live chat launcher.
   - [x] Enforce Multi-Factor Authentication (MFA / 2FA) indicators and password change enforcement.
-- [ ] **Pending** — **Service Catalog & Fee Separation Settings:**
-  - [ ] Manage service catalog offerings (EB-2 NIW, EB-1A, EB-3, E-2, L-1, Family Immigration, Business Formation, Consultation, DMV/PSB, Custom).
-  - [ ] Configure fee categorization rules: strictly separate AdSkill professional fees from third-party fees (Attorney fees, USCIS government fees, Business plans, Evaluations, Translations, CPA licensing).
-  - [ ] Define accounting rule: pass-through and third-party fees do not count as AdSkill revenue.
+- [x] **Completed** — **Service Catalog & Fee Separation Settings:**
+  - [x] Manage service catalog offerings (EB-2 NIW, EB-1A, EB-3, E-2, L-1, Family Immigration, Business Formation, Consultation, DMV/PSB, Custom) via `/services` and `/services/create`.
+  - [x] Configure fee categorization rules: strictly separate AdSkill professional fees from third-party fees (Attorney fees, USCIS government fees, Business plans, Evaluations, Translations, CPA licensing).
+  - [x] Define accounting rule: pass-through and third-party fees do not count as AdSkill revenue (implemented deterministic badges, escrow/pass-through indicators, and automated fee breakdown modals).
 - [ ] **Pending** — **System Integrations & Financial Configurations:**
   - [ ] Configure Stripe payment keys, webhook signing secrets, and hosted checkout settings.
   - [ ] Configure transactional email providers (SendGrid, Postmark, AWS SES) and reminder templates.

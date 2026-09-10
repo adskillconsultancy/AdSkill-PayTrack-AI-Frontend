@@ -124,14 +124,14 @@ const navSections: NavSection[] = [
       },
       {
         title: "Service Catalog",
-        href: `${ROUTES.TRACKING}?tab=services`,
+        href: ROUTES.SERVICES,
         icon: Briefcase,
         requiredPermission: "service:read",
         subItems: [
-          { title: "Service Offerings", href: `${ROUTES.TRACKING}?tab=services` },
+          { title: "Service Offerings", href: ROUTES.SERVICES },
           {
-            title: "Fee Separation",
-            href: `${ROUTES.TRACKING}?tab=fees`,
+            title: "Configure Service",
+            href: ROUTES.SERVICE_CREATE,
             requiredPermission: "service:manage",
           },
         ],

@@ -80,7 +80,7 @@ const services = [
   },
 ];
 
-export default function ServicesPage() {
+export default function AdvisoryPage() {
   return (
     <div className="bg-[#FAF8F5] text-[#092244] min-h-screen">
       {/* ── HEADER INTRO ── */}

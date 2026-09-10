@@ -76,7 +76,7 @@ export default function HomePage() {
                   variant="outline"
                   size="lg"
                 >
-                  <Link href={ROUTES.SERVICES}>
+                  <Link href={ROUTES.ADVISORY}>
                     <span>Explore Supported Cases</span>
                   </Link>
                 </Button>
@@ -315,7 +315,7 @@ export default function HomePage() {
               </h2>
             </div>
             <Button asChild variant="link" className="text-[#092244] font-bold hover:text-[#B47B00] p-0 h-auto gap-1">
-              <Link href={ROUTES.SERVICES}>
+              <Link href={ROUTES.ADVISORY}>
                 <span>View all service fee schedules</span>
                 <ChevronRight className="h-4 w-4" />
               </Link>
