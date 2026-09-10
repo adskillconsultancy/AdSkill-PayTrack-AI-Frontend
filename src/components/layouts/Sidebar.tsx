@@ -24,6 +24,7 @@ import {
   MessageSquare,
   Receipt,
   ShieldAlert,
+  UserPlus,
   Users,
 } from "lucide-react";
 import Image from "next/image";
@@ -220,6 +221,29 @@ const navSections: NavSection[] = [
         href: `${ROUTES.NOTIFICATIONS}?tab=notes`,
         icon: MessageSquare,
         requiredPermission: "note:read",
+      },
+    ],
+  },
+  {
+    sectionTitle: "USER MANAGEMENT",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "User List",
+        href: ROUTES.USERS,
+        icon: Users,
+        requiredPermission: "user:read",
+        subItems: [
+          { title: "All Users", href: ROUTES.USERS },
+          { title: "Staff & Consultants", href: `${ROUTES.USERS}?role=staff` },
+          { title: "Client Accounts", href: `${ROUTES.USERS}?role=client` },
+        ],
+      },
+      {
+        title: "Create User",
+        href: ROUTES.USER_CREATE,
+        icon: UserPlus,
+        requiredPermission: "user:create",
       },
     ],
   },

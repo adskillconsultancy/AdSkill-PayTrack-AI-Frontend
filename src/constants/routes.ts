@@ -25,6 +25,8 @@ export const ROUTES = {
   NOTIFICATIONS: "/notifications",
   PROFILE: "/profile",
   SETTINGS: "/settings",
+  USERS: "/users",
+  USER_CREATE: "/users/create",
 } as const;
 
 export const PUBLIC_ROUTES = [
@@ -53,4 +55,6 @@ export const PROTECTED_ROUTES = [
   ROUTES.NOTIFICATIONS,
   ROUTES.PROFILE,
   ROUTES.SETTINGS,
+  ROUTES.USERS,
+  ROUTES.USER_CREATE,
 ] as const;

@@ -50,12 +50,13 @@
 ### 👑 1.1 Super Admin ("What Super Admin Does")
 *Scope: All clients, employees, roles, financial settings, approvals, reports, integrations, and audit logs.*
 
-- [ ] **Pending** — **User & Employee Management:**
-  - [ ] View list of all registered portal users (clients and staff).
-  - [ ] Update / promote user roles (`Client` → `Manager`, `Consultant`, `Super Admin`).
-  - [ ] Create, edit, and deactivate employee accounts.
-  - [ ] Instant account deactivation when an employee departs.
-  - [ ] Enforce Multi-Factor Authentication (MFA / TOTP) for all internal staff accounts.
+- [x] **Completed** — **User & Employee Management:**
+  - [x] View list of all registered portal users (clients and staff) via reusable `DataTable`.
+  - [x] Update / promote user roles (`Super Admin`, `Admin`, `Consultant`, `Accountant`, `Support`, `Client`).
+  - [x] Create (`/users/create`), edit, view full dossier (`/users/[id]`), and deactivate/suspend employee accounts.
+  - [x] Instant account deactivation / suspension toggle with status badge indicators.
+  - [x] Direct WhatsApp contact integration with country code selector and live chat launcher.
+  - [x] Enforce Multi-Factor Authentication (MFA / 2FA) indicators and password change enforcement.
 - [ ] **Pending** — **Service Catalog & Fee Separation Settings:**
   - [ ] Manage service catalog offerings (EB-2 NIW, EB-1A, EB-3, E-2, L-1, Family Immigration, Business Formation, Consultation, DMV/PSB, Custom).
   - [ ] Configure fee categorization rules: strictly separate AdSkill professional fees from third-party fees (Attorney fees, USCIS government fees, Business plans, Evaluations, Translations, CPA licensing).
