@@ -18,6 +18,8 @@ import {
   CheckCircle2,
   AlertCircle,
   UserPlus,
+  ChevronDown,
+  Plane,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
@@ -25,6 +27,43 @@ import { ROUTES } from "@/constants";
 import { registerSchema, type RegisterFormValues } from "@/validations/auth.schema";
 import { useRegisterMutation } from "@/services/api/auth/authApi";
 import { useAuthStore } from "@/stores/auth.store";
+
+const COUNTRIES = [
+  "United States",
+  "Canada",
+  "United Kingdom",
+  "Australia",
+  "Bangladesh",
+  "India",
+  "Pakistan",
+  "United Arab Emirates",
+  "Saudi Arabia",
+  "Qatar",
+  "Kuwait",
+  "Oman",
+  "Singapore",
+  "Malaysia",
+  "Germany",
+  "France",
+  "Netherlands",
+  "Ireland",
+  "Sweden",
+  "Switzerland",
+  "Italy",
+  "Spain",
+  "New Zealand",
+  "Japan",
+  "South Korea",
+  "China",
+  "Brazil",
+  "Mexico",
+  "Egypt",
+  "Nigeria",
+  "Kenya",
+  "South Africa",
+  "Turkey",
+  "Other",
+];
 
 export function RegisterForm() {
   const router = useRouter();
@@ -239,15 +278,24 @@ export function RegisterForm() {
                 Country of Residence
               </label>
               <div className="relative">
-                <Input
-                  type="text"
+                <select
                   {...register("country")}
-                  placeholder="United States"
-                  className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                  defaultValue=""
+                  className={`w-full appearance-none pl-10 pr-9 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] border transition-all cursor-pointer focus:bg-white focus:outline-none focus:border-[#F3A712] focus:ring-1 focus:ring-[#F3A712] ${
                     errors.country ? "border-rose-500" : "border-[#EAE6DF]"
                   }`}
-                />
-                <Globe className="absolute left-3.5 top-3 h-4 w-4 text-[#94A3B8]" />
+                >
+                  <option value="" disabled>
+                    Select country...
+                  </option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <Globe className="absolute left-3.5 top-3 h-4 w-4 text-[#94A3B8] pointer-events-none" />
+                <ChevronDown className="absolute right-3.5 top-3 h-4 w-4 text-[#94A3B8] pointer-events-none" />
               </div>
               {errors.country && (
                 <p className="text-[11px] font-medium text-rose-500 mt-1">
@@ -271,11 +319,20 @@ export function RegisterForm() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full h-11 gap-2 rounded-xl bg-[#092244] text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a] active:scale-[0.98] disabled:opacity-50 transition-all"
+            className="w-full gap-2"
           >
-            <UserPlus className="h-4 w-4 text-[#F3A712]" />
-            <span>{isLoading ? "Creating Account..." : "Create Account"}</span>
-            <ArrowRight className="h-3.5 w-3.5 opacity-70 ml-1" />
+            {isLoading ? (
+              <>
+                <Plane className="h-4 w-4 text-[#F3A712] fill-[#F3A712] animate-plane-fly drop-shadow-xs" />
+                <span>Preparing Visa Account...</span>
+              </>
+            ) : (
+              <>
+                <UserPlus className="h-4 w-4 text-[#F3A712]" />
+                <span>Create Account</span>
+                <ArrowRight className="h-3.5 w-3.5 opacity-70 ml-1" />
+              </>
+            )}
           </Button>
         </form>
       )}

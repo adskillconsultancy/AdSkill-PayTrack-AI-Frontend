@@ -108,25 +108,28 @@ Use this quick-reference table whenever adding new functionality:
 
 ---
 
-## 4. Reusable Common Components Policy (STRICT DRY RULE)
+## 4. Reusable Common Components Policy (STRICT DRY & CENTRALIZATION RULE)
 
 > **MANDATORY POLICY FOR ALL DEVELOPERS & AI SESSIONS:**
 > 1. **Zero Duplication**: Never write raw `<button>` or raw styled form elements inside pages or features. All buttons, inputs, tables, loaders, and empty states **MUST** be imported from `@/components/common`.
-> 2. **Check Before Creating**: Before building any UI element, check the inventory table below. If a component exists in `src/components/common/`, you **MUST** reuse it.
-> 3. **Protocol for New Reusable Components**:
+> 2. **Strict Component Centralization (Zero Ad-Hoc Styling)**: All visual styling, background colors, hover transitions, active click states, borders, and shadows must live **exclusively inside `src/components/common/<Component>.tsx`** (e.g. `Button.tsx`).
+>    - 🚫 **STRICTLY FORBIDDEN**: Writing manual color or hover overrides on common components (e.g., `className="bg-[#092244] hover:bg-[#0d2e5a]"` or `hover:bg-[#F5F2EC]`).
+>    - ✅ **MANDATORY**: Always use predefined variant props (`variant="default"`, `variant="outline"`, `variant="subtle"`, `variant="ghost"`). If a new color or style pattern is needed, add it as a new variant inside `Button.tsx` so the entire design system updates centrally.
+> 3. **Check Before Creating**: Before building any UI element, check the inventory table below. If a component exists in `src/components/common/`, you **MUST** reuse it.
+> 4. **Protocol for New Reusable Components**:
 >    - If a component or pattern is needed in 2 or more places (e.g., `Badge`, `Modal`, `Card`, `StatusPill`, `Dropdown`), create it in `src/components/common/<Name>.tsx`.
 >    - Export it immediately in `src/components/common/index.ts`.
 >    - **Immediately document it in the table below** so future AI sessions and developers reuse it instead of creating duplicates.
-> 4. **Links Styled as Buttons**: Always use `<Button asChild><Link href="...">Text</Link></Button>`. Never apply raw button styles directly onto a `<Link>` tag.
+> 5. **Links Styled as Buttons**: Always use `<Button asChild><Link href="...">Text</Link></Button>`. Never apply raw button styles directly onto a `<Link>` tag.
 
 ### Active Common Inventory (`src/components/common`)
 
 | Component | Export / Import | Variants / Props | Description & Example Usage |
 | :--- | :--- | :--- | :--- |
-| **`Button`** | `{ Button, buttonVariants } from "@/components/common"` | `variant`: `default`, `outline`, `secondary`, `ghost`, `link`, `destructive`<br>`size`: `default`, `sm`, `lg`, `icon`<br>`asChild`: `boolean` (to wrap Next.js `<Link>`) | Central button primitive for all CTAs, submits, and links.<br>`<Button size="sm">Click</Button>`<br>`<Button asChild><Link href="/login">Login</Link></Button>` |
+| **`Button`** | `{ Button, buttonVariants } from "@/components/common"` | `variant`: `default` (Primary Brand Navy CTA, rich hover & elevation shadow), `outline` (Sleek border & clean hover), `subtle` (Warm beige chips/tags for quick actions), `secondary`, `ghost`, `link`, `destructive`<br>`size`: `default` (h-11 px-5 rounded-xl), `sm` (h-8 px-3 rounded-lg), `lg` (h-12 px-6 rounded-xl), `icon` (h-9 w-9 rounded-lg)<br>`asChild`: `boolean` (to wrap Next.js `<Link>`) | Central button primitive for all CTAs, submits, and links.<br>`<Button size="sm">Click</Button>`<br>`<Button asChild size="lg"><Link href="/login">Login</Link></Button>`<br>`<Button variant="subtle" size="sm">Tag / Quick Fill</Button>` |
 | **`Input`** | `{ Input } from "@/components/common"` | Standard `React.InputHTMLAttributes<HTMLInputElement>` + Tailwind styling | Styled input supporting text, password, email, number. Compatible with `react-hook-form` via `{...register("fieldName")}`. |
 | **`Table`** | `{ Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from "@/components/common"` | Full semantic HTML table wrapper components with responsive container | Standard ledger and milestone tables. Consistent border, font, and row styling across all modules. |
-| **`Loader`** | `{ Loader } from "@/components/common"` | `size`: `sm`, `default`, `lg`<br>`className` | Circular animated loading indicator with branding colors for async states. |
+| **`Loader`** | `{ Loader } from "@/components/common"` | `size`: `sm`, `md`, `lg`<br>`variant`: `plane` (Visa flight theme with animated orbiting plane & radar), `spinner`<br>`text`, `subtext`, `className` | Visa & immigration platform loading animation. Features an animated gold plane, radar pulse, and orbiting flight path in brand colors (`#092244`, `#F3A712`). |
 | **`EmptyState`** | `{ EmptyState } from "@/components/common"` | `icon`, `title`, `description`, `action` | Clean, high-polish placeholder rendered when lists, tables, or search filters return 0 results. |
 | **`ApplicationsTable`** | `{ ApplicationsTable } from "@/components/common"` | `title`, `data?: ApplicationItem[]`, `totalCount`, `currentPage`, `totalPages`, `sortBy`, `onView`, `onMore`, `onPageChange`, `onSortChange` | Standard reusable data table matching the approved UI design with client avatar, destination, visa category, submission date, status pills, and action buttons. Falls back to hardcoded mock data if no prop is supplied. |
 
@@ -253,6 +256,7 @@ export const useSidebarStore = create<SidebarState>((set) => ({
 6. **Centralize Routes**: Always reference `ROUTES` from `@/constants`.
 7. **Always Verify**: Ensure all TypeScript types and builds pass (`npm run build`) without errors.
 8. **Maintain this Document**: If you create a new root folder, feature module, or architectural pattern, update this file so future AI sessions stay synchronized.
+9. **Centralized Primitive Styling**: Never apply ad-hoc background colors, hover states, or arbitrary hex codes directly to common primitives like `<Button>`. Always use or create centralized variants in `src/components/common/Button.tsx`.
 
 ---
 

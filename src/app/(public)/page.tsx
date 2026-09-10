@@ -63,7 +63,6 @@ export default function HomePage() {
                 <Button
                   asChild
                   size="lg"
-                  className="rounded-xl bg-[#092244] px-6 h-13 text-base font-bold text-white shadow-md shadow-[#092244]/15 hover:bg-[#0d2e5a] hover:shadow-lg hover:shadow-[#092244]/20 active:scale-[0.98]"
                 >
                   <Link href={ROUTES.LOGIN}>
                     <ShieldCheck className="h-5 w-5 text-[#F3A712] mr-2" />
@@ -76,7 +75,6 @@ export default function HomePage() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="rounded-xl border-[#EAE6DF] bg-white px-6 h-13 text-base font-semibold text-[#092244] shadow-xs hover:bg-[#F5F2EC] active:scale-[0.98]"
                 >
                   <Link href={ROUTES.SERVICES}>
                     <span>Explore Supported Cases</span>
@@ -189,7 +187,7 @@ export default function HomePage() {
                 <div className="mt-5 pt-4 border-t border-[#EAE6DF]">
                   <Button
                     asChild
-                    className="w-full h-11 gap-2 rounded-xl bg-[#092244] text-xs font-bold text-white shadow-sm hover:bg-[#0d2e5a]"
+                    className="w-full gap-2 text-xs"
                   >
                     <Link href={ROUTES.LOGIN}>
                       <CreditCard className="h-4 w-4 text-[#F3A712]" />

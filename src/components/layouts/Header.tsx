@@ -69,13 +69,13 @@ export function Header() {
 
         {/* Right CTA Actions */}
         <div className="hidden md:flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm" className="text-sm font-semibold text-[#092244] hover:bg-[#EFECE6] h-10 px-4">
+          <Button asChild variant="outline" size="sm">
             <Link href={ROUTES.LOGIN}>
               Sign In
             </Link>
           </Button>
 
-          <Button asChild className="gap-2 rounded-xl bg-[#092244] px-5 h-10 text-sm font-semibold text-white shadow-sm hover:bg-[#0d2e5a] active:scale-[0.98]">
+          <Button asChild size="sm" className="gap-2">
             <Link href={ROUTES.LOGIN}>
               <ShieldCheck className="h-4 w-4 text-[#F3A712]" />
               <span>Client Portal</span>
@@ -113,12 +113,12 @@ export function Header() {
             ))}
           </nav>
           <div className="pt-4 border-t border-[#EAE6DF] flex flex-col gap-2.5">
-            <Button asChild variant="outline" className="w-full h-10 rounded-xl border-[#092244]/20 text-[#092244]">
+            <Button asChild variant="outline" className="w-full">
               <Link href={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
                 Sign In
               </Link>
             </Button>
-            <Button asChild className="w-full h-10 rounded-xl bg-[#092244] text-white">
+            <Button asChild className="w-full">
               <Link href={ROUTES.LOGIN} onClick={() => setMobileMenuOpen(false)}>
                 Client Portal
               </Link>

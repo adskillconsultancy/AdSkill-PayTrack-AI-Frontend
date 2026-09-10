@@ -180,7 +180,7 @@ export default function ServicesPage() {
                   </div>
                 </div>
 
-                <Button asChild className="w-full rounded-xl bg-[#092244] py-3 h-10 text-xs font-bold text-white hover:bg-[#0d2e5a]">
+                <Button asChild size="sm" className="w-full">
                   <Link href={ROUTES.LOGIN}>
                     <span>View Case Plan in Portal</span>
                     <ArrowRight className="h-3.5 w-3.5 ml-2" />
@@ -202,7 +202,7 @@ export default function ServicesPage() {
             Log in to the client portal using your credentials to view your personalized installment dates, remaining balances, and payment receipts.
           </p>
           <div className="pt-2">
-            <Button asChild className="rounded-xl bg-[#092244] px-6 h-11 text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a]">
+            <Button asChild>
               <Link href={ROUTES.LOGIN}>
                 <span>Go to Client Portal</span>
                 <ArrowRight className="h-4 w-4 ml-2" />

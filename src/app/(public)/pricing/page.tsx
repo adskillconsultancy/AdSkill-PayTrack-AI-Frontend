@@ -78,7 +78,7 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <Button asChild className="w-full rounded-xl bg-[#092244] h-10 text-xs font-bold text-white hover:bg-[#0d2e5a]">
+              <Button asChild size="sm" className="w-full">
                 <Link href={ROUTES.LOGIN} className="gap-2">
                   <span>Select Milestone Model</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -93,20 +93,20 @@ export default function PricingPage() {
                   Predictable Budgeting
                 </div>
                 <h3 className="text-2xl font-bold text-[#092244]">
-                  Fixed Monthly Schedule
+                  Monthly Recurring Installments
                 </h3>
                 <p className="text-sm text-[#475569] leading-relaxed">
-                  Even installments distributed over 3, 6, or 9 months via automatic card authorization or ACH transfers.
+                  Evenly spread out payments across 6 to 12 months with automatic ledger logging and card auto-debit receipts.
                 </p>
 
                 <div className="pt-4 border-t border-[#EAE6DF] space-y-2.5 text-xs text-[#475569]">
                   <div className="flex items-center gap-2 font-medium text-[#092244]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
-                    <span>Fixed contracted fee split into equal parts</span>
+                    <span>Fixed recurring monthly invoice amount</span>
                   </div>
                   <div className="flex items-center gap-2 font-medium text-[#092244]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
-                    <span>Automatic email/WhatsApp reminders (7 &amp; 3 days)</span>
+                    <span>Automatic payment receipts &amp; PDF generation</span>
                   </div>
                   <div className="flex items-center gap-2 font-medium text-[#092244]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
@@ -115,7 +115,7 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <Button asChild variant="outline" className="w-full rounded-xl border-[#092244] bg-white h-10 text-xs font-bold text-[#092244] hover:bg-[#FAF8F5]">
+              <Button asChild variant="outline" size="sm" className="w-full">
                 <Link href={ROUTES.LOGIN} className="gap-2">
                   <span>Inquire About Monthly Plan</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -152,7 +152,7 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <Button asChild variant="outline" className="w-full rounded-xl border-[#092244] bg-white h-10 text-xs font-bold text-[#092244] hover:bg-[#FAF8F5]">
+              <Button asChild variant="outline" size="sm" className="w-full">
                 <Link href={ROUTES.CONTACT} className="gap-2">
                   <span>Request Custom Agreement</span>
                   <ArrowRight className="h-3.5 w-3.5" />

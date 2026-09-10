@@ -76,3 +76,32 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
+
+@keyframes plane-fly {
+  0% {
+    transform: translate(-2px, 2px) rotate(-45deg);
+  }
+  50% {
+    transform: translate(3px, -3px) rotate(-45deg);
+  }
+  100% {
+    transform: translate(-2px, 2px) rotate(-45deg);
+  }
+}
+
+@keyframes orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-plane-fly {
+  animation: plane-fly 1.4s ease-in-out infinite;
+}
+
+.animate-orbit {
+  animation: orbit 6s linear infinite;
+}

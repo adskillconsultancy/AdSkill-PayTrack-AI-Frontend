@@ -135,8 +135,9 @@ export default function ContactPage() {
                     </p>
                     <Button
                       type="button"
+                      size="sm"
                       onClick={() => setSubmitted(false)}
-                      className="mt-4 rounded-xl bg-[#092244] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#0d2e5a]"
+                      className="mt-4"
                     >
                       Send Another Message
                     </Button>
@@ -231,7 +232,7 @@ export default function ContactPage() {
 
                     <Button
                       type="submit"
-                      className="w-full h-11 gap-2 rounded-xl bg-[#092244] text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a] active:scale-[0.98]"
+                      className="w-full gap-2"
                     >
                       <Send className="h-4 w-4 text-[#F3A712]" />
                       <span>Submit Advisory Inquiry</span>

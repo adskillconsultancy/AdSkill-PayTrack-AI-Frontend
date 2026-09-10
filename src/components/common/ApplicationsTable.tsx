@@ -390,39 +390,30 @@ export function ApplicationsTable({
 
           <Button
             type="button"
+            variant={activePage === 1 ? "default" : "ghost"}
+            size="icon"
             onClick={() => handlePageClick(1)}
-            className={cn(
-              "h-8 w-8 rounded-lg text-xs font-bold transition-all",
-              activePage === 1
-                ? "bg-[#092244] text-white hover:bg-[#0D2E5A] shadow-xs"
-                : "bg-transparent text-[#64748B] hover:bg-[#FAF8F5]"
-            )}
+            className="h-8 w-8 text-xs font-bold"
           >
             1
           </Button>
 
           <Button
             type="button"
+            variant={activePage === 2 ? "default" : "ghost"}
+            size="icon"
             onClick={() => handlePageClick(2)}
-            className={cn(
-              "h-8 w-8 rounded-lg text-xs font-bold transition-all",
-              activePage === 2
-                ? "bg-[#092244] text-white hover:bg-[#0D2E5A] shadow-xs"
-                : "bg-transparent text-[#64748B] hover:bg-[#FAF8F5]"
-            )}
+            className="h-8 w-8 text-xs font-bold"
           >
             2
           </Button>
 
           <Button
             type="button"
+            variant={activePage === 3 ? "default" : "ghost"}
+            size="icon"
             onClick={() => handlePageClick(3)}
-            className={cn(
-              "h-8 w-8 rounded-lg text-xs font-bold transition-all",
-              activePage === 3
-                ? "bg-[#092244] text-white hover:bg-[#0D2E5A] shadow-xs"
-                : "bg-transparent text-[#64748B] hover:bg-[#FAF8F5]"
-            )}
+            className="h-8 w-8 text-xs font-bold"
           >
             3
           </Button>
@@ -431,13 +422,10 @@ export function ApplicationsTable({
 
           <Button
             type="button"
+            variant={activePage === totalPages ? "default" : "ghost"}
+            size="sm"
             onClick={() => handlePageClick(totalPages)}
-            className={cn(
-              "h-8 min-w-[32px] px-1.5 rounded-lg text-xs font-bold transition-all",
-              activePage === totalPages
-                ? "bg-[#092244] text-white hover:bg-[#0D2E5A] shadow-xs"
-                : "bg-transparent text-[#64748B] hover:bg-[#FAF8F5]"
-            )}
+            className="h-8 min-w-[32px] px-1.5 text-xs font-bold"
           >
             {totalPages}
           </Button>

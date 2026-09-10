@@ -47,7 +47,8 @@ export function DashboardOverview() {
         <div>
           <Button
             type="button"
-            className="rounded-xl bg-[#092244] hover:bg-[#0D2E5A] h-10 px-5 text-xs sm:text-sm font-bold text-white gap-2 shadow-xs cursor-pointer">
+            className="gap-2 cursor-pointer"
+          >
             <Plus className="h-4 w-4 text-[#F3A712]" />
             <span>Add New File</span>
           </Button>

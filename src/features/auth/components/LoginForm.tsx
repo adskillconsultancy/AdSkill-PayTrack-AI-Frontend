@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   AlertCircle,
   KeyRound,
+  Plane,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
@@ -180,11 +181,20 @@ export function LoginForm() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full h-11 gap-2 rounded-xl bg-[#092244] text-sm font-bold text-white shadow-sm hover:bg-[#0d2e5a] active:scale-[0.98] disabled:opacity-50 transition-all"
+          className="w-full gap-2"
         >
-          <ShieldCheck className="h-4 w-4 text-[#F3A712]" />
-          <span>{isLoading ? "Signing In..." : "Sign In to Account"}</span>
-          <ArrowRight className="h-3.5 w-3.5 opacity-70 ml-1" />
+          {isLoading ? (
+            <>
+              <Plane className="h-4 w-4 text-[#F3A712] fill-[#F3A712] animate-plane-fly drop-shadow-xs" />
+              <span>Verifying Visa Account...</span>
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="h-4 w-4 text-[#F3A712]" />
+              <span>Sign In to Account</span>
+              <ArrowRight className="h-3.5 w-3.5 opacity-70 ml-1" />
+            </>
+          )}
         </Button>
       </form>
 
@@ -197,40 +207,36 @@ export function LoginForm() {
           </div>
           <span className="text-[10px] text-[#94A3B8] font-mono">Password123!</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Button
             type="button"
-            variant="outline"
+            variant="subtle"
             size="sm"
             onClick={() => handleQuickFill("client@example.com")}
-            className="h-8 px-2 rounded-lg bg-[#FAF8F5] border-[#EAE6DF] text-[#092244] hover:bg-[#F3A712]/10 hover:border-[#F3A712] font-semibold transition-colors text-xs justify-center"
           >
             Client
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="subtle"
             size="sm"
             onClick={() => handleQuickFill("consultant@adskillconsultancy.com")}
-            className="h-8 px-2 rounded-lg bg-[#FAF8F5] border-[#EAE6DF] text-[#092244] hover:bg-[#F3A712]/10 hover:border-[#F3A712] font-semibold transition-colors text-xs justify-center"
           >
             Consultant
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="subtle"
             size="sm"
             onClick={() => handleQuickFill("manager@adskillconsultancy.com")}
-            className="h-8 px-2 rounded-lg bg-[#FAF8F5] border-[#EAE6DF] text-[#092244] hover:bg-[#F3A712]/10 hover:border-[#F3A712] font-semibold transition-colors text-xs justify-center"
           >
             Manager
           </Button>
           <Button
             type="button"
-            variant="outline"
+            variant="subtle"
             size="sm"
             onClick={() => handleQuickFill("admin@adskillconsultancy.com")}
-            className="h-8 px-2 rounded-lg bg-[#FAF8F5] border-[#EAE6DF] text-[#092244] hover:bg-[#F3A712]/10 hover:border-[#F3A712] font-semibold transition-colors text-xs justify-center"
           >
             Super Admin
           </Button>
