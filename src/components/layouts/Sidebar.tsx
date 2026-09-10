@@ -104,18 +104,23 @@ const navSections: NavSection[] = [
     portalType: "MANAGEMENT",
     items: [
       {
-        title: "Client Profiles",
+        title: "Client List",
         href: ROUTES.CLIENTS,
         icon: Users,
         requiredPermission: "user:read",
         subItems: [
           { title: "All Clients", href: ROUTES.CLIENTS },
           {
-            title: "New Client",
-            href: `${ROUTES.CLIENTS}?action=new`,
-            requiredPermission: "user:create",
+            title: "Active Cases",
+            href: `${ROUTES.CLIENTS}?status=Processing`,
           },
         ],
+      },
+      {
+        title: "Create Client",
+        href: ROUTES.CLIENT_CREATE,
+        icon: UserPlus,
+        requiredPermission: "user:create",
       },
       {
         title: "Service Catalog",
@@ -323,7 +328,8 @@ export function Sidebar() {
     Record<string, boolean>
   >({
     Dashboard: false,
-    "Client Profiles": false,
+    "Client List": false,
+    "User List": false,
     "Service Catalog": false,
     "Case Tracking": false,
     "Payment Plans": false,

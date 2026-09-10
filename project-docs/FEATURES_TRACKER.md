@@ -79,10 +79,10 @@
 ### 💼 1.2 Manager / Finance ("What Manager Does")
 *Scope: Create plans, verify payments, issue invoices and receipts, send reminders, and view financial reports.*
 
-- [ ] **Pending** — **Payment Plan Creation & Management:**
-  - [ ] Build payment plans for clients: Fixed, recurring, or customized milestone schedules.
-  - [ ] Capture original price, discount amount, mandatory discount reason, final fee, and deposit.
-  - [ ] **Deterministic Math Validation:** Validate that $\sum \text{Installments} + \text{Deposit} == \text{Contracted Fee}$ before saving.
+- [x] **Completed** — **Payment Plan Creation & Management:**
+  - [x] Build payment plans for clients: Fixed, recurring, or customized milestone schedules.
+  - [x] Capture original price, discount amount, mandatory discount reason, final fee, and deposit.
+  - [x] **Deterministic Math Validation:** Validate that $\sum \text{Installments} + \text{Deposit} == \text{Contracted Fee}$ before saving.
   - [ ] Allow authorized plan amendments with mandatory reason logging in audit log.
   - [ ] Confirmation prompt required before committing any material financial adjustment.
 - [ ] **Pending** — **Payment Recording & Verification Workflow:**
@@ -97,7 +97,7 @@
   - [ ] Mark receipts `Paid` only after manual staff verification or verified Stripe webhook.
   - [ ] Allow staff to re-download or regenerate duplicate copies without altering historical ledger timestamps.
 - [ ] **Pending** — **Payment Reminder Controls:**
-  - [ ] Configure per-client reminder preferences (toggle automated reminders on/off).
+  - [x] Configure per-client reminder preferences (toggle automated reminders on/off).
   - [ ] Trigger manual email reminders to individual clients or batch reminders.
   - [ ] Automatic halt: Reminders must instantly stop once an installment or fee is paid.
 - [ ] **Pending** — **Financial Dashboard & Reporting:**
@@ -112,10 +112,11 @@
 ### 📋 1.3 Consultant ("What Consultant Does")
 *Scope: View assigned clients, payment status, and notes; no deletion, refund approval, or security administration.*
 
-- [ ] **Pending** — **Assigned Client Directory:**
-  - [ ] Search and view assigned clients and active immigration cases.
-  - [ ] View client profile: full name, contact info, agreement date, service/case type, assigned consultant.
-  - [ ] Access client-visible notes and view internal case notes.
+- [x] **Completed** — **Assigned Client Directory & Case Management:**
+  - [x] Search and view assigned clients and active immigration cases with reusable `DataTable` at `/clients`.
+  - [x] View full client case dossier at `/clients/[id]`: personal contact info, destination, visa category, contract fee schedule, case milestones, and direct WhatsApp launcher.
+  - [x] Dedicated client onboarding form at `/clients/create` with dual intake modes (New Applicant & Existing User / Client Profile Lookup), international WhatsApp country code selector, and case configuration.
+  - [x] Direct WhatsApp communication channel (`https://wa.me/...`) for payment reminders and case updates.
 - [ ] **Pending** — **Payment Compliance & Status Verification:**
   - [ ] Check client financial standing before performing key case actions (e.g. verify if deposit or milestone is cleared).
   - [ ] View installment payment statuses (`Paid`, `Due Today`, `Overdue`, `Scheduled`, `Partially Paid`).

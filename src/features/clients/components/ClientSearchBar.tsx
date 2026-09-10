@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
+import { ROUTES } from "@/constants/routes";
 import {
   Search,
   SlidersHorizontal,
@@ -223,14 +225,15 @@ export function ClientSearchBar({
           )}
         </div>
 
-        {/* "+ New Client" Primary CTA */}
+        {/* "+ New Client" Primary CTA button linking to dedicated /clients/create */}
         <Button
-          type="button"
-          onClick={onNewClientClick}
+          asChild
           className="h-12 px-5 sm:px-6 rounded-2xl bg-[#092244] text-white hover:bg-[#071933] shadow-[0_4px_16px_rgba(9,34,68,0.2)] gap-2 font-bold text-xs sm:text-sm cursor-pointer transition-all"
         >
-          <Plus className="h-4 w-4 text-[#F3A712]" />
-          <span>New Client</span>
+          <Link href={ROUTES.CLIENT_CREATE}>
+            <Plus className="h-4 w-4 text-[#F3A712]" />
+            <span>New Client</span>
+          </Link>
         </Button>
       </div>
     </div>

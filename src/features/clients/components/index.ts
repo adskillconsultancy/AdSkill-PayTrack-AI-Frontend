@@ -3,6 +3,8 @@ export { ClientMetricCards } from "./ClientMetricCards";
 export { ClientSearchBar } from "./ClientSearchBar";
 export { ClientDetailModal } from "./ClientDetailModal";
 export { NewClientModal } from "./NewClientModal";
+export { ClientDetailView } from "./ClientDetailView";
+export { CreateClientForm } from "./CreateClientForm";
 
 export {
   ApplicationsTable,

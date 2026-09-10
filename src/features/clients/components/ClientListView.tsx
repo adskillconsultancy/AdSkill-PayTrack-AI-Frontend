@@ -2,11 +2,13 @@
 
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { DataTable, ColumnDef } from "@/components/common/DataTable";
 import { ClientItem, ClientStatus } from "../types";
-import { MOCK_CLIENTS, INITIAL_CLIENT_STATS } from "../mockData";
+import { MOCK_CLIENTS, INITIAL_CLIENT_STATS, getMockClients } from "../mockData";
 import { ClientMetricCards } from "./ClientMetricCards";
 import { ClientSearchBar } from "./ClientSearchBar";
 import { ClientDetailModal } from "./ClientDetailModal";
@@ -21,6 +23,8 @@ import {
   Send,
   Trash2,
   Copy,
+  MessageCircle,
+  ExternalLink,
 } from "lucide-react";
 
 interface ClientListViewProps {
@@ -36,7 +40,13 @@ export function ClientListView({
   parentBreadcrumb = "Visa Applications",
   initialClients = MOCK_CLIENTS,
 }: ClientListViewProps) {
+  const router = useRouter();
   const [clients, setClients] = React.useState<ClientItem[]>(initialClients);
+
+  React.useEffect(() => {
+    setClients(getMockClients());
+  }, []);
+
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
   const [destinationFilter, setDestinationFilter] = React.useState<string>("ALL");
@@ -250,6 +260,29 @@ export function ClientListView({
       ),
     },
     {
+      key: "whatsapp",
+      header: "WHATSAPP",
+      cell: (item) => {
+        const wa = item.whatsapp || "+14165550192";
+        return (
+          <a
+            href={`https://wa.me/${wa.replace(/[^0-9]/g, "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#ECFDF5] text-[#059669] hover:bg-[#D1FAE5] transition-colors group cursor-pointer"
+            title={`Chat with ${item.name} on WhatsApp`}
+          >
+            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#25D366] text-white">
+              <MessageCircle className="h-3 w-3 fill-current text-white" />
+            </div>
+            <span className="text-xs font-mono font-bold">{wa}</span>
+            <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+          </a>
+        );
+      },
+    },
+    {
       key: "status",
       header: "STATUS",
       cell: (item) => renderStatusBadge(item.status),
@@ -268,10 +301,9 @@ export function ClientListView({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedClient(item);
-                setIsDetailModalOpen(true);
+                router.push(`/clients/${item.id}`);
               }}
-              title="View Client Dossier"
+              title="View Client Full Dossier"
               className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#092244] hover:bg-[#EAE6DF] hover:text-[#092244] transition-colors cursor-pointer shadow-2xs"
             >
               <Eye className="h-4 w-4" />
@@ -302,18 +334,23 @@ export function ClientListView({
                   onClick={(e) => e.stopPropagation()}
                   className="absolute right-0 top-full mt-1.5 w-48 rounded-2xl border border-[#EAE6DF] bg-white p-1.5 shadow-xl z-30 animate-in fade-in slide-in-from-top-1 duration-150"
                 >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedClient(item);
-                      setIsDetailModalOpen(true);
-                      setActiveMenuId(null);
-                    }}
+                  <Link
+                    href={`/clients/${item.id}`}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#092244] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
                   >
                     <Eye className="h-3.5 w-3.5 text-[#64748B]" />
-                    <span>View Dossier</span>
-                  </button>
+                    <span>View Full Dossier</span>
+                  </Link>
+
+                  <a
+                    href={`https://wa.me/${(item.whatsapp || "+14165550192").replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#059669] rounded-xl hover:bg-[#ECFDF5] transition-colors cursor-pointer"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 text-[#059669]" />
+                    <span>Chat on WhatsApp</span>
+                  </a>
 
                   <button
                     type="button"
@@ -430,10 +467,7 @@ export function ClientListView({
         ]}
         onSortChange={(sort) => setSelectedSort(sort)}
         onPageChange={(page) => setCurrentPage(page)}
-        onRowClick={(item) => {
-          setSelectedClient(item);
-          setIsDetailModalOpen(true);
-        }}
+        onRowClick={(item) => router.push(`/clients/${item.id}`)}
       />
 
       {/* ── 5. MODALS ── */}

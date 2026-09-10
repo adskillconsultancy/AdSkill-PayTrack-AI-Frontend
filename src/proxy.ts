@@ -23,9 +23,13 @@ const authPaths = ["/login", "/register", "/forgot-password", "/reset-password"]
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // TODO: Replace with actual token check (cookie-based or header-based)
-  // For now, this is a placeholder that allows all requests through.
+  // In active development, allow all requests through unless explicitly enforced
   const token = request.cookies.get("accessToken")?.value;
+  const enforceAuth = process.env.NEXT_PUBLIC_ENABLE_AUTH_REDIRECT === "true";
+
+  if (!enforceAuth) {
+    return NextResponse.next();
+  }
 
   const isProtectedRoute = protectedPaths.some((path) =>
     pathname.startsWith(path)

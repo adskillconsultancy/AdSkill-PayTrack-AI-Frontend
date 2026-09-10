@@ -6,12 +6,21 @@ export type ClientStatus =
   | "Delayed"
   | "Rejected";
 
+export interface ClientActivityLog {
+  id: string;
+  action: string;
+  target: string;
+  timestamp: string;
+  agentName: string;
+}
+
 export interface ClientItem {
   id: string;
   clientId: string; // e.g. #APP-2026-9482
   name: string;
   email?: string;
   phone?: string;
+  whatsapp?: string; // e.g. +1 416 555 0192
   avatarUrl?: string;
   initials?: string;
   destination: {
@@ -31,7 +40,23 @@ export interface ClientItem {
   totalFee?: number;
   paidAmount?: number;
   dueAmount?: number;
+  currency?: string;
+  depositAmount?: number;
+  discountAmount?: number;
+  discountReason?: string;
+  preferredName?: string;
+  city?: string;
+  countryOfOrigin?: string;
+  preferredLanguage?: string;
+  remindersEnabled?: boolean;
+  milestones?: {
+    id: string;
+    name: string;
+    dueDate: string;
+    amount: number;
+  }[];
   notes?: string;
+  activityLogs?: ClientActivityLog[];
 }
 
 export interface ClientSummaryStats {
