@@ -1,18 +1,27 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-const Table = React.forwardRef<
-  HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto rounded-lg border bg-card text-card-foreground shadow-sm">
-    <table
-      ref={ref}
-      className={cn("w-full caption-bottom text-sm", className)}
-      {...props}
-    />
-  </div>
-));
+export interface TableProps
+  extends React.HTMLAttributes<HTMLTableElement> {
+  containerClassName?: string;
+}
+
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ className, containerClassName, ...props }, ref) => (
+    <div
+      className={cn(
+        "relative w-full overflow-auto rounded-lg border border-[#EAE6DF] bg-white text-[#092244] shadow-xs",
+        containerClassName
+      )}
+    >
+      <table
+        ref={ref}
+        className={cn("w-full caption-bottom text-sm", className)}
+        {...props}
+      />
+    </div>
+  )
+);
 Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<

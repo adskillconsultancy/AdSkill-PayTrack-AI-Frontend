@@ -132,6 +132,7 @@ Use this quick-reference table whenever adding new functionality:
 | **`Loader`** | `{ Loader } from "@/components/common"` | `size`: `sm`, `md`, `lg`<br>`variant`: `plane` (Visa flight theme with animated orbiting plane & radar), `spinner`<br>`text`, `subtext`, `className` | Visa & immigration platform loading animation. Features an animated gold plane, radar pulse, and orbiting flight path in brand colors (`#092244`, `#F3A712`). |
 | **`EmptyState`** | `{ EmptyState } from "@/components/common"` | `icon`, `title`, `description`, `action` | Clean, high-polish placeholder rendered when lists, tables, or search filters return 0 results. |
 | **`ApplicationsTable`** | `{ ApplicationsTable } from "@/components/common"` | `title`, `data?: ApplicationItem[]`, `totalCount`, `currentPage`, `totalPages`, `sortBy`, `onView`, `onMore`, `onPageChange`, `onSortChange` | Standard reusable data table matching the approved UI design with client avatar, destination, visa category, submission date, status pills, and action buttons. Falls back to hardcoded mock data if no prop is supplied. |
+| **`DataTable`** | `{ DataTable } from "@/components/common"` | `title`, `data: T[]`, `columns: ColumnDef<T>[]`, `totalCount`, `currentPage`, `totalPages`, `pageSize`, `sortBy`, `sortOptions`, `onSortChange`, `onPageChange`, `onRowClick` | Generic, reusable data table component with card shell, sorting dropdown, custom typed columns, empty state, and smart numbered pagination matching the global brand color system. |
 
 
 ---

@@ -1,3 +1,9 @@
+export { ClientListView } from "./ClientListView";
+export { ClientMetricCards } from "./ClientMetricCards";
+export { ClientSearchBar } from "./ClientSearchBar";
+export { ClientDetailModal } from "./ClientDetailModal";
+export { NewClientModal } from "./NewClientModal";
+
 export {
   ApplicationsTable,
   DEFAULT_APPLICATIONS,

@@ -229,7 +229,10 @@ export function ApplicationsTable({
 
       {/* ── RESPONSIVE TABLE WRAPPER ── */}
       <div className="overflow-x-auto">
-        <Table className="w-full border-none shadow-none rounded-none">
+        <Table
+          containerClassName="border-none shadow-none rounded-none bg-transparent overflow-visible"
+          className="w-full border-none shadow-none rounded-none bg-white"
+        >
           <TableHeader className="bg-[#FAF8F5] border-b border-[#EAE6DF]">
             <TableRow className="border-b border-[#EAE6DF] hover:bg-transparent">
               <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#092244]">
@@ -253,7 +256,7 @@ export function ApplicationsTable({
             </TableRow>
           </TableHeader>
 
-          <TableBody className="divide-y divide-[#F0ECE6]">
+          <TableBody className="divide-y divide-[#F0ECE6] bg-white">
             {data.map((item) => (
               <TableRow
                 key={item.id}

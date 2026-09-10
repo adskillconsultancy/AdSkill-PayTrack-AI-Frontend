@@ -1,22 +1,18 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { ClientListView } from "@/features/clients";
 
 export const metadata: Metadata = {
-  title: "Clients",
+  title: "Application List — AdSkill PayTrack AI",
+  description:
+    "Manage client immigration applications, track status milestones, and monitor case processing.",
 };
 
 export default function ClientsPage() {
   return (
-    <div className="container py-10">
-      <PageHeader
-        title="Clients"
-        description="Manage your client accounts."
-      />
-      <div className="rounded-lg border bg-card p-8 text-card-foreground">
-        <p className="text-sm text-muted-foreground">
-          Clients page content will be implemented here.
-        </p>
-      </div>
-    </div>
+    <ClientListView
+      pageTitle="Application List"
+      categoryLabel="ALL APPLICATIONS"
+      parentBreadcrumb="Visa Applications"
+    />
   );
 }
