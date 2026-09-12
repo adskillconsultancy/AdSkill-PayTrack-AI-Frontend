@@ -6,8 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { DataTable, ColumnDef } from "@/components/common/DataTable";
+import { Loader } from "@/components/common/Loader";
 import { UserItem, UserRole, UserStatus } from "../types";
-import { MOCK_USERS, INITIAL_USER_STATS } from "../mockData";
 import { UserMetricCards } from "./UserMetricCards";
 import { UserSearchBar } from "./UserSearchBar";
 import {
@@ -16,21 +16,21 @@ import {
   Eye,
   MoreVertical,
   MessageCircle,
-  Shield,
-  KeyRound,
   Ban,
   CheckCircle,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
-import { ROUTES } from "@/constants/routes";
+import {
+  useGetUsersQuery,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+} from "@/services/api/users/usersApi";
 
-interface UserListViewProps {
-  initialUsers?: UserItem[];
-}
-
-export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
+export function UserListView() {
   const router = useRouter();
-  const [users, setUsers] = React.useState<UserItem[]>(initialUsers);
+
+  // Query states
   const [searchQuery, setSearchQuery] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<string>("ALL");
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
@@ -52,105 +52,106 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
     }
   }, [activeMenuId]);
 
-  // Filter logic
-  const filteredUsers = React.useMemo(() => {
-    return users.filter((user) => {
-      // Search matching (name, username, email, whatsapp)
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesName = user.name.toLowerCase().includes(q);
-        const matchesUsername = user.username.toLowerCase().includes(q);
-        const matchesEmail = user.email.toLowerCase().includes(q);
-        const matchesWhatsApp = user.whatsapp.includes(q);
-
-        if (!matchesName && !matchesUsername && !matchesEmail && !matchesWhatsApp) {
-          return false;
-        }
-      }
-
-      // Role filter
-      if (roleFilter !== "ALL") {
-        if (roleFilter === "Staff" && (user.role === "Client")) {
-          return false;
-        } else if (roleFilter !== "Staff" && user.role !== roleFilter) {
-          return false;
-        }
-      }
-
-      // Status filter
-      if (statusFilter !== "ALL" && user.status !== statusFilter) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [users, searchQuery, roleFilter, statusFilter]);
-
-  // Sort logic
-  const sortedUsers = React.useMemo(() => {
-    const list = [...filteredUsers];
+  // Sort mapping to backend API
+  const sortParams = React.useMemo(() => {
     switch (selectedSort) {
-      case "Newest First":
-        return list;
       case "Oldest First":
-        return list.reverse();
+        return { sortBy: "createdAt", sortOrder: "asc" as const };
       case "Name (A-Z)":
-        return list.sort((a, b) => a.name.localeCompare(b.name));
+        return { sortBy: "name", sortOrder: "asc" as const };
       case "Name (Z-A)":
-        return list.sort((a, b) => b.name.localeCompare(a.name));
-      case "Role":
-        return list.sort((a, b) => a.role.localeCompare(b.role));
+        return { sortBy: "name", sortOrder: "desc" as const };
+      case "Newest First":
       default:
-        return list;
+        return { sortBy: "createdAt", sortOrder: "desc" as const };
     }
-  }, [filteredUsers, selectedSort]);
+  }, [selectedSort]);
 
-  // Role Badge Styling
+  // Live Backend Query with Server-side Pagination & Dynamic DB Filters
+  const { data: usersResponse, isLoading, refetch } = useGetUsersQuery({
+    page: currentPage,
+    limit: pageSize,
+    searchTerm: searchQuery.trim() || undefined,
+    roleName: roleFilter !== "ALL" ? roleFilter : undefined,
+    status: statusFilter !== "ALL" ? statusFilter.toUpperCase() : undefined,
+    sortBy: sortParams.sortBy,
+    sortOrder: sortParams.sortOrder,
+  });
+
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+
+  // Map backend users to frontend UserItem (100% dynamic from DB)
+  const users: UserItem[] = React.useMemo(() => {
+    if (!usersResponse?.data) return [];
+
+    return usersResponse.data.map((u) => {
+      const statusDisplay: UserStatus =
+        u.status === "ACTIVE"
+          ? "Active"
+          : u.status === "SUSPENDED"
+          ? "Suspended"
+          : "Pending";
+
+      return {
+        id: u.id,
+        clientId: u.clientId,
+        userId: u.clientId || `USR-${u.id.slice(0, 8).toUpperCase()}`,
+        name: u.name,
+        preferredName: u.preferredName,
+        username:
+          u.clientId ||
+          (u.preferredName
+            ? `@${u.preferredName.toLowerCase()}`
+            : `@${u.email.split("@")[0]}`),
+        email: u.email,
+        role: u.role?.name || "CLIENT",
+        department:
+          u.role?.name === "CLIENT" ? "Client Portal User" : "Legal & Operations",
+        status: statusDisplay,
+        phone: u.phone || "-",
+        whatsapp: u.whatsapp || u.phone || "-",
+        country: u.country || "United States",
+        lastActive: "Active today",
+        createdAt: new Date(u.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }),
+        avatarUrl: undefined,
+        initials: u.name
+          .split(" ")
+          .map((n) => n[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase(),
+        twoFactorEnabled: u.isMfaEnabled ?? false,
+      };
+    });
+  }, [usersResponse]);
+
+  // Compute live stats for KPI cards
+  const stats = React.useMemo(() => {
+    const total = usersResponse?.meta?.total ?? users.length;
+    const active = users.filter((u) => u.status === "Active").length;
+    const staff = users.filter((u) => u.role !== "CLIENT" && u.role !== "Client").length;
+    const pending = users.filter((u) => u.status === "Pending").length;
+
+    return {
+      totalUsers: total,
+      activeUsers: active,
+      staffCount: staff,
+      pendingInvitations: pending,
+    };
+  }, [usersResponse, users]);
+
+  // Role Badge Styling (Dynamic from Database)
   const renderRoleBadge = (role: UserRole) => {
-    switch (role) {
-      case "Super Admin":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FAF5FF] text-[#7E22CE] ring-1 ring-[#7E22CE]/20">
-            Super Admin
-          </span>
-        );
-      case "Admin":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#EFF6FF] text-[#1E40AF] ring-1 ring-[#1E40AF]/20">
-            Admin
-          </span>
-        );
-      case "Consultant":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#E6F4F1] text-[#0D6E6E] ring-1 ring-[#0D6E6E]/20">
-            Consultant
-          </span>
-        );
-      case "Accountant":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ECFDF5] text-[#059669] ring-1 ring-[#059669]/20">
-            Accountant
-          </span>
-        );
-      case "Support":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FEF3C7] text-[#B45309] ring-1 ring-[#B45309]/20">
-            Support Staff
-          </span>
-        );
-      case "Client":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#F1F5F9] text-[#475569] ring-1 ring-[#475569]/20">
-            Client Account
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FAF8F5] text-[#64748B]">
-            {role}
-          </span>
-        );
-    }
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF]">
+        {role}
+      </span>
+    );
   };
 
   // Status Badge Styling
@@ -178,6 +179,7 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
           </span>
         );
       case "Inactive":
+      default:
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#F1F5F9] text-[#64748B]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#94A3B8]" />
@@ -187,11 +189,39 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
     }
   };
 
+  // Handle status toggle
+  const handleToggleStatus = async (item: UserItem, newStatus: "ACTIVE" | "SUSPENDED") => {
+    try {
+      await updateUser({
+        id: item.id,
+        data: { status: newStatus },
+      }).unwrap();
+      setActiveMenuId(null);
+      refetch();
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string } };
+      alert(apiErr?.data?.message || "Failed to update user status");
+    }
+  };
+
+  // Handle soft delete
+  const handleDeleteUser = async (item: UserItem) => {
+    if (!confirm(`Are you sure you want to soft delete "${item.name}"?`)) return;
+    try {
+      await deleteUser(item.id).unwrap();
+      setActiveMenuId(null);
+      refetch();
+    } catch (err: unknown) {
+      const apiErr = err as { data?: { message?: string } };
+      alert(apiErr?.data?.message || "Failed to delete user");
+    }
+  };
+
   // Define Reusable DataTable Columns
   const columns: ColumnDef<UserItem>[] = [
     {
       key: "user",
-      header: "USER & USERNAME",
+      header: "USER & IDENTITY",
       cell: (item) => (
         <div className="flex items-center gap-3.5">
           {item.avatarUrl ? (
@@ -206,18 +236,25 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
               />
             </div>
           ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#092244]/10 text-sm font-bold text-[#092244]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#092244]/10 text-sm font-black text-[#092244]">
               {item.initials || item.name.charAt(0)}
             </div>
           )}
           <div>
-            <div className="text-sm font-bold text-[#092244] leading-tight">
-              {item.name}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-[#092244] leading-tight">
+                {item.name}
+              </span>
+              {item.clientId && (
+                <span className="text-[10px] font-mono font-bold text-[#0284C7] bg-[#F0F9FF] px-1.5 py-0.5 rounded border border-[#0284C7]/20">
+                  {item.clientId}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 text-xs font-mono font-medium text-[#64748B] mt-0.5">
               <span className="text-[#092244] font-semibold">{item.username}</span>
-              <span>•</span>
-              <span className="text-[#94A3B8] truncate max-w-[150px]">{item.email}</span>
+              <span>·</span>
+              <span className="text-[#94A3B8] truncate max-w-[170px]">{item.email}</span>
             </div>
           </div>
         </div>
@@ -242,7 +279,7 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
     },
     {
       key: "whatsapp",
-      header: "WHATSAPP",
+      header: "WHATSAPP / PHONE",
       cell: (item) => (
         <a
           href={`https://wa.me/${item.whatsapp.replace(/[^0-9]/g, "")}`}
@@ -262,14 +299,14 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
     },
     {
       key: "activity",
-      header: "JOINED / ACTIVITY",
+      header: "JOINED DATE",
       cell: (item) => (
         <div>
           <div className="text-xs font-semibold text-[#092244]">
             {item.createdAt}
           </div>
           <div className="text-[11px] text-[#64748B] mt-0.5 font-medium">
-            {item.lastActive}
+            {item.country || "Active"}
           </div>
         </div>
       ),
@@ -280,6 +317,7 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
       align: "right",
       cell: (item) => {
         const isMenuOpen = activeMenuId === item.id;
+        const targetSlugOrId = item.clientId || item.id;
 
         return (
           <div className="relative flex items-center justify-end gap-2">
@@ -288,10 +326,10 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/users/${item.id}`);
+                router.push(`/users/${targetSlugOrId}`);
               }}
               title="View User Full Dossier"
-              className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#092244] hover:bg-[#EAE6DF] hover:text-[#092244] transition-colors cursor-pointer shadow-2xs"
+              className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#092244] hover:bg-[#EAE6DF] transition-colors cursor-pointer shadow-2xs"
             >
               <Eye className="h-4 w-4" />
               <span className="sr-only">View</span>
@@ -322,7 +360,7 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
                   className="absolute right-0 top-full mt-1.5 w-52 rounded-2xl border border-[#EAE6DF] bg-white p-1.5 shadow-xl z-30 animate-in fade-in slide-in-from-top-1 duration-150"
                 >
                   <Link
-                    href={`/users/${item.id}`}
+                    href={`/users/${targetSlugOrId}`}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#092244] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
                   >
                     <Eye className="h-3.5 w-3.5 text-[#64748B]" />
@@ -339,31 +377,12 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
                     <span>Chat on WhatsApp</span>
                   </a>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      alert(`Password reset link sent to ${item.email}`);
-                      setActiveMenuId(null);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#092244] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
-                  >
-                    <KeyRound className="h-3.5 w-3.5 text-[#F3A712]" />
-                    <span>Reset Password</span>
-                  </button>
-
                   <div className="my-1 border-t border-[#F0ECE6]" />
 
                   {item.status === "Active" ? (
                     <button
                       type="button"
-                      onClick={() => {
-                        setUsers((prev) =>
-                          prev.map((u) =>
-                            u.id === item.id ? { ...u, status: "Suspended" } : u
-                          )
-                        );
-                        setActiveMenuId(null);
-                      }}
+                      onClick={() => handleToggleStatus(item, "SUSPENDED")}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#E11D48] rounded-xl hover:bg-[#FFF1F2] transition-colors cursor-pointer"
                     >
                       <Ban className="h-3.5 w-3.5 text-[#E11D48]" />
@@ -372,20 +391,22 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
-                        setUsers((prev) =>
-                          prev.map((u) =>
-                            u.id === item.id ? { ...u, status: "Active" } : u
-                          )
-                        );
-                        setActiveMenuId(null);
-                      }}
+                      onClick={() => handleToggleStatus(item, "ACTIVE")}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#059669] rounded-xl hover:bg-[#ECFDF5] transition-colors cursor-pointer"
                     >
                       <CheckCircle className="h-3.5 w-3.5 text-[#059669]" />
                       <span>Reactivate Account</span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteUser(item)}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                    <span>Soft Delete User</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -397,24 +418,26 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
 
   return (
     <div className="space-y-6">
-      {/* ── 1. TOP BREADCRUMB & PAGE TITLE ── */}
-      <div className="flex items-center gap-3.5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] shadow-2xs">
-          <Users className="h-5 w-5 text-[#092244]" />
-        </div>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
-            User Management
-          </h1>
-          <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
-            <span>Super Admin</span>
-            <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-            <span className="text-[#092244] font-bold">User List</span>
+      {/* 1. TOP BREADCRUMB & PAGE TITLE */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] shadow-2xs">
+            <Users className="h-5 w-5 text-[#092244]" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+              User Management
+            </h1>
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
+              <span>Super Admin</span>
+              <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
+              <span className="text-[#092244] font-bold">User Directory</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── 2. SEARCH BAR & ACTION TOOLBAR ── */}
+      {/* 2. SEARCH BAR & ACTION TOOLBAR */}
       <UserSearchBar
         searchQuery={searchQuery}
         onSearchChange={(q) => {
@@ -433,48 +456,51 @@ export function UserListView({ initialUsers = MOCK_USERS }: UserListViewProps) {
         }}
       />
 
-      {/* ── 3. 4 METRIC SUMMARY KPI CARDS ── */}
+      {/* 3. 4 METRIC SUMMARY KPI CARDS */}
       <UserMetricCards
-        stats={INITIAL_USER_STATS}
+        stats={stats}
         activeFilter={roleFilter !== "ALL" ? roleFilter : statusFilter}
         onFilterSelect={(filter) => {
           if (filter === "Active" || filter === "Pending") {
             setStatusFilter(filter);
             setRoleFilter("ALL");
-          } else if (filter === "Staff") {
-            setRoleFilter("Staff");
-            setStatusFilter("ALL");
           } else {
-            setRoleFilter("ALL");
+            setRoleFilter(filter);
             setStatusFilter("ALL");
           }
           setCurrentPage(1);
         }}
       />
 
-      {/* ── 4. REUSABLE DATA TABLE CONTAINER ── */}
-      <DataTable<UserItem>
-        title="ALL USERS & CREDENTIALS"
-        data={sortedUsers}
-        columns={columns}
-        keyExtractor={(item) => item.id}
-        totalCount={1428}
-        currentPage={currentPage}
-        pageSize={pageSize}
-        totalPages={143}
-        itemLabel="users"
-        sortBy={selectedSort}
-        sortOptions={[
-          "Newest First",
-          "Oldest First",
-          "Name (A-Z)",
-          "Name (Z-A)",
-          "Role",
-        ]}
-        onSortChange={(sort) => setSelectedSort(sort)}
-        onPageChange={(page) => setCurrentPage(page)}
-        onRowClick={(item) => router.push(`/users/${item.id}`)}
-      />
+      {/* 4. DATA TABLE CONTAINER */}
+      {isLoading ? (
+        <div className="p-12 bg-white rounded-2xl border border-[#EAE6DF] flex flex-col items-center justify-center gap-3">
+          <Loader />
+          <span className="text-xs font-bold text-[#64748B]">Loading users from database...</span>
+        </div>
+      ) : (
+        <DataTable<UserItem>
+          title="ALL USERS & CREDENTIALS"
+          data={users}
+          columns={columns}
+          keyExtractor={(item) => item.id}
+          totalCount={usersResponse?.meta?.total ?? users.length}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalPages={usersResponse?.meta?.totalPage ?? 1}
+          itemLabel="users"
+          sortBy={selectedSort}
+          sortOptions={[
+            "Newest First",
+            "Oldest First",
+            "Name (A-Z)",
+            "Name (Z-A)",
+          ]}
+          onSortChange={(sort) => setSelectedSort(sort)}
+          onPageChange={(page) => setCurrentPage(page)}
+          onRowClick={(item) => router.push(`/users/${item.clientId || item.id}`)}
+        />
+      )}
     </div>
   );
 }

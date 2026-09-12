@@ -1,9 +1,15 @@
-// ── Global API Response Types ──────────────────────────
+﻿// 🌐 Global API Response Types 🌐
 
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPage?: number;
+  };
 }
 
 export interface ApiErrorResponse {

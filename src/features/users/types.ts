@@ -1,10 +1,6 @@
-export type UserRole =
-  | "Super Admin"
-  | "Admin"
-  | "Consultant"
-  | "Accountant"
-  | "Support"
-  | "Client";
+// 🛡️ Dynamic User Types (100% Database Driven) 🛡️
+
+export type UserRole = string;
 
 export type UserStatus = "Active" | "Inactive" | "Suspended" | "Pending";
 
@@ -18,14 +14,21 @@ export interface UserActivityLog {
 
 export interface UserItem {
   id: string;
-  userId: string; // e.g. USR-2026-101
+  userId: string; // e.g. ASK-2026-0001 or USR-XXXXXXXX
+  clientId?: string | null;
   name: string;
-  username: string; // e.g. @patel_admin
+  preferredName?: string | null;
+  username: string;
   email: string;
   role: UserRole;
   status: UserStatus;
-  whatsapp: string; // e.g. +1 416 555 0100
+  whatsapp: string;
   phone?: string;
+  country?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
   avatarUrl?: string;
   initials?: string;
   department: string;

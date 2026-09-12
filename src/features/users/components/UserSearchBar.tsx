@@ -11,9 +11,11 @@ import {
   X,
   Check,
   RotateCcw,
+  Loader2,
 } from "lucide-react";
-import { UserRole, UserStatus } from "../types";
+import { UserStatus } from "../types";
 import { ROUTES } from "@/constants/routes";
+import { useGetAllRolesQuery } from "@/services/api/roles/rolesApi";
 
 interface UserSearchBarProps {
   searchQuery: string;
@@ -37,6 +39,10 @@ export function UserSearchBar({
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
   const filterRef = React.useRef<HTMLDivElement>(null);
 
+  // Dynamic live roles from PostgreSQL database (Zero Hardcoded Roles)
+  const { data: rolesResponse, isLoading: isRolesLoading } = useGetAllRolesQuery();
+  const dbRoles = rolesResponse?.data || [];
+
   // Close filter popover on outside click
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -58,14 +64,14 @@ export function UserSearchBar({
     setIsFilterOpen(false);
   };
 
-  const roleOptions: { label: string; value: UserRole | "ALL" }[] = [
-    { label: "All Roles", value: "ALL" },
-    { label: "Super Admin", value: "Super Admin" },
-    { label: "Consultant", value: "Consultant" },
-    { label: "Accountant", value: "Accountant" },
-    { label: "Support Staff", value: "Support" },
-    { label: "Client Accounts", value: "Client" },
-  ];
+  const roleOptions: { label: string; value: string }[] = React.useMemo(() => {
+    const base = [{ label: "All Roles", value: "ALL" }];
+    const dynamic = dbRoles.map((r) => ({
+      label: r.name.replace(/_/g, " "),
+      value: r.name,
+    }));
+    return [...base, ...dynamic];
+  }, [dbRoles]);
 
   const statusOptions: { label: string; value: UserStatus | "ALL" }[] = [
     { label: "All Statuses", value: "ALL" },
@@ -82,7 +88,7 @@ export function UserSearchBar({
         className
       )}
     >
-      {/* ── 1. SEARCH INPUT BAR ── */}
+      {/* 🔍 1. SEARCH INPUT BAR */}
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
           <Search className="h-4.5 w-4.5 text-[#94A3B8]" />
@@ -91,7 +97,7 @@ export function UserSearchBar({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by name, username, email or WhatsApp..."
+          placeholder="Search by name, client ID, email, or WhatsApp..."
           className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-[#EAE6DF] text-sm text-[#092244] placeholder:text-[#94A3B8] shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all focus:outline-none focus:border-[#092244] focus:ring-2 focus:ring-[#092244]/15"
         />
         {searchQuery && (
@@ -105,7 +111,7 @@ export function UserSearchBar({
         )}
       </div>
 
-      {/* ── 2. ACTIONS: FILTERS & CREATE USER ── */}
+      {/* ⚙️ 2. ACTIONS: DYNAMIC FILTERS & CREATE USER */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
         {/* Filters Popover Button */}
         <div className="relative" ref={filterRef}>
@@ -146,12 +152,17 @@ export function UserSearchBar({
                 )}
               </div>
 
-              {/* Role Section */}
+              {/* Role Section (Live PBAC Roles) */}
               <div className="py-3 space-y-2">
-                <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Role
-                </label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
+                    Role (Database Driven)
+                  </label>
+                  {isRolesLoading && (
+                    <Loader2 className="h-3 w-3 animate-spin text-[#092244]" />
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
                   {roleOptions.map((opt) => {
                     const isSelected = roleFilter === opt.value;
                     return (

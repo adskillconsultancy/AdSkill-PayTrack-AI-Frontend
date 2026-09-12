@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Button } from "@/components/common";
 import { ROUTES } from "@/constants";
@@ -253,18 +253,18 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    sectionTitle: "SYSTEM & GOVERNANCE",
+    sectionTitle: "SECURITY & GOVERNANCE",
     portalType: "MANAGEMENT",
     items: [
       {
-        title: "Role & PBAC Settings",
-        href: ROUTES.SETTINGS,
+        title: "Roles & Permissions",
+        href: ROUTES.ROLES,
         icon: ShieldAlert,
         requiredPermission: "user:manage-role",
         subItems: [
-          { title: "Dynamic Roles", href: `${ROUTES.SETTINGS}?tab=roles` },
-          { title: "Permissions Matrix", href: `${ROUTES.SETTINGS}?tab=permissions` },
-          { title: "Staff Management", href: `${ROUTES.SETTINGS}?tab=users` },
+          { title: "Dynamic Roles", href: ROUTES.ROLES },
+          { title: "Permissions Matrix", href: `${ROUTES.ROLES}?tab=matrix` },
+          { title: "Create New Role", href: `${ROUTES.ROLES}?action=create` },
         ],
       },
       {

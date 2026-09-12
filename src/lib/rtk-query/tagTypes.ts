@@ -1,10 +1,11 @@
-// ── RTK Query Cache Tag Types ──────────────────────────
+﻿// 🏷️ RTK Query Cache Tag Types 🏷️
 // All tag types must be registered here centrally.
 // Feature endpoint files reference these for providesTags / invalidatesTags.
 
 export const TAG_TYPES = [
   "Auth",
   "User",
+  "Role",
   "Client",
   "Booking",
   "Payment",
