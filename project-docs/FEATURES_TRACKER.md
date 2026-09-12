@@ -115,7 +115,7 @@
 - [x] **Completed** — **Assigned Client Directory & Case Management:**
   - [x] Search and view assigned clients and active immigration cases with reusable `DataTable` at `/clients`.
   - [x] View full client case dossier at `/clients/[id]`: personal contact info, destination, visa category, contract fee schedule, case milestones, and direct WhatsApp launcher.
-  - [x] Dedicated client onboarding form at `/clients/create` with dual intake modes (New Applicant & Existing User / Client Profile Lookup), international WhatsApp country code selector, and case configuration.
+  - [x] Dedicated client onboarding form at `/clients/create` with dual intake modes (New Applicant & Existing User / Client Profile Lookup wired to live `usersApi` via `useGetUsersQuery`), category filtering (All, Portal Users, Past Clients), auto-data population, international WhatsApp country code selector, and case configuration.
   - [x] Direct WhatsApp communication channel (`https://wa.me/...`) for payment reminders and case updates.
 - [ ] **Pending** — **Payment Compliance & Status Verification:**
   - [ ] Check client financial standing before performing key case actions (e.g. verify if deposit or milestone is cleared).

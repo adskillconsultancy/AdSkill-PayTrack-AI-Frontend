@@ -13,7 +13,7 @@ import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { ClientItem, ClientStatus } from "../types";
 import { addMockClient, getMockClients } from "../mockData";
-import { MOCK_USERS } from "@/features/users";
+import { useGetUsersQuery } from "@/services/api/users/usersApi";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import {
@@ -229,6 +229,9 @@ interface ExistingUserOption {
   existingCaseRef?: string;
   destinationCountry?: string;
   visaCategory?: string;
+  role?: string;
+  userId?: string;
+  status?: string;
 }
 
 export function CreateClientForm() {
@@ -248,6 +251,17 @@ export function CreateClientForm() {
   const [intakeMode, setIntakeMode] = React.useState<"new" | "existing">("new");
   const [selectedExistingUser, setSelectedExistingUser] = React.useState<ExistingUserOption | null>(null);
   const [existingSearchQuery, setExistingSearchQuery] = React.useState<string>("");
+  const [existingUserCategory, setExistingUserCategory] = React.useState<"all" | "user" | "client">("all");
+
+  // Live Users API Query to fetch registered portal users dynamically from database
+  const {
+    data: usersApiResponse,
+    isLoading: isUsersLoading,
+    isFetching: isUsersFetching,
+    refetch: refetchUsers,
+  } = useGetUsersQuery({
+    limit: 100,
+  });
 
   // Initialize React Hook Form with Zod schema validation
   const {
@@ -308,79 +322,119 @@ export function CreateClientForm() {
     name: "milestones",
   });
 
-  // Unified existing users/clients list
+  // Unified existing users/clients list with Live usersApi integration
   const existingUserOptions = React.useMemo<ExistingUserOption[]>(() => {
     const options: ExistingUserOption[] = [];
     const seenEmails = new Set<string>();
 
-    // 1. From existing clients
-    const mockClients = getMockClients();
-    mockClients.forEach((c) => {
-      if (c.email) seenEmails.add(c.email.toLowerCase());
-      options.push({
-        id: `client-${c.id}`,
-        source: "client",
-        name: c.name,
-        email: c.email || "",
-        phone: c.phone,
-        whatsapp: c.whatsapp,
-        passportNumber: c.passportNumber,
-        countryOfOrigin: c.countryOfOrigin || c.destination?.country,
-        city: c.city,
-        avatarUrl: c.avatarUrl,
-        initials: c.initials,
-        badgeLabel: "Existing Client",
-        existingCaseRef: c.clientId,
-        destinationCountry: c.destination?.country,
-        visaCategory: c.visaCategory?.title,
-      });
-    });
-
-    // 2. From registered portal users
-    MOCK_USERS.forEach((u) => {
-      if (u.email && !seenEmails.has(u.email.toLowerCase())) {
-        seenEmails.add(u.email.toLowerCase());
+    // 1. From live registered portal users API (purely dynamic from backend DB)
+    const backendUsers = usersApiResponse?.data;
+    if (backendUsers && backendUsers.length > 0) {
+      backendUsers.forEach((u) => {
+        if (u.email) seenEmails.add(u.email.toLowerCase());
+        const initials = u.name
+          ? u.name
+              .split(" ")
+              .filter(Boolean)
+              .map((w) => w[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase()
+          : "U";
+        const roleName = u.role?.name || "CLIENT";
         options.push({
           id: `user-${u.id}`,
           source: "user",
           name: u.name,
           email: u.email,
-          phone: u.phone,
-          whatsapp: u.whatsapp,
-          avatarUrl: u.avatarUrl,
-          initials: u.initials,
-          badgeLabel: `Portal User (${u.role})`,
-          existingCaseRef: u.userId,
+          phone: u.phone || undefined,
+          whatsapp: u.whatsapp || u.phone || undefined,
+          countryOfOrigin: u.country || undefined,
+          city: u.city || undefined,
+          initials,
+          badgeLabel: `Portal User (${roleName})`,
+          existingCaseRef: u.clientId || `USR-${u.id.slice(0, 8).toUpperCase()}`,
+          role: roleName,
+          userId: u.id,
+          status: u.status,
         });
+      });
+    }
+
+    // 2. From existing clients (past client cases)
+    const mockClients = getMockClients();
+    mockClients.forEach((c) => {
+      const emailKey = c.email?.toLowerCase();
+      const isAlreadyAdded = emailKey && seenEmails.has(emailKey);
+      if (!isAlreadyAdded) {
+        if (emailKey) seenEmails.add(emailKey);
+        options.push({
+          id: `client-${c.id}`,
+          source: "client",
+          name: c.name,
+          email: c.email || "",
+          phone: c.phone,
+          whatsapp: c.whatsapp,
+          passportNumber: c.passportNumber,
+          countryOfOrigin: c.countryOfOrigin || c.destination?.country,
+          city: c.city,
+          avatarUrl: c.avatarUrl,
+          initials: c.initials,
+          badgeLabel: "Existing Client",
+          existingCaseRef: c.clientId,
+          destinationCountry: c.destination?.country,
+          visaCategory: c.visaCategory?.title,
+        });
+      } else if (emailKey) {
+        // Complement the portal user profile with historical client case data if missing
+        const existingOpt = options.find((o) => o.email.toLowerCase() === emailKey);
+        if (existingOpt) {
+          if (!existingOpt.passportNumber && c.passportNumber) existingOpt.passportNumber = c.passportNumber;
+          if (!existingOpt.destinationCountry && c.destination?.country) existingOpt.destinationCountry = c.destination.country;
+          if (!existingOpt.visaCategory && c.visaCategory?.title) existingOpt.visaCategory = c.visaCategory.title;
+          if (!existingOpt.phone && c.phone) existingOpt.phone = c.phone;
+          if (!existingOpt.whatsapp && c.whatsapp) existingOpt.whatsapp = c.whatsapp;
+          if (!existingOpt.countryOfOrigin && (c.countryOfOrigin || c.destination?.country)) {
+            existingOpt.countryOfOrigin = c.countryOfOrigin || c.destination?.country;
+          }
+          if (!existingOpt.city && c.city) existingOpt.city = c.city;
+        }
       }
     });
 
     return options;
-  }, []);
+  }, [usersApiResponse, isUsersLoading]);
 
-  // Filtered existing users based on search input
+  // Filtered existing users based on search input & category tab
   const filteredExistingUsers = React.useMemo(() => {
+    let list = existingUserOptions;
+    if (existingUserCategory !== "all") {
+      list = list.filter((u) => u.source === existingUserCategory);
+    }
     if (!existingSearchQuery.trim()) {
-      return existingUserOptions.slice(0, 6);
+      return list.slice(0, 9);
     }
     const q = existingSearchQuery.toLowerCase();
-    return existingUserOptions.filter(
+    return list.filter(
       (u) =>
         u.name.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
         (u.phone && u.phone.toLowerCase().includes(q)) ||
         (u.whatsapp && u.whatsapp.toLowerCase().includes(q)) ||
         (u.existingCaseRef && u.existingCaseRef.toLowerCase().includes(q)) ||
-        (u.passportNumber && u.passportNumber.toLowerCase().includes(q))
+        (u.passportNumber && u.passportNumber.toLowerCase().includes(q)) ||
+        (u.countryOfOrigin && u.countryOfOrigin.toLowerCase().includes(q)) ||
+        (u.city && u.city.toLowerCase().includes(q)) ||
+        (u.role && u.role.toLowerCase().includes(q))
     );
-  }, [existingUserOptions, existingSearchQuery]);
+  }, [existingUserOptions, existingSearchQuery, existingUserCategory]);
 
   const handleSelectExistingUser = (user: ExistingUserOption) => {
     setSelectedExistingUser(user);
     setValue("name", user.name, { shouldValidate: true });
     setValue("email", user.email, { shouldValidate: true });
     if (user.name) {
-      const parts = user.name.split(" ");
+      const parts = user.name.trim().split(" ");
       setValue("preferredName", parts[0]);
     }
     if (user.phone) {
@@ -406,7 +460,7 @@ export function CreateClientForm() {
     if (!currentNotes.trim()) {
       setValue(
         "internalNotes",
-        `New case opened for existing client ${user.name} (${user.existingCaseRef || user.email}).`
+        `New case opened for registered portal client ${user.name} (${user.existingCaseRef || user.email}).`
       );
     }
   };
@@ -656,7 +710,7 @@ export function CreateClientForm() {
         {
           id: `log-${Date.now()}-1`,
           action: selectedExistingUser
-            ? `New Case Opened for Existing Client (${selectedExistingUser.existingCaseRef})`
+            ? `New Case Opened for ${selectedExistingUser.source === "user" ? "Registered Portal User" : "Existing Client"} (${selectedExistingUser.name} · ${selectedExistingUser.existingCaseRef})`
             : "Client Case Dossier Initialized",
           target: `${data.visaCategory} (${data.destinationCountry})`,
           timestamp: "Just now",
@@ -903,76 +957,165 @@ export function CreateClientForm() {
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
-                        <span className="text-xs font-extrabold uppercase tracking-wider text-[#092244] block">
-                          Select Existing User or Client Record
-                        </span>
-                        <p className="text-xs text-[#64748B]">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-[#092244] block">
+                            Select Existing User or Client Record
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#059669] text-[10px] font-bold border border-[#A7F3D0]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                            Live API Connected
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#64748B] mt-0.5">
                           Search among registered portal clients and users to open a new case for them without re-entering their data.
                         </p>
                       </div>
-                      <span className="text-[11px] font-bold text-[#64748B] bg-white border border-[#EAE6DF] px-2.5 py-1 rounded-xl self-start sm:self-auto">
-                        {existingUserOptions.length} Existing Profiles Available
-                      </span>
-                    </div>
-
-                    {/* Search input */}
-                    <div className="relative">
-                      <Search className="h-4 w-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
-                      <Input
-                        value={existingSearchQuery}
-                        onChange={(e) => setExistingSearchQuery(e.target.value)}
-                        placeholder="Search by client name, email, phone, passport, or case ID (#APP-2026-...)"
-                        className="h-11 pl-10 pr-4 rounded-xl bg-white border-[#EAE6DF] text-xs font-medium text-[#092244]"
-                      />
-                      {existingSearchQuery && (
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
                         <button
                           type="button"
-                          onClick={() => setExistingSearchQuery("")}
-                          className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#092244]"
+                          onClick={() => refetchUsers()}
+                          disabled={isUsersFetching}
+                          title="Refresh user list from database"
+                          className="flex items-center gap-1 text-[11px] font-bold text-[#64748B] hover:text-[#092244] bg-white border border-[#EAE6DF] hover:border-[#092244]/30 px-2.5 py-1 rounded-xl transition-all cursor-pointer shadow-2xs"
                         >
-                          <X className="h-4 w-4" />
+                          <RefreshCw className={cn("h-3 w-3", isUsersFetching && "animate-spin text-[#0284C7]")} />
+                          {isUsersFetching ? "Syncing..." : "Sync"}
                         </button>
-                      )}
+                        <span className="text-[11px] font-bold text-[#64748B] bg-white border border-[#EAE6DF] px-2.5 py-1 rounded-xl shadow-2xs">
+                          {existingUserOptions.length} Profiles Available
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Results list */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
-                      {filteredExistingUsers.length > 0 ? (
-                        filteredExistingUsers.map((user) => (
-                          <div
-                            key={user.id}
-                            onClick={() => handleSelectExistingUser(user)}
-                            className="p-3 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#092244] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group"
+                    {/* Filter Category Tabs & Search input */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                      <div className="relative flex-1">
+                        <Search className="h-4 w-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
+                        <Input
+                          value={existingSearchQuery}
+                          onChange={(e) => setExistingSearchQuery(e.target.value)}
+                          placeholder="Search by name, email, phone, passport, city, or reference ID..."
+                          className="h-11 pl-10 pr-9 rounded-xl bg-white border-[#EAE6DF] text-xs font-medium text-[#092244]"
+                        />
+                        {existingSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setExistingSearchQuery("")}
+                            className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#092244]"
                           >
-                            <div className="h-9 w-9 rounded-xl bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF] font-extrabold text-xs flex items-center justify-center shrink-0 group-hover:bg-[#092244] group-hover:text-white transition-colors">
-                              {user.initials || user.name.slice(0, 2).toUpperCase()}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="text-xs font-bold text-[#092244] truncate block">
-                                  {user.name}
-                                </span>
-                                <span className="text-[10px] font-extrabold text-[#64748B] bg-[#FAF8F5] px-1.5 py-0.5 rounded-md shrink-0">
-                                  {user.existingCaseRef || "Portal User"}
-                                </span>
-                              </div>
-                              <span className="text-[11px] text-[#64748B] truncate block">
-                                {user.email || user.phone || "No contact info"}
-                              </span>
-                              {user.countryOfOrigin && (
-                                <span className="text-[10px] text-[#94A3B8] font-medium block mt-0.5">
-                                  Origin: {user.countryOfOrigin}
-                                </span>
-                              )}
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Source category filter pills */}
+                      <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#EAE6DF] shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setExistingUserCategory("all")}
+                          className={cn(
+                            "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                            existingUserCategory === "all"
+                              ? "bg-[#092244] text-white"
+                              : "text-[#64748B] hover:text-[#092244]"
+                          )}
+                        >
+                          All ({existingUserOptions.length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExistingUserCategory("user")}
+                          className={cn(
+                            "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                            existingUserCategory === "user"
+                              ? "bg-[#092244] text-white"
+                              : "text-[#64748B] hover:text-[#092244]"
+                          )}
+                        >
+                          Portal Users ({existingUserOptions.filter((u) => u.source === "user").length})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExistingUserCategory("client")}
+                          className={cn(
+                            "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                            existingUserCategory === "client"
+                              ? "bg-[#092244] text-white"
+                              : "text-[#64748B] hover:text-[#092244]"
+                          )}
+                        >
+                          Past Clients ({existingUserOptions.filter((u) => u.source === "client").length})
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Results list or Loading Skeleton */}
+                    {isUsersLoading ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 py-4">
+                        {[1, 2, 3, 4, 5, 6].map((idx) => (
+                          <div
+                            key={idx}
+                            className="p-3 rounded-xl bg-white border border-[#EAE6DF] animate-pulse flex items-start gap-3"
+                          >
+                            <div className="h-9 w-9 rounded-xl bg-slate-200 shrink-0" />
+                            <div className="flex-1 space-y-2">
+                              <div className="h-3.5 bg-slate-200 rounded-md w-3/4" />
+                              <div className="h-3 bg-slate-100 rounded-md w-1/2" />
                             </div>
                           </div>
-                        ))
-                      ) : (
-                        <div className="col-span-full py-6 text-center text-xs text-[#94A3B8] bg-white rounded-xl border border-dashed border-[#EAE6DF]">
-                          No existing clients or users matched &ldquo;{existingSearchQuery}&rdquo;
-                        </div>
-                      )}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
+                        {filteredExistingUsers.length > 0 ? (
+                          filteredExistingUsers.map((user) => (
+                            <div
+                              key={user.id}
+                              onClick={() => handleSelectExistingUser(user)}
+                              className="p-3 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#092244] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group relative overflow-hidden"
+                            >
+                              <div className="h-9 w-9 rounded-xl bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF] font-extrabold text-xs flex items-center justify-center shrink-0 group-hover:bg-[#092244] group-hover:text-white transition-colors">
+                                {user.initials || user.name.slice(0, 2).toUpperCase()}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="text-xs font-bold text-[#092244] truncate block">
+                                    {user.name}
+                                  </span>
+                                  <span
+                                    className={cn(
+                                      "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 uppercase tracking-tight",
+                                      user.source === "user"
+                                        ? "bg-[#EBF8FF] text-[#0284C7] border border-[#BAE6FD]"
+                                        : "bg-[#FAF8F5] text-[#64748B] border border-[#EAE6DF]"
+                                    )}
+                                  >
+                                    {user.source === "user" ? (user.role || "User") : "Client"}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-[#64748B] truncate block">
+                                  {user.email || user.phone || "No email"}
+                                </span>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="text-[10px] font-mono text-[#092244] bg-[#FAF8F5] px-1.5 py-0.2 rounded border border-[#EAE6DF]/60">
+                                    {user.existingCaseRef || "ID Pending"}
+                                  </span>
+                                  {user.countryOfOrigin && (
+                                    <span className="text-[10px] text-[#94A3B8] font-medium truncate">
+                                      · {user.countryOfOrigin}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="col-span-full py-6 text-center text-xs text-[#94A3B8] bg-white rounded-xl border border-dashed border-[#EAE6DF]">
+                            No records found matching &ldquo;{existingSearchQuery}&rdquo;.
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   /* Active Linked User Banner */
@@ -987,18 +1130,19 @@ export function CreateClientForm() {
                             {selectedExistingUser.name}
                           </span>
                           <span className="text-[10px] font-extrabold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded-md">
-                            Existing Profile Linked
+                            {selectedExistingUser.source === "user" ? "Registered Portal User Linked" : "Existing Client Linked"}
                           </span>
                           {selectedExistingUser.existingCaseRef && (
                             <span className="text-[10px] font-mono font-bold text-[#64748B] bg-[#FAF8F5] border border-[#EAE6DF] px-2 py-0.5 rounded-md">
-                              Prior: {selectedExistingUser.existingCaseRef}
+                              Ref: {selectedExistingUser.existingCaseRef}
                             </span>
                           )}
                         </div>
                         <p className="text-xs text-[#64748B] mt-0.5">
                           {selectedExistingUser.email}
                           {selectedExistingUser.phone && ` • ${selectedExistingUser.phone}`}
-                          {selectedExistingUser.passportNumber && ` • Passport: ${selectedExistingUser.passportNumber}`}
+                          {selectedExistingUser.whatsapp && ` • WA: ${selectedExistingUser.whatsapp}`}
+                          {selectedExistingUser.countryOfOrigin && ` • Origin: ${selectedExistingUser.countryOfOrigin}`}
                         </p>
                       </div>
                     </div>
@@ -1010,7 +1154,7 @@ export function CreateClientForm() {
                         onClick={handleClearExistingUser}
                         className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#092244] hover:bg-[#FAF8F5] cursor-pointer"
                       >
-                        Change User
+                        Change Selection
                       </Button>
                       <Button
                         type="button"
