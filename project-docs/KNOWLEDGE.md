@@ -55,13 +55,18 @@ src/
 │   ├── clients/          # Client tables, client cards, client modals
 │   ├── payments/         # Payment tables, invoice forms, calculation hooks
 │   ├── reports/          # Analytics tables, chart widgets, filter bars
-│   └── tracking/         # Booking/time tracking cards and widgets
+│   ├── roles/            # Role directory, capability matrix, dynamic role modals
+│   ├── services/         # Service catalog table, service forms
+│   ├── tracking/         # Booking/time tracking cards and widgets
+│   └── users/            # User tables, dossier views, user create form
 │
 ├── services/             # Server State & API Layer (RTK QUERY)
 │   └── api/              # Domain-scoped endpoint definitions
 │       ├── auth/         # authEndpoints.ts
 │       ├── clients/      # clientEndpoints.ts
-│       └── payments/     # paymentEndpoints.ts
+│       ├── payments/     # paymentEndpoints.ts
+│       ├── roles/        # rolesApi.ts
+│       └── users/        # usersApi.ts
 │
 ├── stores/               # Client UI State (ZUSTAND)
 │   ├── auth.store.ts     # Current user, access token storage
@@ -286,15 +291,20 @@ Located at `src/components/layouts/Sidebar.tsx`:
 - **Special Client (Bob)**: Has role `CLIENT` + direct capability override `payment:verify` granted individually.
 - **Dynamic UI Behavior**: When Bob logs in, `usePermissions().hasPermission('payment:verify')` evaluates to `true`. The sidebar automatically displays the **"Pending Verifications"** item under Operations exclusively for Bob, without changing Alice's menu and without requiring a new role.
 
-### ⏳ Pending Frontend Deliverables (Roadmap)
-1. **RTK Query Role API Slice**: Create `src/services/api/roles/roleApi.ts` injecting endpoints:
-   - `getRoles`: `GET /api/v1/roles`
-   - `getPermissions`: `GET /api/v1/roles/permissions/all`
+### ✅ Delivered Frontend Modules & Architecture
+1. **RTK Query Role API Slice**: `src/services/api/roles/rolesApi.ts` injecting endpoints:
+   - `getAllRoles`: `GET /api/v1/roles`
+   - `getAllPermissions`: `GET /api/v1/roles/permissions/all`
    - `createRole`: `POST /api/v1/roles`
    - `updateRolePermissions`: `PATCH /api/v1/roles/:id/permissions`
-   - `getUserPermissions`: `GET /api/v1/users/:id/permissions`
-   - `updateUserPermissions`: `PATCH /api/v1/users/:id/permissions`
-2. **Role Management Page (`/settings/roles`)**:
-   - Super Admin matrix table with checkboxes to toggle role capabilities dynamically.
-3. **User Direct Capability Modal**:
-   - Dialog on User/Client profile to grant individual overrides (e.g. granting a single client `payment:verify`).
+   - `deleteRole`: `DELETE /api/v1/roles/:id`
+2. **Role & PBAC Management Feature (`src/features/roles`)**:
+   - `RoleListView.tsx`: Primary view container.
+   - `RoleMetricCards.tsx`: Top executive KPI metric cards.
+   - `RoleDirectory.tsx`: Role card grid with capability chips & actions.
+   - `RoleMatrixView.tsx`: Super Admin full cross-module capability matrix table.
+   - `CreateRoleModal.tsx`: Dynamic role creation with initial capability assignment.
+   - `EditRolePermissionsModal.tsx`: Granular module capability configuration dialog with "Toggle All".
+   - Page route container: `src/app/(protected)/roles/page.tsx` (clean server component with metadata and suspense).
+3. **User Direct Capabilities Display**:
+   - Live PBAC capabilities resolution in `UserDetailView.tsx`.

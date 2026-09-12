@@ -15,8 +15,8 @@
 | Rule / Governance Requirement | Status | Notes |
 | :--- | :---: | :--- |
 | **Default Registration:** All new users registering through the portal are automatically assigned the **`Client`** role by default. | ✅ `[x] Done` | Backend: Auto-assigned in `auth.service.ts` register. Frontend: Self-registration complete. |
-| **Role Elevation Authority:** Only **`Super Admin`** has permission to view registered users and promote/update their role. | 🔄 `[/] In Progress` | Backend: `PATCH /users/:id` and `/roles` fully guarded. Frontend: Role settings UI pending. |
-| **Least-Privilege PBAC & Overrides:** Dynamic permissions with individual user-level capability overrides. | 🔄 `[/] In Progress` | Backend: 100% complete (DB, middleware, API). Frontend: Sidebar complete; Management UI pending. |
+| **Role Elevation Authority:** Only **`Super Admin`** has permission to view registered users and promote/update their role. | ✅ `[x] Done` | Backend: `PATCH /users/:id` and `/roles` fully guarded. Frontend: Dedicated role management at `/roles` and role elevation in `/users/[id]`. |
+| **Least-Privilege PBAC & Overrides:** Dynamic permissions with individual user-level capability overrides. | ✅ `[x] Done` | Backend: 100% complete (DB, middleware, API). Frontend: Pure capability dynamic sidebar, modular `/roles` management UI, and capability matrix. |
 
 ---
 
@@ -36,10 +36,10 @@
 - [x] **Done** — **Dynamic PBAC Sidebar (`Sidebar.tsx`)**: Replaced all hardcoded role strings with pure capability evaluation.
 - [x] **Done** — **Capability Hook (`usePermissions.ts`)**: Provides `hasPermission()`, `hasAnyPermission()`, and `SUPER_ADMIN` universal access.
 - [x] **Done** — **Live User State in Layout**: Header and footer display live user name, initials avatar, and dynamic role title.
-- [ ] **Pending** — **Role & PBAC Management UI (`/settings/roles`)**: Dedicated page for Super Admin to view and create custom roles.
-- [ ] **Pending** — **Permission Matrix Checkbox Grid Component**: Interactive UI grid allowing Super Admin to check/uncheck capabilities per role.
+- [x] **Done** — **Role & PBAC Management UI (`/roles` & `src/features/roles`)**: Dedicated modular page for Super Admin to view and create custom roles with KPI cards and tab switching.
+- [x] **Done** — **Permission Matrix Checkbox Grid Component**: Interactive UI grid allowing Super Admin to check/uncheck capabilities per role (`RoleMatrixView` & `EditRolePermissionsModal`).
 - [ ] **Pending** — **User Capability Override Modal**: Modal on Client/Staff profile allowing Super Admin to grant individual overrides (e.g. giving one client `payment:verify`).
-- [ ] **Pending** — **RTK Query Role API Slice**: `src/services/api/roles/roleApi.ts` injecting endpoints for `/roles` and `/users/:id/permissions`.
+- [x] **Done** — **RTK Query Role API Slice**: `src/services/api/roles/rolesApi.ts` injecting endpoints for `/roles` and permission matrix management.
 
 ---
 
@@ -57,6 +57,13 @@
   - [x] Instant account deactivation / suspension toggle with status badge indicators.
   - [x] Direct WhatsApp contact integration with country code selector and live chat launcher.
   - [x] Enforce Multi-Factor Authentication (MFA / 2FA) indicators and password change enforcement.
+- [x] **Completed** — **Role & Dynamic PBAC Access Control Management (`/roles` & `src/features/roles`):**
+  - [x] Dedicated Super Admin role management page at `/roles` with executive KPI cards (Total Roles, System Roles, Custom Roles, Capabilities).
+  - [x] Create dynamic custom roles with initial capability assignments via interactive modal.
+  - [x] Configure granular capability matrix per role across 7 system modules (`USER`, `SERVICE`, `PLAN`, `PAYMENT`, `INVOICE`, `RECEIPT`, `REPORT`, `NOTE`).
+  - [x] Interactive System Capability Matrix table view (`/roles?tab=matrix`) mapping all 22 system capabilities against configured roles.
+  - [x] Safeguarded system roles (`SUPER_ADMIN`, `MANAGER`, `CLIENT`, etc.) against accidental deletion.
+  - [x] Delete custom roles with confirmation prompt and audit invalidation.
 - [x] **Completed** — **Service Catalog & Fee Separation Settings:**
   - [x] Manage service catalog offerings (EB-2 NIW, EB-1A, EB-3, E-2, L-1, Family Immigration, Business Formation, Consultation, DMV/PSB, Custom) via `/services` and `/services/create`.
   - [x] Configure fee categorization rules: strictly separate AdSkill professional fees from third-party fees (Attorney fees, USCIS government fees, Business plans, Evaluations, Translations, CPA licensing).
@@ -284,7 +291,7 @@
 ### Section 16: Privacy Controls
 - [ ] **Pending** — Privacy notice, terms of use, payment authorization, and communication consent.
 - [ ] **Pending** — Data correction, export, and account deactivation processes.
-- [ ] **Pending** — Restrict employee access by assigned role.
+- [x] **Completed** — Restrict employee access by assigned role and dynamic PBAC capabilities (enforced via PBAC auth middleware and dynamic capability-guarded navigation).
 - [ ] **Pending** — Minimize collected data and redact sensitive data from logs.
 
 ---
