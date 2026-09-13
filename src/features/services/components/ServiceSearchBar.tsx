@@ -56,7 +56,7 @@ export function ServiceSearchBar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search service by program name, code (e.g. SRV-EB2), destination, or keyword..."
-            className="w-full h-11 pl-10 pr-4 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] placeholder:text-[#94A3B8] focus:outline-none focus:ring-1 focus:ring-[#092244] transition-all"
+            className="w-full h-11 pl-10 pr-4 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#092244] transition-all"
           />
         </div>
 

@@ -289,7 +289,7 @@ export function CreateUserForm() {
 
       {/* 📋 2. FULL 2-COLUMN RESPONSIVE LAYOUT (FORM + LIVE PROFILE PREVIEW) */}
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
           {/* Main Details Column (2 Columns wide) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Section 1: Identity & Credentials */}
@@ -732,8 +732,8 @@ export function CreateUserForm() {
             </div>
           </div>
 
-          {/* Right Sidebar Column (Live Profile Preview & Actions) */}
-          <div className="space-y-6">
+          {/* Right Sidebar Column (Sticky Live Profile Preview & Actions) */}
+          <div className="lg:sticky lg:top-20 space-y-6 self-start">
             {/* Live User Profile Preview Card */}
             <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-[#F0ECE6]">

@@ -88,7 +88,7 @@ export function ClientSearchBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search by client name, passport or ID..."
-          className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-[#EAE6DF] text-sm text-[#092244] placeholder:text-[#94A3B8] shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all focus:outline-none focus:border-[#092244] focus:ring-2 focus:ring-[#092244]/15"
+          className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-[#EAE6DF] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all focus:outline-none focus:border-[#092244] focus:ring-2 focus:ring-[#092244]/15"
         />
         {searchQuery && (
           <button

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import Image from "next/image";
@@ -26,7 +26,7 @@ import {
   AlertCircle,
   MapPin,
   Sparkles,
-  RefreshCw, Loader2,
+  Loader2,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import {

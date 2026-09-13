@@ -108,7 +108,7 @@ export function LoginForm() {
               type="email"
               {...register("email")}
               placeholder="you@example.com"
-              className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+              className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                 errors.email ? "border-rose-500" : "border-[#EAE6DF]"
               }`}
             />
@@ -139,7 +139,7 @@ export function LoginForm() {
               type={showPassword ? "text" : "password"}
               {...register("password")}
               placeholder="••••••••••••"
-              className={`pl-10 pr-10 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+              className={`pl-10 pr-10 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                 errors.password ? "border-rose-500" : "border-[#EAE6DF]"
               }`}
             />

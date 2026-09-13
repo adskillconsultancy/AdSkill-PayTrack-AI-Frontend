@@ -132,7 +132,7 @@ Use this quick-reference table whenever adding new functionality:
 | Component | Export / Import | Variants / Props | Description & Example Usage |
 | :--- | :--- | :--- | :--- |
 | **`Button`** | `{ Button, buttonVariants } from "@/components/common"` | `variant`: `default` (Primary Brand Navy CTA, rich hover & elevation shadow), `outline` (Sleek border & clean hover), `subtle` (Warm beige chips/tags for quick actions), `secondary`, `ghost`, `link`, `destructive`<br>`size`: `default` (h-11 px-5 rounded-xl), `sm` (h-8 px-3 rounded-lg), `lg` (h-12 px-6 rounded-xl), `icon` (h-9 w-9 rounded-lg)<br>`asChild`: `boolean` (to wrap Next.js `<Link>`) | Central button primitive for all CTAs, submits, and links.<br>`<Button size="sm">Click</Button>`<br>`<Button asChild size="lg"><Link href="/login">Login</Link></Button>`<br>`<Button variant="subtle" size="sm">Tag / Quick Fill</Button>` |
-| **`Input`** | `{ Input } from "@/components/common"` | Standard `React.InputHTMLAttributes<HTMLInputElement>` + Tailwind styling | Styled input supporting text, password, email, number. Compatible with `react-hook-form` via `{...register("fieldName")}`. |
+| **`Input`** | `{ Input } from "@/components/common"` | Standard `React.InputHTMLAttributes<HTMLInputElement>` + Tailwind styling | Standardized input primitive. Features preconfigured brand placeholder design (`placeholder:text-[#94A3B8]/60 placeholder:font-normal`). Compatible with `react-hook-form` via `{...register("fieldName")}`. |
 | **`Table`** | `{ Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from "@/components/common"` | Full semantic HTML table wrapper components with responsive container | Standard ledger and milestone tables. Consistent border, font, and row styling across all modules. |
 | **`Loader`** | `{ Loader } from "@/components/common"` | `size`: `sm`, `md`, `lg`<br>`variant`: `plane` (Visa flight theme with animated orbiting plane & radar), `spinner`<br>`text`, `subtext`, `className` | Visa & immigration platform loading animation. Features an animated gold plane, radar pulse, and orbiting flight path in brand colors (`#092244`, `#F3A712`). |
 | **`EmptyState`** | `{ EmptyState } from "@/components/common"` | `icon`, `title`, `description`, `action` | Clean, high-polish placeholder rendered when lists, tables, or search filters return 0 results. |
@@ -250,6 +250,65 @@ export const useSidebarStore = create<SidebarState>((set) => ({
 }));
 ```
 
+### E. Standardized Form Field & Placeholder Specification (`/users/create` Design Standard)
+
+All forms, search bars, textareas, and modal inputs in the application follow the strict design standard established in `src/features/users/components/CreateUserForm.tsx` (`/users/create`):
+
+1. **Placeholder Tokens**:
+   - **Color & Opacity**: Soft slate `#94A3B8` at 60% opacity (`rgba(148, 163, 184, 0.6)` / `placeholder:text-[#94A3B8]/60`).
+   - **Font Weight**: **Always** `font-normal` (`placeholder:font-normal`). Even if the input text itself is `font-bold` or `font-semibold` or `font-mono`, the placeholder text MUST always remain `font-normal` to keep placeholders soft, crisp, and cleanly differentiated from entered user values.
+   - **Global Fallback**: Configured globally in `src/app/globals.css` under `@layer base`:
+     ```css
+     input::placeholder,
+     textarea::placeholder {
+       color: rgb(148 163 184 / 0.6);
+       font-weight: 400;
+     }
+     ```
+
+2. **Standard Form Field Syntax**:
+   ```tsx
+   import { Input } from "@/components/common";
+
+   // Standard Text / Email / Date Input
+   <Input
+     {...register("fullName")}
+     placeholder="Enter full name"
+     className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+   />
+
+   // Standard Input with Left Icon
+   <div className="relative">
+     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8]" />
+     <Input
+       type="email"
+       {...register("email")}
+       placeholder="name@example.com"
+       className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+     />
+   </div>
+
+   // Standard Form Textarea
+   <textarea
+     {...register("description")}
+     rows={3}
+     placeholder="Describe legal advisory scope, milestones, or notes..."
+     className="w-full p-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+   />
+
+   // Standard Search Bar
+   <div className="relative flex-1">
+     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8]" />
+     <input
+       type="text"
+       value={searchQuery}
+       onChange={(e) => setSearchQuery(e.target.value)}
+       placeholder="Search by client name, ID, or email..."
+       className="w-full h-11 pl-10 pr-4 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#092244] transition-all"
+     />
+   </div>
+   ```
+
 ---
 
 ## 6. Guidelines for AI Sessions
@@ -263,6 +322,11 @@ export const useSidebarStore = create<SidebarState>((set) => ({
 7. **Always Verify**: Ensure all TypeScript types and builds pass (`npm run build`) without errors.
 8. **Maintain this Document**: If you create a new root folder, feature module, or architectural pattern, update this file so future AI sessions stay synchronized.
 9. **Centralized Primitive Styling**: Never apply ad-hoc background colors, hover states, or arbitrary hex codes directly to common primitives like `<Button>`. Always use or create centralized variants in `src/components/common/Button.tsx`.
+10. **Standardized Placeholder & Form Design System**:
+    - **Always** follow the `/users/create` placeholder standard: `placeholder:text-[#94A3B8]/60 placeholder:font-normal`.
+    - **Never** leave input or textarea placeholders unstyled, and never use dark/muddy default colors (`placeholder:text-muted-foreground` or browser default).
+    - **Never** let placeholders become bold: inputs with `font-bold` or `font-semibold` must explicitly include `placeholder:font-normal`.
+    - **Always** use `<Input />` from `@/components/common` for form text/number/email fields.
 
 ---
 

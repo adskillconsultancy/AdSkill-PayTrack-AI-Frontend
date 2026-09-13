@@ -12,11 +12,9 @@ import {
   INITIAL_SERVICE_STATS,
   getMockServices,
   saveMockServices,
-  addMockService,
 } from "../mockData";
 import { ServiceMetricCards } from "./ServiceMetricCards";
 import { ServiceSearchBar } from "./ServiceSearchBar";
-import { NewServiceModal } from "./NewServiceModal";
 import { ROUTES } from "@/constants/routes";
 import {
   Briefcase,
@@ -62,8 +60,7 @@ export function ServiceListView({
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 10;
 
-  // Quick Add modal
-  const [isNewServiceModalOpen, setIsNewServiceModalOpen] = React.useState(false);
+
 
   // Active dropdown menu for row
   const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
@@ -135,10 +132,7 @@ export function ServiceListView({
     setCurrentPage(1);
   };
 
-  const handleQuickAddService = (newSvc: ServiceItem) => {
-    addMockService(newSvc);
-    setServices(getMockServices());
-  };
+
 
   const handleDeleteService = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -495,26 +489,6 @@ export function ServiceListView({
           </Button>
 
           <Button
-            type="button"
-            variant="outline"
-            onClick={() => setServices(getMockServices())}
-            className="h-10 px-3.5 rounded-xl border-[#EAE6DF] bg-white text-[#092244] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
-          >
-            <RotateCw className="h-3.5 w-3.5 text-[#64748B]" />
-            <span className="hidden sm:inline">Refresh</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsNewServiceModalOpen(true)}
-            className="h-10 px-3.5 rounded-xl border-[#EAE6DF] bg-white text-[#092244] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
-          >
-            <Plus className="h-3.5 w-3.5 text-[#092244]" />
-            <span>Quick Add</span>
-          </Button>
-
-          <Button
             asChild
             className="h-10 px-4 rounded-xl bg-[#092244] text-white hover:bg-[#071933] text-xs font-bold shadow-xs gap-1.5 cursor-pointer"
           >
@@ -596,12 +570,6 @@ export function ServiceListView({
         }
       />
 
-      {/* Quick Add New Service Modal */}
-      <NewServiceModal
-        isOpen={isNewServiceModalOpen}
-        onClose={() => setIsNewServiceModalOpen(false)}
-        onSubmit={handleQuickAddService}
-      />
     </div>
   );
 }

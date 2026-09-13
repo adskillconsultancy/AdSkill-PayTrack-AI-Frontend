@@ -34,7 +34,6 @@ import {
   Plus,
   Trash2,
   AlertTriangle,
-  RefreshCw,
   Percent,
   Info,
   ExternalLink,
@@ -804,14 +803,6 @@ export function CreateClientForm() {
                 {caseIdentifier || "#APP-2026-••••"}
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => setCaseIdentifier(generateRandomCaseId())}
-              title="Generate new Case ID"
-              className="p-1.5 rounded-xl hover:bg-[#FAF8F5] text-[#64748B] hover:text-[#092244] transition-colors cursor-pointer"
-            >
-              <RefreshCw className="h-3.5 w-3.5" />
-            </button>
           </div>
 
           {/* Quick Back to Directory Button */}
@@ -971,16 +962,6 @@ export function CreateClientForm() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <button
-                          type="button"
-                          onClick={() => refetchUsers()}
-                          disabled={isUsersFetching}
-                          title="Refresh user list from database"
-                          className="flex items-center gap-1 text-[11px] font-bold text-[#64748B] hover:text-[#092244] bg-white border border-[#EAE6DF] hover:border-[#092244]/30 px-2.5 py-1 rounded-xl transition-all cursor-pointer shadow-2xs"
-                        >
-                          <RefreshCw className={cn("h-3 w-3", isUsersFetching && "animate-spin text-[#0284C7]")} />
-                          {isUsersFetching ? "Syncing..." : "Sync"}
-                        </button>
                         <span className="text-[11px] font-bold text-[#64748B] bg-white border border-[#EAE6DF] px-2.5 py-1 rounded-xl shadow-2xs">
                           {existingUserOptions.length} Profiles Available
                         </span>
@@ -1637,7 +1618,7 @@ export function CreateClientForm() {
                         <input
                           {...register(`milestones.${idx}.name` as const)}
                           placeholder="Milestone title"
-                          className="w-full h-10 px-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                          className="w-full h-10 px-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#092244]"
                         />
                       </div>
                       <div className="sm:col-span-3">
@@ -1658,7 +1639,7 @@ export function CreateClientForm() {
                               valueAsNumber: true,
                             })}
                             placeholder="Amount"
-                            className="w-full h-10 pl-7 pr-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-mono font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                            className="w-full h-10 pl-7 pr-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-mono font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#092244]"
                           />
                         </div>
                       </div>
@@ -1800,7 +1781,7 @@ export function CreateClientForm() {
                 {...register("internalNotes")}
                 rows={3}
                 placeholder="e.g. Client preparing academic credential evaluation from WES. Petition drafting assigned to Sarah K."
-                className="w-full p-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] placeholder:text-[#94A3B8]"
+                className="w-full p-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
               />
             </div>
           </div>

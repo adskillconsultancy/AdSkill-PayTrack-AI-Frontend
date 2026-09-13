@@ -164,7 +164,7 @@ export default function ContactPage() {
                           placeholder="e.g. Dr. Jane Smith"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
+                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
                         />
                       </div>
 
@@ -178,7 +178,7 @@ export default function ContactPage() {
                           placeholder="jane@example.com"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
+                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
                         />
                       </div>
                     </div>
@@ -193,7 +193,7 @@ export default function ContactPage() {
                           placeholder="+1 (555) 000-0000"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
+                          className="h-10 rounded-xl border-[#EAE6DF] bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
                         />
                       </div>
 
@@ -226,7 +226,7 @@ export default function ContactPage() {
                         placeholder="Tell us about your background, target petition deadline, or payment schedule questions..."
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        className="w-full rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] px-3.5 py-2.5 text-sm text-[#092244] placeholder:text-[#94A3B8] focus:border-[#F3A712] focus:bg-white focus:outline-none"
+                        className="w-full rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] px-3.5 py-2.5 text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:border-[#F3A712] focus:bg-white focus:outline-none"
                       />
                     </div>
 

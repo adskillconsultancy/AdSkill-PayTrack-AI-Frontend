@@ -177,7 +177,7 @@ export function RegisterForm() {
                 type="text"
                 {...register("name")}
                 placeholder="e.g. Mohammad Rahim"
-                className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                   errors.name ? "border-rose-500" : "border-[#EAE6DF]"
                 }`}
               />
@@ -200,7 +200,7 @@ export function RegisterForm() {
                 type="email"
                 {...register("email")}
                 placeholder="client@example.com"
-                className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                   errors.email ? "border-rose-500" : "border-[#EAE6DF]"
                 }`}
               />
@@ -223,7 +223,7 @@ export function RegisterForm() {
                 type={showPassword ? "text" : "password"}
                 {...register("password")}
                 placeholder="At least 6 characters"
-                className={`pl-10 pr-10 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                className={`pl-10 pr-10 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                   errors.password ? "border-rose-500" : "border-[#EAE6DF]"
                 }`}
               />
@@ -260,7 +260,7 @@ export function RegisterForm() {
                   type="tel"
                   {...register("phone")}
                   placeholder="+1 (555) 000-0000"
-                  className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                  className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                     errors.phone ? "border-rose-500" : "border-[#EAE6DF]"
                   }`}
                 />
