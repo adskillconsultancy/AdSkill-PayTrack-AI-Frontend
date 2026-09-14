@@ -14,6 +14,7 @@ import { Input } from "@/components/common/Input";
 import { ClientItem, ClientStatus } from "../types";
 import { addMockClient, getMockClients } from "../mockData";
 import { useGetUsersQuery } from "@/services/api/users/usersApi";
+import { useGetServicesQuery } from "@/services/api/services/servicesApi";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import {
@@ -46,122 +47,6 @@ import {
   FileText,
 } from "lucide-react";
 
-// Predefined official AdSkill Service Catalog
-interface ServiceCatalogItem {
-  id: string;
-  title: string;
-  subCategory: string;
-  defaultFee: number;
-  country: string;
-  countryCode: string;
-}
-
-const SERVICE_CATALOG: ServiceCatalogItem[] = [
-  {
-    id: "eb2_niw",
-    title: "EB-2 NIW",
-    subCategory: "National Interest Waiver",
-    defaultFee: 6500,
-    country: "United States",
-    countryCode: "US",
-  },
-  {
-    id: "eb1a",
-    title: "EB-1A",
-    subCategory: "Extraordinary Ability",
-    defaultFee: 8000,
-    country: "United States",
-    countryCode: "US",
-  },
-  {
-    id: "eb3",
-    title: "EB-3",
-    subCategory: "Skilled / Professional Worker",
-    defaultFee: 5500,
-    country: "United States",
-    countryCode: "US",
-  },
-  {
-    id: "e2",
-    title: "E-2 Treaty Investor",
-    subCategory: "Principal Investor Visa",
-    defaultFee: 7500,
-    country: "United States",
-    countryCode: "US",
-  },
-  {
-    id: "l1",
-    title: "L-1 Intracompany Transferee",
-    subCategory: "Executive & Managerial (L-1A)",
-    defaultFee: 6000,
-    country: "United States",
-    countryCode: "US",
-  },
-  {
-    id: "ee_fsw",
-    title: "Canada Express Entry",
-    subCategory: "Federal Skilled Worker (FSW)",
-    defaultFee: 4500,
-    country: "Canada",
-    countryCode: "CA",
-  },
-  {
-    id: "ca_pnp",
-    title: "Canada PNP",
-    subCategory: "Provincial Nominee Program",
-    defaultFee: 5200,
-    country: "Canada",
-    countryCode: "CA",
-  },
-  {
-    id: "uk_skilled",
-    title: "UK Skilled Worker",
-    subCategory: "Shortage Occupation Route",
-    defaultFee: 4200,
-    country: "United Kingdom",
-    countryCode: "GB",
-  },
-  {
-    id: "au_gti",
-    title: "Australia GTI",
-    subCategory: "Global Talent Independent (Subclass 858)",
-    defaultFee: 4800,
-    country: "Australia",
-    countryCode: "AU",
-  },
-  {
-    id: "student_visa",
-    title: "Student Visa",
-    subCategory: "Higher Education / University",
-    defaultFee: 3200,
-    country: "Canada",
-    countryCode: "CA",
-  },
-  {
-    id: "family_sponsorship",
-    title: "Family Sponsorship",
-    subCategory: "Spousal & Dependent Route",
-    defaultFee: 3500,
-    country: "Canada",
-    countryCode: "CA",
-  },
-  {
-    id: "business_formation",
-    title: "Business Formation",
-    subCategory: "US Corporate Setup & EIN",
-    defaultFee: 3800,
-    country: "United States",
-    countryCode: "US",
-  },
-  {
-    id: "consultation",
-    title: "Consultation & Advisory",
-    subCategory: "Comprehensive Legal Strategy",
-    defaultFee: 1500,
-    country: "United States",
-    countryCode: "US",
-  },
-];
 
 const CONSULTANTS = [
   { name: "Sarah K.", role: "Senior Immigration Specialist", initials: "SK" },
@@ -234,6 +119,8 @@ interface ExistingUserOption {
 }
 
 export function CreateClientForm() {
+  const { data: servicesResponse } = useGetServicesQuery({ limit: 100, isActive: "true" });
+  const services = servicesResponse?.data || [];
   const router = useRouter();
 
   // Generated Client Case Identifier
@@ -572,38 +459,35 @@ export function CreateClientForm() {
     }
   };
 
-  // Handle selection from official service catalog
+  // Handle selection from live service catalog
   const handleCatalogSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = SERVICE_CATALOG.find((s) => s.id === e.target.value);
+    const selected = services.find((s) => s.id === e.target.value);
     if (selected) {
-      setValue("visaCategory", selected.title);
-      setValue("subCategory", selected.subCategory);
-      setValue("destinationCountry", selected.country);
-      setValue("destinationCode", selected.countryCode);
-      setValue("baseFee", selected.defaultFee);
+      setValue("visaCategory", selected.name);
+      setValue("subCategory", selected.category);
+      setValue("destinationCountry", "United States");
+      setValue("destinationCode", "US");
+      setValue("baseFee", selected.baseFee);
       setValue("discountAmount", 0);
       setValue("discountReason", "");
-      setValue("contractedFee", selected.defaultFee);
+      setValue("contractedFee", selected.baseFee);
 
-      // Re-initialize default milestone breakdown
-      const deposit = Math.round(selected.defaultFee * 0.4);
-      const remaining = selected.defaultFee - deposit;
-      const half = Math.round(remaining / 2);
+      const deposit = selected.defaultDeposit || Math.round(selected.baseFee * 0.4);
+      const remaining = selected.baseFee - deposit;
+      const installments = selected.defaultInstallments || 2;
+      const instAmt = Math.round(remaining / installments);
       setValue("depositAmount", deposit);
-      replace([
-        {
-          id: "m1",
-          name: "Milestone 1 — Document Submission",
+
+      const newMilestones = [];
+      for (let i = 1; i <= installments; i++) {
+        newMilestones.push({
+          id: `m${i}`,
+          name: `Milestone ${i} - Phase Deliverable`,
           dueDate: "2026-10-15",
-          amount: half,
-        },
-        {
-          id: "m2",
-          name: "Milestone 2 — Final Case Adjudication",
-          dueDate: "2026-12-01",
-          amount: remaining - half,
-        },
-      ]);
+          amount: i === installments ? remaining - instAmt * (installments - 1) : instAmt,
+        });
+      }
+      replace(newMilestones);
     }
   };
 
@@ -751,16 +635,16 @@ export function CreateClientForm() {
             asChild
             variant="outline"
             size="icon"
-            className="h-11 w-11 rounded-2xl bg-white border border-[#EAE6DF] text-[#092244] hover:bg-[#FAF8F5] shadow-2xs shrink-0 cursor-pointer"
+            className="h-11 w-11 rounded-2xl bg-white border border-[#EAE6DF] text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs shrink-0 cursor-pointer"
           >
             <Link href={ROUTES.CLIENTS}>
-              <ArrowLeft className="h-5 w-5 text-[#092244]" />
+              <ArrowLeft className="h-5 w-5 text-[#0a0a0a]" />
               <span className="sr-only">Back to Client Directory</span>
             </Link>
           </Button>
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
                 Onboard New Client Case
               </h1>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF8FF] text-[#0284C7] text-xs font-bold border border-[#BAE6FD]">
@@ -771,19 +655,19 @@ export function CreateClientForm() {
             <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
               <Link
                 href={ROUTES.CLIENTS}
-                className="hover:text-[#092244] transition-colors"
+                className="hover:text-[#0a0a0a] transition-colors"
               >
                 Visa Applications
               </Link>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
               <Link
                 href={ROUTES.CLIENTS}
-                className="hover:text-[#092244] transition-colors"
+                className="hover:text-[#0a0a0a] transition-colors"
               >
                 Application List
               </Link>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#092244] font-bold">Create Client Case</span>
+              <span className="text-[#0a0a0a] font-bold">Create Client Case</span>
             </div>
           </div>
         </div>
@@ -798,7 +682,7 @@ export function CreateClientForm() {
               </span>
               <span
                 suppressHydrationWarning
-                className="font-mono font-black text-sm text-[#092244] mt-0.5 block"
+                className="font-mono font-black text-sm text-[#0a0a0a] mt-0.5 block"
               >
                 {caseIdentifier || "#APP-2026-••••"}
               </span>
@@ -809,7 +693,7 @@ export function CreateClientForm() {
           <Button
             asChild
             variant="outline"
-            className="h-11 px-4 rounded-2xl border-[#EAE6DF] bg-white text-[#092244] hover:bg-[#FAF8F5] shadow-2xs text-xs font-bold gap-2 cursor-pointer"
+            className="h-11 px-4 rounded-2xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs text-xs font-bold gap-2 cursor-pointer"
           >
             <Link href={ROUTES.CLIENTS}>
               <FileText className="h-4 w-4 text-[#64748B]" />
@@ -852,7 +736,7 @@ export function CreateClientForm() {
         {/* Table Top Header Info Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#F0ECE6]">
           <div className="flex items-center gap-3">
-            <span className="text-[11px] font-extrabold tracking-wider uppercase bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF] px-3.5 py-1.5 rounded-xl shadow-2xs">
+            <span className="text-[11px] font-extrabold tracking-wider uppercase bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] px-3.5 py-1.5 rounded-xl shadow-2xs">
               {selectedExistingUser
                 ? "EXISTING CLIENT DOSSIER"
                 : intakeMode === "existing"
@@ -875,14 +759,14 @@ export function CreateClientForm() {
               <select
                 onChange={handleCatalogSelect}
                 defaultValue=""
-                className="h-10 pl-3 pr-8 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] shadow-2xs cursor-pointer"
+                className="h-10 pl-3 pr-8 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] shadow-2xs cursor-pointer"
               >
                 <option value="" disabled>
                   Load Service Catalog Preset...
                 </option>
-                {SERVICE_CATALOG.map((s) => (
+                {services.map((s: any) => (
                   <option key={s.id} value={s.id}>
-                    {s.title} ({s.country} — ${s.defaultFee.toLocaleString()})
+                    {s.name} ({s.code} - ${Number(s.baseFee || 0).toLocaleString()} {s.currency || "USD"})
                   </option>
                 ))}
               </select>
@@ -897,11 +781,11 @@ export function CreateClientForm() {
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[#F0ECE6]">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF] shadow-2xs">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] shadow-2xs">
                   <User className="h-4.5 w-4.5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#092244]">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
                     1. Applicant Identity &amp; Credentials
                   </h3>
                   <p className="text-xs text-[#64748B]">
@@ -918,8 +802,8 @@ export function CreateClientForm() {
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
                     intakeMode === "new"
-                      ? "bg-[#092244] text-white shadow-xs"
-                      : "text-[#64748B] hover:text-[#092244]"
+                      ? "bg-[#0a0a0a] text-white shadow-xs"
+                      : "text-[#64748B] hover:text-[#0a0a0a]"
                   )}
                 >
                   <UserPlus className="h-3.5 w-3.5" />
@@ -931,8 +815,8 @@ export function CreateClientForm() {
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
                     intakeMode === "existing"
-                      ? "bg-[#092244] text-white shadow-xs"
-                      : "text-[#64748B] hover:text-[#092244]"
+                      ? "bg-[#0a0a0a] text-white shadow-xs"
+                      : "text-[#64748B] hover:text-[#0a0a0a]"
                   )}
                 >
                   <Users className="h-3.5 w-3.5" />
@@ -949,7 +833,7 @@ export function CreateClientForm() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold uppercase tracking-wider text-[#092244] block">
+                          <span className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a] block">
                             Select Existing User or Client Record
                           </span>
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#059669] text-[10px] font-bold border border-[#A7F3D0]">
@@ -976,13 +860,13 @@ export function CreateClientForm() {
                           value={existingSearchQuery}
                           onChange={(e) => setExistingSearchQuery(e.target.value)}
                           placeholder="Search by name, email, phone, passport, city, or reference ID..."
-                          className="h-11 pl-10 pr-9 rounded-xl bg-white border-[#EAE6DF] text-xs font-medium text-[#092244]"
+                          className="h-11 pl-10 pr-9 rounded-xl bg-white border-[#EAE6DF] text-xs font-medium text-[#0a0a0a]"
                         />
                         {existingSearchQuery && (
                           <button
                             type="button"
                             onClick={() => setExistingSearchQuery("")}
-                            className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#092244]"
+                            className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#0a0a0a]"
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -997,8 +881,8 @@ export function CreateClientForm() {
                           className={cn(
                             "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
                             existingUserCategory === "all"
-                              ? "bg-[#092244] text-white"
-                              : "text-[#64748B] hover:text-[#092244]"
+                              ? "bg-[#0a0a0a] text-white"
+                              : "text-[#64748B] hover:text-[#0a0a0a]"
                           )}
                         >
                           All ({existingUserOptions.length})
@@ -1009,8 +893,8 @@ export function CreateClientForm() {
                           className={cn(
                             "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
                             existingUserCategory === "user"
-                              ? "bg-[#092244] text-white"
-                              : "text-[#64748B] hover:text-[#092244]"
+                              ? "bg-[#0a0a0a] text-white"
+                              : "text-[#64748B] hover:text-[#0a0a0a]"
                           )}
                         >
                           Portal Users ({existingUserOptions.filter((u) => u.source === "user").length})
@@ -1021,8 +905,8 @@ export function CreateClientForm() {
                           className={cn(
                             "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
                             existingUserCategory === "client"
-                              ? "bg-[#092244] text-white"
-                              : "text-[#64748B] hover:text-[#092244]"
+                              ? "bg-[#0a0a0a] text-white"
+                              : "text-[#64748B] hover:text-[#0a0a0a]"
                           )}
                         >
                           Past Clients ({existingUserOptions.filter((u) => u.source === "client").length})
@@ -1053,14 +937,14 @@ export function CreateClientForm() {
                             <div
                               key={user.id}
                               onClick={() => handleSelectExistingUser(user)}
-                              className="p-3 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#092244] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group relative overflow-hidden"
+                              className="p-3 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#0a0a0a] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group relative overflow-hidden"
                             >
-                              <div className="h-9 w-9 rounded-xl bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF] font-extrabold text-xs flex items-center justify-center shrink-0 group-hover:bg-[#092244] group-hover:text-white transition-colors">
+                              <div className="h-9 w-9 rounded-xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] font-extrabold text-xs flex items-center justify-center shrink-0 group-hover:bg-[#0a0a0a] group-hover:text-white transition-colors">
                                 {user.initials || user.name.slice(0, 2).toUpperCase()}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-1">
-                                  <span className="text-xs font-bold text-[#092244] truncate block">
+                                  <span className="text-xs font-bold text-[#0a0a0a] truncate block">
                                     {user.name}
                                   </span>
                                   <span
@@ -1078,7 +962,7 @@ export function CreateClientForm() {
                                   {user.email || user.phone || "No email"}
                                 </span>
                                 <div className="flex items-center gap-1.5 mt-1">
-                                  <span className="text-[10px] font-mono text-[#092244] bg-[#FAF8F5] px-1.5 py-0.2 rounded border border-[#EAE6DF]/60">
+                                  <span className="text-[10px] font-mono text-[#0a0a0a] bg-[#FAF8F5] px-1.5 py-0.2 rounded border border-[#EAE6DF]/60">
                                     {user.existingCaseRef || "ID Pending"}
                                   </span>
                                   {user.countryOfOrigin && (
@@ -1107,7 +991,7 @@ export function CreateClientForm() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-black text-[#092244]">
+                          <span className="text-sm font-black text-[#0a0a0a]">
                             {selectedExistingUser.name}
                           </span>
                           <span className="text-[10px] font-extrabold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded-md">
@@ -1133,7 +1017,7 @@ export function CreateClientForm() {
                         type="button"
                         variant="outline"
                         onClick={handleClearExistingUser}
-                        className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#092244] hover:bg-[#FAF8F5] cursor-pointer"
+                        className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
                       >
                         Change Selection
                       </Button>
@@ -1164,7 +1048,7 @@ export function CreateClientForm() {
                 <Input
                   {...register("name")}
                   placeholder="e.g. Maya Elizabeth Lin"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
@@ -1175,7 +1059,7 @@ export function CreateClientForm() {
                 <Input
                   {...register("preferredName")}
                   placeholder="e.g. Maya"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
@@ -1186,7 +1070,7 @@ export function CreateClientForm() {
                 <Input
                   {...register("passportNumber")}
                   placeholder="e.g. M9821034"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#0a0a0a]"
                 />
               </div>
             </div>
@@ -1205,7 +1089,7 @@ export function CreateClientForm() {
                   type="email"
                   {...register("email")}
                   placeholder="maya.lin@example.com"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
@@ -1216,7 +1100,7 @@ export function CreateClientForm() {
                 <Input
                   {...register("phone")}
                   placeholder="+1 (416) 555-0188"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
@@ -1227,7 +1111,7 @@ export function CreateClientForm() {
                 <Input
                   {...register("city")}
                   placeholder="e.g. Toronto"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
             </div>
@@ -1240,7 +1124,7 @@ export function CreateClientForm() {
                 <MessageCircle className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#092244]">
+                <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
                   2. WhatsApp Channel &amp; Country Code Selector
                 </h3>
                 <p className="text-xs text-[#64748B]">
@@ -1256,7 +1140,7 @@ export function CreateClientForm() {
                 </label>
                 <select
                   {...register("countryCode")}
-                  className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                  className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                 >
                   {COUNTRY_DIAL_CODES.map((item) => (
                     <option key={item.code} value={item.code}>
@@ -1283,7 +1167,7 @@ export function CreateClientForm() {
                 <div className="flex items-center justify-between text-[11px] text-[#64748B]">
                   <span>
                     Formatted:{" "}
-                    <strong className="text-[#092244]">
+                    <strong className="text-[#0a0a0a]">
                       {watchedCountryCode} {watchedWhatsapp || "XXXXXXXXXX"}
                     </strong>
                   </span>
@@ -1309,7 +1193,7 @@ export function CreateClientForm() {
                   <MessageCircle className="h-4.5 w-4.5 fill-current" />
                 </div>
                 <div>
-                  <span className="text-xs font-bold text-[#092244] block">
+                  <span className="text-xs font-bold text-[#0a0a0a] block">
                     Welcome &amp; Case Opening Automated Template
                   </span>
                   <p className="text-xs text-[#065F46] font-medium font-mono mt-0.5">
@@ -1330,7 +1214,7 @@ export function CreateClientForm() {
                 <MapPin className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#092244]">
+                <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
                   3. Case Jurisdiction &amp; Visa Destination
                 </h3>
                 <p className="text-xs text-[#64748B]">
@@ -1347,7 +1231,7 @@ export function CreateClientForm() {
                 <select
                   value={watchedCountry}
                   onChange={(e) => handleCountryChange(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                 >
                   <option value="Canada">🇨🇦 Canada (CA)</option>
                   <option value="United States">🇺🇸 United States (US)</option>
@@ -1369,7 +1253,7 @@ export function CreateClientForm() {
                 <Input
                   {...register("visaCategory")}
                   placeholder="e.g. Express Entry, EB-2 NIW"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
@@ -1380,7 +1264,7 @@ export function CreateClientForm() {
                 <Input
                   {...register("subCategory")}
                   placeholder="e.g. Federal Skilled Worker"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
@@ -1390,7 +1274,7 @@ export function CreateClientForm() {
                 </label>
                 <select
                   {...register("status")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                 >
                   <option value="Processing">Processing (Initial Intake)</option>
                   <option value="Under Review">Under Review (Legal Audit)</option>
@@ -1408,7 +1292,7 @@ export function CreateClientForm() {
                 </label>
                 <select
                   {...register("assignedConsultant")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                 >
                   {CONSULTANTS.map((c) => (
                     <option key={c.name} value={c.name}>
@@ -1426,7 +1310,7 @@ export function CreateClientForm() {
                   type="date"
                   {...register("targetSubmissionDate")}
                   defaultValue="2026-10-30"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
             </div>
@@ -1439,7 +1323,7 @@ export function CreateClientForm() {
                 <CreditCard className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#092244]">
+                <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
                   4. Professional Fees &amp; Milestone Payment Plan (Section 6 &amp; 8)
                 </h3>
                 <p className="text-xs text-[#64748B]">
@@ -1456,7 +1340,7 @@ export function CreateClientForm() {
                 </label>
                 <select
                   {...register("currency")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                 >
                   {CURRENCIES.map((c) => (
                     <option key={c.code} value={c.code}>
@@ -1474,7 +1358,7 @@ export function CreateClientForm() {
                   type="number"
                   {...register("baseFee", { valueAsNumber: true })}
                   placeholder="4500"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#092244]"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#0a0a0a]"
                 />
               </div>
 
@@ -1491,10 +1375,10 @@ export function CreateClientForm() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#092244]">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
                   Contracted Fee ({currencySymbol})
                 </label>
-                <div className="h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] flex items-center font-mono font-black text-sm text-[#092244]">
+                <div className="h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] flex items-center font-mono font-black text-sm text-[#0a0a0a]">
                   {currencySymbol}
                   {computedContractedFee.toLocaleString()}
                 </div>
@@ -1530,7 +1414,7 @@ export function CreateClientForm() {
                 <Input
                   {...register("discountReason")}
                   placeholder="e.g. Partner referral promotion or family package concession"
-                  className="h-10 rounded-xl bg-white border-[#FDE68A] text-xs font-semibold text-[#092244]"
+                  className="h-10 rounded-xl bg-white border-[#FDE68A] text-xs font-semibold text-[#0a0a0a]"
                 />
                 <p className="text-[11px] text-[#92400E]">
                   Section 6 Governance: Every fee deduction requires a recorded rationale in the company audit trail.
@@ -1542,12 +1426,12 @@ export function CreateClientForm() {
             <div className="space-y-3 pt-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-xs font-black uppercase tracking-wider text-[#092244] block">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] block">
                     Installment Milestone Breakdown
                   </span>
                   <p className="text-[11px] text-[#64748B]">
                     Configure milestone dates and amounts totaling{" "}
-                    <strong className="text-[#092244]">
+                    <strong className="text-[#0a0a0a]">
                       {currencySymbol}
                       {computedContractedFee.toLocaleString()}
                     </strong>
@@ -1561,8 +1445,8 @@ export function CreateClientForm() {
                     onClick={() => handleScheduleTypeChange("deposit_2_milestones")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       watchedScheduleType === "deposit_2_milestones"
-                        ? "bg-[#092244] text-white shadow-2xs"
-                        : "text-[#64748B] hover:text-[#092244]"
+                        ? "bg-[#0a0a0a] text-white shadow-2xs"
+                        : "text-[#64748B] hover:text-[#0a0a0a]"
                     }`}
                   >
                     Deposit + 2 Milestones
@@ -1572,8 +1456,8 @@ export function CreateClientForm() {
                     onClick={() => handleScheduleTypeChange("deposit_3_monthly")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       watchedScheduleType === "deposit_3_monthly"
-                        ? "bg-[#092244] text-white shadow-2xs"
-                        : "text-[#64748B] hover:text-[#092244]"
+                        ? "bg-[#0a0a0a] text-white shadow-2xs"
+                        : "text-[#64748B] hover:text-[#0a0a0a]"
                     }`}
                   >
                     Deposit + 3 Monthly
@@ -1583,8 +1467,8 @@ export function CreateClientForm() {
                     onClick={() => handleScheduleTypeChange("single")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       watchedScheduleType === "single"
-                        ? "bg-[#092244] text-white shadow-2xs"
-                        : "text-[#64748B] hover:text-[#092244]"
+                        ? "bg-[#0a0a0a] text-white shadow-2xs"
+                        : "text-[#64748B] hover:text-[#0a0a0a]"
                     }`}
                   >
                     100% Full Payment
@@ -1594,8 +1478,8 @@ export function CreateClientForm() {
                     onClick={() => setValue("scheduleType", "custom")}
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       watchedScheduleType === "custom"
-                        ? "bg-[#092244] text-white shadow-2xs"
-                        : "text-[#64748B] hover:text-[#092244]"
+                        ? "bg-[#0a0a0a] text-white shadow-2xs"
+                        : "text-[#64748B] hover:text-[#0a0a0a]"
                     }`}
                   >
                     Custom
@@ -1618,14 +1502,14 @@ export function CreateClientForm() {
                         <input
                           {...register(`milestones.${idx}.name` as const)}
                           placeholder="Milestone title"
-                          className="w-full h-10 px-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                          className="w-full h-10 px-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                         />
                       </div>
                       <div className="sm:col-span-3">
                         <input
                           type="date"
                           {...register(`milestones.${idx}.dueDate` as const)}
-                          className="w-full h-10 px-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                          className="w-full h-10 px-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                         />
                       </div>
                       <div className="sm:col-span-2">
@@ -1639,7 +1523,7 @@ export function CreateClientForm() {
                               valueAsNumber: true,
                             })}
                             placeholder="Amount"
-                            className="w-full h-10 pl-7 pr-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-mono font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                            className="w-full h-10 pl-7 pr-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-mono font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                           />
                         </div>
                       </div>
@@ -1660,7 +1544,7 @@ export function CreateClientForm() {
                     variant="outline"
                     size="sm"
                     onClick={handleAddMilestone}
-                    className="w-full h-10 rounded-xl border-dashed border-[#CBD5E1] text-xs font-bold text-[#092244] hover:bg-white gap-2 cursor-pointer"
+                    className="w-full h-10 rounded-xl border-dashed border-[#CBD5E1] text-xs font-bold text-[#0a0a0a] hover:bg-white gap-2 cursor-pointer"
                   >
                     <Plus className="h-4 w-4" />
                     Add Another Custom Milestone Installment
@@ -1695,9 +1579,9 @@ export function CreateClientForm() {
 
               {/* Section 5 Disclaimer */}
               <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs text-[#64748B] flex items-start gap-3">
-                <Info className="h-4.5 w-4.5 text-[#092244] shrink-0 mt-0.5" />
+                <Info className="h-4.5 w-4.5 text-[#0a0a0a] shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  <strong className="text-[#092244]">Section 5 Accounting Separation Rule:</strong>{" "}
+                  <strong className="text-[#0a0a0a]">Section 5 Accounting Separation Rule:</strong>{" "}
                   AdSkill professional fees cover dedicated casework, consulting, and application preparation. Third-party filing fees (e.g. USCIS, IRCC, UKVI) and certified translations are strictly separated and are not recognized as company revenue.
                 </p>
               </div>
@@ -1711,7 +1595,7 @@ export function CreateClientForm() {
                 <ShieldCheck className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#092244]">
+                <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
                   5. Onboarding Preferences &amp; Case Notes
                 </h3>
                 <p className="text-xs text-[#64748B]">
@@ -1725,10 +1609,10 @@ export function CreateClientForm() {
                 <input
                   type="checkbox"
                   {...register("sendWelcomeWhatsApp")}
-                  className="h-4 w-4 rounded text-[#092244] focus:ring-[#092244] mt-0.5"
+                  className="h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a] mt-0.5"
                 />
                 <div className="text-xs">
-                  <span className="font-bold text-[#092244] block">
+                  <span className="font-bold text-[#0a0a0a] block">
                     WhatsApp Welcome Notice
                   </span>
                   <p className="text-[#64748B] text-[11px] mt-0.5">
@@ -1741,10 +1625,10 @@ export function CreateClientForm() {
                 <input
                   type="checkbox"
                   {...register("sendEmailInvitation")}
-                  className="h-4 w-4 rounded text-[#092244] focus:ring-[#092244] mt-0.5"
+                  className="h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a] mt-0.5"
                 />
                 <div className="text-xs">
-                  <span className="font-bold text-[#092244] block">
+                  <span className="font-bold text-[#0a0a0a] block">
                     Email Portal Invitation
                   </span>
                   <p className="text-[#64748B] text-[11px] mt-0.5">
@@ -1757,10 +1641,10 @@ export function CreateClientForm() {
                 <input
                   type="checkbox"
                   {...register("remindersEnabled")}
-                  className="h-4 w-4 rounded text-[#092244] focus:ring-[#092244] mt-0.5"
+                  className="h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a] mt-0.5"
                 />
                 <div className="text-xs">
-                  <span className="font-bold text-[#092244] block">
+                  <span className="font-bold text-[#0a0a0a] block">
                     Automated Payment Reminders
                   </span>
                   <p className="text-[#64748B] text-[11px] mt-0.5">
@@ -1781,7 +1665,7 @@ export function CreateClientForm() {
                 {...register("internalNotes")}
                 rows={3}
                 placeholder="e.g. Client preparing academic credential evaluation from WES. Petition drafting assigned to Sarah K."
-                className="w-full p-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                className="w-full p-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
               />
             </div>
           </div>
@@ -1792,7 +1676,7 @@ export function CreateClientForm() {
               <ShieldCheck className="h-4 w-4 text-[#059669]" />
               <span>
                 Case {caseIdentifier || "#APP-2026-••••"} •{" "}
-                <strong className="text-[#092244]">
+                <strong className="text-[#0a0a0a]">
                   {currencySymbol}
                   {computedContractedFee.toLocaleString()} Total Contracted
                 </strong>
@@ -1803,7 +1687,7 @@ export function CreateClientForm() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full sm:w-auto h-12 px-6 rounded-2xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#092244] hover:bg-[#FAF8F5] cursor-pointer"
+                className="w-full sm:w-auto h-12 px-6 rounded-2xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
               >
                 <Link href={ROUTES.CLIENTS}>Cancel &amp; Return</Link>
               </Button>
@@ -1811,7 +1695,7 @@ export function CreateClientForm() {
               <Button
                 type="submit"
                 disabled={isSubmitting || !isMathValid}
-                className="w-full sm:w-auto h-12 px-8 rounded-2xl bg-[#092244] text-white hover:bg-[#071933] shadow-[0_4px_16px_rgba(9,34,68,0.2)] text-xs font-bold cursor-pointer gap-2 transition-all disabled:opacity-50"
+                className="w-full sm:w-auto h-12 px-8 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10, 10, 10,0.2)] text-xs font-bold cursor-pointer gap-2 transition-all disabled:opacity-50"
               >
                 <UserPlus className="h-4 w-4 text-[#F3A712]" />
                 <span>

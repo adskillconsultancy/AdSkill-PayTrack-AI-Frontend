@@ -61,12 +61,12 @@ export function CreateRoleModal({
         <div className="flex items-center justify-between border-b border-[#EAE6DF] pb-3">
           <div className="flex items-center gap-2.5">
             <ShieldAlert className="h-5 w-5 text-[#F3A712]" />
-            <h3 className="text-base font-black text-[#092244]">Create New Dynamic Role</h3>
+            <h3 className="text-base font-black text-[#0a0a0a]">Create New Dynamic Role</h3>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94A3B8] hover:text-[#092244] font-bold text-sm cursor-pointer"
+            className="text-[#94A3B8] hover:text-[#0a0a0a] font-bold text-sm cursor-pointer"
           >
             ✕
           </button>
@@ -114,7 +114,7 @@ export function CreateRoleModal({
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => togglePerm(perm.id)}
-                            className="h-3.5 w-3.5 rounded text-[#092244]"
+                            className="h-3.5 w-3.5 rounded text-[#0a0a0a]"
                           />
                           <span className="font-mono text-[11px] truncate">{perm.name}</span>
                         </label>
@@ -138,7 +138,7 @@ export function CreateRoleModal({
             <Button
               type="submit"
               disabled={isCreating}
-              className="h-10 px-6 rounded-xl bg-[#092244] text-white hover:bg-[#071933] text-xs font-bold"
+              className="h-10 px-6 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold"
             >
               {isCreating ? "Creating..." : "Save Role"}
             </Button>

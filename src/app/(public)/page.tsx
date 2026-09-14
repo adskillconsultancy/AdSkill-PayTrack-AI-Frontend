@@ -24,12 +24,12 @@ export const metadata: Metadata = {
 
 export default function HomePage() {
   return (
-    <div className="bg-[#FAF8F5] text-[#092244] min-h-screen">
+    <div className="bg-[#FAF8F5] text-[#0a0a0a] min-h-screen">
       {/* ── 1. HERO SECTION ── */}
       <section className="relative overflow-hidden pt-12 pb-20 lg:pt-16 lg:pb-28">
         {/* Soft Warm Radial Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#F3A712]/10 blur-[130px] pointer-events-none rounded-full" />
-        <div className="absolute top-1/3 right-10 w-96 h-96 bg-[#092244]/5 blur-[120px] pointer-events-none rounded-full" />
+        <div className="absolute top-1/3 right-10 w-96 h-96 bg-[#0a0a0a]/5 blur-[120px] pointer-events-none rounded-full" />
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -37,13 +37,13 @@ export default function HomePage() {
             {/* Left Column: Value Proposition */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
               {/* Official Endorsement Tag */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#EAE6DF] bg-white/80 text-xs font-semibold text-[#092244] shadow-xs">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#EAE6DF] bg-white/80 text-xs font-semibold text-[#0a0a0a] shadow-xs">
                 <span className="flex h-2 w-2 rounded-full bg-[#F3A712]" />
                 <span className="text-[#475569]">AdSkill Consultancy Inc. Flagship Financial System</span>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-extrabold tracking-tight text-[#092244] leading-[1.12]">
+              <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-extrabold tracking-tight text-[#0a0a0a] leading-[1.12]">
                 Transparent Client Fees.{" "}
                 <span className="text-[#B47B00]">
                   Automated Milestone
@@ -101,14 +101,14 @@ export default function HomePage() {
 
             {/* Right Column: Live Interactive-Style Payment Card Mockup */}
             <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-md rounded-2xl border border-[#EAE6DF] bg-white p-6 sm:p-7 shadow-[0_12px_40px_-8px_rgba(9,34,68,0.1)] transition-all">
+              <div className="relative mx-auto max-w-md rounded-2xl border border-[#EAE6DF] bg-white p-6 sm:p-7 shadow-[0_12px_40px_-8px_rgba(10, 10, 10,0.1)] transition-all">
                 {/* Header of Card */}
                 <div className="flex items-center justify-between border-b border-[#EAE6DF] pb-4">
                   <div>
                     <div className="text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
                       Client Account
                     </div>
-                    <div className="text-base font-bold text-[#092244]">
+                    <div className="text-base font-bold text-[#0a0a0a]">
                       EB-2 NIW Petition Plan
                     </div>
                   </div>
@@ -122,15 +122,15 @@ export default function HomePage() {
                 <div className="my-5 rounded-xl bg-[#FAF8F5] p-4 border border-[#EAE6DF]">
                   <div className="flex justify-between items-baseline">
                     <span className="text-xs font-semibold text-[#64748B]">Total Contracted Fee</span>
-                    <span className="text-xl font-extrabold text-[#092244]">$6,500.00</span>
+                    <span className="text-xl font-extrabold text-[#0a0a0a]">$6,500.00</span>
                   </div>
                   <div className="mt-3 flex justify-between text-xs text-[#64748B]">
-                    <span>Paid to Date: <strong className="text-[#092244]">$2,500.00</strong></span>
+                    <span>Paid to Date: <strong className="text-[#0a0a0a]">$2,500.00</strong></span>
                     <span>Remaining: <strong className="text-[#B47B00]">$4,000.00</strong></span>
                   </div>
                   {/* Progress Bar */}
                   <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-[#EAE6DF]">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#092244] to-[#F3A712] w-[38%]" />
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#0a0a0a] to-[#F3A712] w-[38%]" />
                   </div>
                 </div>
 
@@ -147,11 +147,11 @@ export default function HomePage() {
                         <Check className="h-3.5 w-3.5" />
                       </div>
                       <div>
-                        <div className="font-bold text-[#092244]">1. Initial Retainer & Audit</div>
+                        <div className="font-bold text-[#0a0a0a]">1. Initial Retainer & Audit</div>
                         <div className="text-[11px] text-[#64748B]">Paid on Sept 01, 2026 &bull; Receipt #REC-1042</div>
                       </div>
                     </div>
-                    <span className="font-bold text-[#092244]">$2,500.00</span>
+                    <span className="font-bold text-[#0a0a0a]">$2,500.00</span>
                   </div>
 
                   {/* Milestone 2 - Due Next */}
@@ -161,11 +161,11 @@ export default function HomePage() {
                         2
                       </div>
                       <div>
-                        <div className="font-bold text-[#092244]">2. Case Brief & Draft Review</div>
+                        <div className="font-bold text-[#0a0a0a]">2. Case Brief & Draft Review</div>
                         <div className="text-[11px] text-[#B47B00] font-medium">Due in 5 Days &bull; Sept 15, 2026</div>
                       </div>
                     </div>
-                    <span className="font-bold text-[#092244]">$2,000.00</span>
+                    <span className="font-bold text-[#0a0a0a]">$2,000.00</span>
                   </div>
 
                   {/* Milestone 3 - Upcoming */}
@@ -175,7 +175,7 @@ export default function HomePage() {
                         3
                       </div>
                       <div>
-                        <div className="font-bold text-[#092244]">3. Final Submission Package</div>
+                        <div className="font-bold text-[#0a0a0a]">3. Final Submission Package</div>
                         <div className="text-[11px] text-[#64748B]">Upon Case Completion</div>
                       </div>
                     </div>
@@ -207,25 +207,25 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div>
-              <div className="text-3xl lg:text-4xl font-extrabold text-[#092244]">100%</div>
+              <div className="text-3xl lg:text-4xl font-extrabold text-[#0a0a0a]">100%</div>
               <div className="mt-1 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                 Deterministic Math
               </div>
             </div>
             <div>
-              <div className="text-3xl lg:text-4xl font-extrabold text-[#092244]">0%</div>
+              <div className="text-3xl lg:text-4xl font-extrabold text-[#0a0a0a]">0%</div>
               <div className="mt-1 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                 AI Hallucination
               </div>
             </div>
             <div>
-              <div className="text-3xl lg:text-4xl font-extrabold text-[#092244]">6+</div>
+              <div className="text-3xl lg:text-4xl font-extrabold text-[#0a0a0a]">6+</div>
               <div className="mt-1 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                 Payment Methods
               </div>
             </div>
             <div>
-              <div className="text-3xl lg:text-4xl font-extrabold text-[#092244]">256-bit</div>
+              <div className="text-3xl lg:text-4xl font-extrabold text-[#0a0a0a]">256-bit</div>
               <div className="mt-1 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                 Encrypted Storage
               </div>
@@ -241,7 +241,7 @@ export default function HomePage() {
             <h2 className="text-xs font-bold uppercase tracking-widest text-[#B47B00]">
               Engineered for Compliance
             </h2>
-            <p className="mt-2 text-3xl font-extrabold text-[#092244] tracking-tight">
+            <p className="mt-2 text-3xl font-extrabold text-[#0a0a0a] tracking-tight">
               Why AdSkill Clients & Staff Rely On PayTrack AI
             </p>
           </div>
@@ -249,10 +249,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Pillar 1: Precise Accounting */}
             <div className="rounded-2xl border border-[#EAE6DF] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] mb-5 font-bold">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] mb-5 font-bold">
                 <TrendingUp className="h-5 w-5 text-[#F3A712]" />
               </div>
-              <h3 className="text-lg font-bold text-[#092244] mb-2">
+              <h3 className="text-lg font-bold text-[#0a0a0a] mb-2">
                 Deterministic Logic
               </h3>
               <p className="text-sm leading-relaxed text-[#475569]">
@@ -262,10 +262,10 @@ export default function HomePage() {
 
             {/* Pillar 2: Fee Separation */}
             <div className="rounded-2xl border border-[#EAE6DF] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] mb-5 font-bold">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] mb-5 font-bold">
                 <BadgePercent className="h-5 w-5 text-[#F3A712]" />
               </div>
-              <h3 className="text-lg font-bold text-[#092244] mb-2">
+              <h3 className="text-lg font-bold text-[#0a0a0a] mb-2">
                 Strict Fee Separation
               </h3>
               <p className="text-sm leading-relaxed text-[#475569]">
@@ -275,10 +275,10 @@ export default function HomePage() {
 
             {/* Pillar 3: Branded Invoices */}
             <div className="rounded-2xl border border-[#EAE6DF] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] mb-5 font-bold">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] mb-5 font-bold">
                 <FileText className="h-5 w-5 text-[#F3A712]" />
               </div>
-              <h3 className="text-lg font-bold text-[#092244] mb-2">
+              <h3 className="text-lg font-bold text-[#0a0a0a] mb-2">
                 Branded PDF Receipts
               </h3>
               <p className="text-sm leading-relaxed text-[#475569]">
@@ -288,10 +288,10 @@ export default function HomePage() {
 
             {/* Pillar 4: Controlled AI */}
             <div className="rounded-2xl border border-[#EAE6DF] bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] mb-5 font-bold">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] mb-5 font-bold">
                 <Sparkles className="h-5 w-5 text-[#F3A712]" />
               </div>
-              <h3 className="text-lg font-bold text-[#092244] mb-2">
+              <h3 className="text-lg font-bold text-[#0a0a0a] mb-2">
                 Controlled AI Insights
               </h3>
               <p className="text-sm leading-relaxed text-[#475569]">
@@ -310,11 +310,11 @@ export default function HomePage() {
               <span className="text-xs font-bold uppercase tracking-wider text-[#B47B00]">
                 Covered Programs
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#092244] mt-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0a0a0a] mt-1">
                 Supported Advisory & Visa Cases
               </h2>
             </div>
-            <Button asChild variant="link" className="text-[#092244] font-bold hover:text-[#B47B00] p-0 h-auto gap-1">
+            <Button asChild variant="link" className="text-[#0a0a0a] font-bold hover:text-[#B47B00] p-0 h-auto gap-1">
               <Link href={ROUTES.ADVISORY}>
                 <span>View all service fee schedules</span>
                 <ChevronRight className="h-4 w-4" />
@@ -328,7 +328,7 @@ export default function HomePage() {
               <div className="text-xs font-bold uppercase text-[#B47B00] tracking-wider mb-1">
                 Employment-Based
               </div>
-              <h3 className="text-xl font-bold text-[#092244] mb-2">
+              <h3 className="text-xl font-bold text-[#0a0a0a] mb-2">
                 EB-2 NIW Petition
               </h3>
               <p className="text-sm text-[#475569] leading-relaxed mb-4">
@@ -345,7 +345,7 @@ export default function HomePage() {
               <div className="text-xs font-bold uppercase text-[#B47B00] tracking-wider mb-1">
                 Priority Worker
               </div>
-              <h3 className="text-xl font-bold text-[#092244] mb-2">
+              <h3 className="text-xl font-bold text-[#0a0a0a] mb-2">
                 EB-1A Extraordinary Ability
               </h3>
               <p className="text-sm text-[#475569] leading-relaxed mb-4">
@@ -362,7 +362,7 @@ export default function HomePage() {
               <div className="text-xs font-bold uppercase text-[#B47B00] tracking-wider mb-1">
                 Investor & Corporate
               </div>
-              <h3 className="text-xl font-bold text-[#092244] mb-2">
+              <h3 className="text-xl font-bold text-[#0a0a0a] mb-2">
                 E-2 & L-1 Business Formations
               </h3>
               <p className="text-sm text-[#475569] leading-relaxed mb-4">
@@ -380,7 +380,7 @@ export default function HomePage() {
       {/* ── 5. CALL TO ACTION ── */}
       <section className="py-20 lg:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-[#092244] text-white p-10 sm:p-14 lg:p-16 shadow-2xl">
+          <div className="relative overflow-hidden rounded-3xl bg-[#0a0a0a] text-white p-10 sm:p-14 lg:p-16 shadow-2xl">
             {/* Background Glow */}
             <div className="absolute top-0 right-0 w-96 h-96 bg-[#F3A712]/15 blur-[120px] pointer-events-none rounded-full" />
 
@@ -402,7 +402,7 @@ export default function HomePage() {
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <Button
                   asChild
-                  className="rounded-xl bg-[#F3A712] px-6 h-12 text-sm font-bold text-[#092244] shadow-md hover:bg-[#ffb526] active:scale-[0.98]"
+                  className="rounded-xl bg-[#F3A712] px-6 h-12 text-sm font-bold text-[#0a0a0a] shadow-md hover:bg-[#ffb526] active:scale-[0.98]"
                 >
                   <Link href={ROUTES.LOGIN}>
                     <ShieldCheck className="h-4 w-4 mr-2" />

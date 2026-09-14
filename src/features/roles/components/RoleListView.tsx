@@ -80,11 +80,11 @@ export function RoleListView() {
       {/* 1. Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] shadow-2xs">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] shadow-2xs">
             <ShieldAlert className="h-5 w-5 text-[#F3A712]" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
               Roles &amp; PBAC Access Control
             </h1>
             <p className="text-xs font-semibold text-[#64748B]">
@@ -97,7 +97,7 @@ export function RoleListView() {
           <Button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="h-10 px-5 rounded-xl bg-[#092244] text-white hover:bg-[#071933] text-xs font-bold shadow-md cursor-pointer gap-2"
+            className="h-10 px-5 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold shadow-md cursor-pointer gap-2"
           >
             <Plus className="h-4 w-4 text-[#F3A712]" />
             <span>Create Dynamic Role</span>
@@ -116,8 +116,8 @@ export function RoleListView() {
             onClick={() => setActiveTab("roles")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
               activeTab === "roles"
-                ? "bg-[#092244] text-white"
-                : "bg-[#FAF8F5] text-[#64748B] hover:text-[#092244]"
+                ? "bg-[#0a0a0a] text-white"
+                : "bg-[#FAF8F5] text-[#64748B] hover:text-[#0a0a0a]"
             }`}
           >
             Role Directory ({roles.length})
@@ -127,8 +127,8 @@ export function RoleListView() {
             onClick={() => setActiveTab("matrix")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
               activeTab === "matrix"
-                ? "bg-[#092244] text-white"
-                : "bg-[#FAF8F5] text-[#64748B] hover:text-[#092244]"
+                ? "bg-[#0a0a0a] text-white"
+                : "bg-[#FAF8F5] text-[#64748B] hover:text-[#0a0a0a]"
             }`}
           >
             Capability Matrix (PBAC)

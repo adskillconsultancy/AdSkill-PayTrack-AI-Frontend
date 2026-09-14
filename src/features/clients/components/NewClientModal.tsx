@@ -85,11 +85,11 @@ export function NewClientModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#F0ECE6] bg-[#FAF8F5]">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#092244] text-[#F3A712] shadow-2xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0a0a0a] text-[#F3A712] shadow-2xs">
               <UserPlus className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-[#092244] tracking-tight">
+              <h3 className="text-base font-black text-[#0a0a0a] tracking-tight">
                 Add New Client Case
               </h3>
               <p className="text-xs text-[#64748B]">
@@ -100,7 +100,7 @@ export function NewClientModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-[#EAE6DF] text-[#64748B] hover:text-[#092244] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-[#EAE6DF] text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -117,7 +117,7 @@ export function NewClientModal({
               placeholder="e.g. Liam Henderson"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+              className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
             />
           </div>
 
@@ -131,7 +131,7 @@ export function NewClientModal({
                 placeholder="liam@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
               />
             </div>
             <div className="space-y-1.5">
@@ -142,7 +142,7 @@ export function NewClientModal({
                 placeholder="+1 555-0199"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
               />
             </div>
           </div>
@@ -155,7 +155,7 @@ export function NewClientModal({
               <select
                 value={country}
                 onChange={(e) => handleCountryChange(e.target.value)}
-                className="w-full h-10 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                className="w-full h-10 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
               >
                 <option value="Canada">Canada (CA)</option>
                 <option value="United Kingdom">United Kingdom (GB)</option>
@@ -172,7 +172,7 @@ export function NewClientModal({
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ClientStatus)}
-                className="w-full h-10 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244]"
+                className="w-full h-10 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
               >
                 <option value="Processing">Processing</option>
                 <option value="Approved">Approved</option>
@@ -192,7 +192,7 @@ export function NewClientModal({
                 placeholder="e.g. Express Entry"
                 value={visaTitle}
                 onChange={(e) => setVisaTitle(e.target.value)}
-                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
               />
             </div>
             <div className="space-y-1.5">
@@ -203,7 +203,7 @@ export function NewClientModal({
                 placeholder="e.g. Federal Skilled Worker"
                 value={visaSub}
                 onChange={(e) => setVisaSub(e.target.value)}
-                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
               />
             </div>
           </div>
@@ -217,7 +217,7 @@ export function NewClientModal({
                 placeholder="Sarah K."
                 value={agentName}
                 onChange={(e) => setAgentName(e.target.value)}
-                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
               />
             </div>
             <div className="space-y-1.5">
@@ -229,7 +229,7 @@ export function NewClientModal({
                 placeholder="4500"
                 value={totalFee}
                 onChange={(e) => setTotalFee(e.target.value)}
-                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#092244]"
+                className="h-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
               />
             </div>
           </div>
@@ -246,7 +246,7 @@ export function NewClientModal({
             </Button>
             <Button
               type="submit"
-              className="h-10 text-xs font-bold bg-[#092244] text-white hover:bg-[#071933]"
+              className="h-10 text-xs font-bold bg-[#0a0a0a] text-white hover:bg-[#171717]"
             >
               Save Client Record
             </Button>

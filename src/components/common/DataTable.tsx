@@ -138,7 +138,7 @@ export function DataTable<T>({
     >
       {/* ── 1. TABLE TOP BAR (TITLE + CONTROLS) ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-5 border-b border-[#F0ECE6] bg-white">
-        <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#092244]">
+        <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#0a0a0a]">
           {title}
         </h3>
 
@@ -153,7 +153,7 @@ export function DataTable<T>({
                 <button
                   type="button"
                   onClick={() => setIsSortOpen(!isSortOpen)}
-                  className="inline-flex items-center gap-1 font-bold text-[#092244] hover:text-[#F3A712] transition-colors focus:outline-none cursor-pointer"
+                  className="inline-flex items-center gap-1 font-bold text-[#0a0a0a] hover:text-[#F3A712] transition-colors focus:outline-none cursor-pointer"
                 >
                   <span>{selectedSort}</span>
                   <ChevronDown
@@ -175,8 +175,8 @@ export function DataTable<T>({
                       className={cn(
                         "w-full text-left px-3 py-2 text-xs rounded-lg transition-colors font-medium flex items-center justify-between cursor-pointer",
                         selectedSort === opt
-                          ? "bg-[#FAF8F5] text-[#092244] font-bold"
-                          : "text-[#64748B] hover:bg-[#FAF8F5] hover:text-[#092244]"
+                          ? "bg-[#FAF8F5] text-[#0a0a0a] font-bold"
+                          : "text-[#64748B] hover:bg-[#FAF8F5] hover:text-[#0a0a0a]"
                       )}
                     >
                       <span>{opt}</span>
@@ -204,7 +204,7 @@ export function DataTable<T>({
                 <TableHead
                   key={col.key}
                   className={cn(
-                    "h-11 px-6 text-[11px] font-extrabold uppercase tracking-wider text-[#092244]",
+                    "h-11 px-6 text-[11px] font-extrabold uppercase tracking-wider text-[#0a0a0a]",
                     col.align === "right"
                       ? "text-right"
                       : col.align === "center"
@@ -292,11 +292,11 @@ export function DataTable<T>({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-[#F0ECE6] bg-white">
         <div className="text-xs text-[#64748B]">
           Showing{" "}
-          <span className="font-bold text-[#092244]">
+          <span className="font-bold text-[#0a0a0a]">
             {total === 0 ? "0" : `${startIndex}-${endIndex}`}
           </span>{" "}
           of{" "}
-          <span className="font-bold text-[#092244]">
+          <span className="font-bold text-[#0a0a0a]">
             {total.toLocaleString()}
           </span>{" "}
           {itemLabel}
@@ -344,8 +344,8 @@ export function DataTable<T>({
                   className={cn(
                     "h-8 min-w-[32px] px-2 text-xs font-bold rounded-lg cursor-pointer transition-all",
                     isActive
-                      ? "bg-[#092244] text-white hover:bg-[#071933] shadow-xs"
-                      : "text-[#64748B] hover:text-[#092244] hover:bg-[#FAF8F5]"
+                      ? "bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-xs"
+                      : "text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5]"
                   )}
                 >
                   {pageNum}

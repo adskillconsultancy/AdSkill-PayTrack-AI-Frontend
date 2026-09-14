@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/common";
 import { ROUTES } from "@/constants";
@@ -440,7 +440,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed left-0 z-50 flex flex-col bg-white transition-all duration-300 ease-in-out shadow-[4px_0_24px_-4px_rgba(9,34,68,0.03)]",
+          "fixed left-0 z-50 flex flex-col bg-white transition-all duration-300 ease-in-out shadow-[4px_0_24px_-4px_rgba(10, 10, 10,0.03)]",
           isOpen
             ? "top-0 h-screen w-64"
             : "top-16 sm:top-18 h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] w-15 border-r border-[#EAE6DF]",
@@ -464,10 +464,10 @@ export function Sidebar() {
               </div>
 
               <div className="flex flex-col">
-                <div className="text-[17px] font-black tracking-tight text-[#092244] leading-tight">
+                <div className="text-[17px] font-black tracking-tight text-[#0a0a0a] leading-tight">
                   PayTrack<span className="text-[#F3A712]"> AI</span>
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#525252]">
                   by AdSkill
                 </div>
               </div>
@@ -480,7 +480,7 @@ export function Sidebar() {
               size="icon"
               onClick={toggleSidebar}
               title="Collapse Sidebar"
-              className="h-8.5 w-8.5 rounded-xl bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#092244] transition-colors shrink-0">
+              className="h-8.5 w-8.5 rounded-xl bg-[#FAF8F5] text-[#525252] hover:bg-[#F1F5F9] hover:text-[#0a0a0a] transition-colors shrink-0">
               <ChevronLeft className="h-4 w-4" />
               <span className="sr-only">Collapse Sidebar</span>
             </Button>
@@ -493,7 +493,7 @@ export function Sidebar() {
           <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6 scrollbar-none">
             {filteredNavSections.map((section) => (
               <div key={section.sectionTitle} className="space-y-2">
-                <div className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">
+                <div className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#525252]">
                   {section.sectionTitle}
                 </div>
 
@@ -512,8 +512,8 @@ export function Sidebar() {
                           className={cn(
                             "group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer",
                             isActive
-                              ? "bg-[#FAF8F5] text-[#092244] font-bold border-l-2 border-[#F3A712]"
-                              : "text-[#475569] hover:bg-[#FAF8F5] hover:text-[#092244]",
+                              ? "bg-[#FAF8F5] text-[#0a0a0a] font-bold border-l-2 border-[#F3A712]"
+                              : "text-[#171717] hover:bg-[#FAF8F5] hover:text-[#0a0a0a]",
                           )}
                           onClick={(e) => {
                             if (hasSubItems) {
@@ -528,7 +528,7 @@ export function Sidebar() {
                                 "h-4.5 w-4.5 shrink-0 transition-colors",
                                 isActive
                                   ? "text-[#F3A712]"
-                                  : "text-[#64748B] group-hover:text-[#092244]",
+                                  : "text-[#525252] group-hover:text-[#0a0a0a]",
                               )}
                             />
                             <span className="truncate text-[13.5px]">
@@ -539,7 +539,7 @@ export function Sidebar() {
                           {hasSubItems && (
                             <div
                               onClick={(e) => toggleExpand(item.title, e)}
-                              className="p-1 rounded-md text-[#94A3B8] hover:text-[#092244] transition-colors">
+                              className="p-1 rounded-md text-[#525252] hover:text-[#0a0a0a] transition-colors">
                               <ChevronDown
                                 className={cn(
                                   "h-3.5 w-3.5 transition-transform duration-200",
@@ -562,8 +562,8 @@ export function Sidebar() {
                                   className={cn(
                                     "block rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
                                     isSubActive
-                                      ? "text-[#092244] font-bold bg-[#FAF8F5]"
-                                      : "text-[#64748B] hover:text-[#092244] hover:bg-[#FAF8F5]",
+                                      ? "text-[#0a0a0a] font-bold bg-[#FAF8F5]"
+                                      : "text-[#262626] hover:text-[#0a0a0a] hover:bg-[#FAF8F5]",
                                   )}>
                                   {sub.title}
                                 </Link>
@@ -587,8 +587,8 @@ export function Sidebar() {
               size="icon"
               onClick={toggleSidebar}
               title="Expand Sidebar"
-              className="h-9.5 w-9.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] hover:bg-[#F1F5F9] hover:text-[#092244] transition-colors shadow-2xs flex items-center justify-center shrink-0 mb-1 cursor-pointer">
-              <ChevronRight className="h-4.5 w-4.5 text-[#092244]" />
+              className="h-9.5 w-9.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] hover:bg-[#F1F5F9] hover:text-[#0a0a0a] transition-colors shadow-2xs flex items-center justify-center shrink-0 mb-1 cursor-pointer">
+              <ChevronRight className="h-4.5 w-4.5 text-[#0a0a0a]" />
               <span className="sr-only">Expand Sidebar</span>
             </Button>
 
@@ -606,15 +606,15 @@ export function Sidebar() {
                   className={cn(
                     "flex h-9.5 w-9.5 items-center justify-center rounded-xl transition-all duration-150 group",
                     isActive
-                      ? "bg-[#FAF8F5] text-[#092244] font-bold border border-[#F3A712]/40 shadow-xs"
-                      : "text-[#1E293B] hover:bg-[#FAF8F5] hover:text-[#092244]",
+                      ? "bg-[#FAF8F5] text-[#0a0a0a] font-bold border border-[#F3A712]/40 shadow-xs"
+                      : "text-[#171717] hover:bg-[#FAF8F5] hover:text-[#0a0a0a]",
                   )}>
                   <item.icon
                     className={cn(
                       "h-5 w-5 shrink-0 transition-colors",
                       isActive
                         ? "text-[#F3A712]"
-                        : "text-[#1E293B] group-hover:text-[#092244]",
+                        : "text-[#525252] group-hover:text-[#0a0a0a]",
                     )}
                     strokeWidth={1.85}
                   />
@@ -634,14 +634,14 @@ export function Sidebar() {
           {isOpen ? (
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#092244] text-[#F3A712] font-black text-sm shadow-xs border border-[#F3A712]/30">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a] text-[#F3A712] font-black text-sm shadow-xs border border-[#F3A712]/30">
                   {userInitials}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-[#092244] truncate leading-tight">
+                  <div className="text-sm font-bold text-[#0a0a0a] truncate leading-tight">
                     {user?.name || "Staff Member"}
                   </div>
-                  <div className="text-xs text-[#64748B] truncate mt-0.5 font-medium capitalize">
+                  <div className="text-xs text-[#525252] truncate mt-0.5 font-medium capitalize">
                     {userRoleDisplay.toLowerCase()}
                   </div>
                 </div>
@@ -661,7 +661,7 @@ export function Sidebar() {
           ) : (
             <div
               title={`${user?.name || "Staff Member"} (${userRoleDisplay})`}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#092244] text-[#F3A712] font-black text-xs shadow-xs border border-[#F3A712]/30">
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a] text-[#F3A712] font-black text-xs shadow-xs border border-[#F3A712]/30">
               {userInitials}
             </div>
           )}

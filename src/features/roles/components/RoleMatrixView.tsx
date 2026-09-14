@@ -12,7 +12,7 @@ export function RoleMatrixView({ roles, permissionGroups }: RoleMatrixViewProps)
     <div className="bg-white rounded-2xl border border-[#EAE6DF] shadow-2xs overflow-hidden">
       <div className="p-4 border-b border-[#EAE6DF] flex items-center justify-between">
         <div>
-          <h3 className="text-xs font-black uppercase text-[#092244] tracking-wider">
+          <h3 className="text-xs font-black uppercase text-[#0a0a0a] tracking-wider">
             Full System Capability Matrix
           </h3>
           <p className="text-[11px] text-[#64748B]">
@@ -27,7 +27,7 @@ export function RoleMatrixView({ roles, permissionGroups }: RoleMatrixViewProps)
             <tr>
               <th className="py-3 px-4 w-72">Capability &amp; Module</th>
               {roles.map((role) => (
-                <th key={role.id} className="py-3 px-4 text-center font-mono font-bold text-[#092244]">
+                <th key={role.id} className="py-3 px-4 text-center font-mono font-bold text-[#0a0a0a]">
                   {role.name}
                 </th>
               ))}
@@ -36,14 +36,14 @@ export function RoleMatrixView({ roles, permissionGroups }: RoleMatrixViewProps)
           <tbody className="divide-y divide-[#EAE6DF]">
             {permissionGroups.map((group) => (
               <React.Fragment key={group.module}>
-                <tr className="bg-[#FAF8F5]/80 font-bold text-[#092244]">
+                <tr className="bg-[#FAF8F5]/80 font-bold text-[#0a0a0a]">
                   <td colSpan={roles.length + 1} className="py-2 px-4 text-[11px] uppercase tracking-wider text-[#F3A712] font-black">
                     {group.module} MODULE
                   </td>
                 </tr>
                 {group.permissions.map((perm) => (
                   <tr key={perm.id} className="hover:bg-[#FAF8F5]/50 transition-colors">
-                    <td className="py-2.5 px-4 font-mono text-[#092244]">
+                    <td className="py-2.5 px-4 font-mono text-[#0a0a0a]">
                       <div className="font-bold">{perm.name}</div>
                       <div className="text-[10px] text-[#64748B] font-sans">{perm.description}</div>
                     </td>

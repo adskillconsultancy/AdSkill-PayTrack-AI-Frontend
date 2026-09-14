@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#FAF8F5] text-[#092244] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[calc(100vh-5rem)] bg-[#FAF8F5] text-[#0a0a0a] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-6">
         {/* Logo Header */}
         <div className="text-center space-y-3">
@@ -39,7 +39,7 @@ export default function LoginPage() {
           Don't have an account yet?{" "}
           <Link
             href={ROUTES.REGISTER}
-            className="font-bold text-[#092244] hover:underline"
+            className="font-bold text-[#0a0a0a] hover:underline"
           >
             Create an Account
           </Link>

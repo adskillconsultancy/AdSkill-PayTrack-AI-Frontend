@@ -6,6 +6,7 @@ export const TAG_TYPES = [
   "Auth",
   "User",
   "Role",
+  "Service",
   "Client",
   "Booking",
   "Payment",

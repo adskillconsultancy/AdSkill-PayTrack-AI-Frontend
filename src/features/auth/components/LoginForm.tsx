@@ -80,10 +80,10 @@ export function LoginForm() {
   };
 
   return (
-    <div className="rounded-2xl border border-[#EAE6DF] bg-white p-7 sm:p-8 shadow-[0_8px_30px_-4px_rgba(9,34,68,0.06)]">
+    <div className="rounded-2xl border border-[#EAE6DF] bg-white p-7 sm:p-8 shadow-[0_8px_30px_-4px_rgba(10, 10, 10,0.06)]">
       {/* Header text */}
       <div className="mb-6 text-center">
-        <h2 className="text-xl font-bold text-[#092244]">Sign In</h2>
+        <h2 className="text-xl font-bold text-[#0a0a0a]">Sign In</h2>
         <p className="text-xs text-[#64748B] mt-1">
           Access your payment tracker, milestone invoices, and receipts
         </p>
@@ -100,7 +100,7 @@ export function LoginForm() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email Input */}
         <div className="space-y-1.5">
-          <label className="text-xs font-bold text-[#092244]">
+          <label className="text-xs font-bold text-[#0a0a0a]">
             Email Address
           </label>
           <div className="relative">
@@ -108,7 +108,7 @@ export function LoginForm() {
               type="email"
               {...register("email")}
               placeholder="you@example.com"
-              className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+              className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                 errors.email ? "border-rose-500" : "border-[#EAE6DF]"
               }`}
             />
@@ -124,7 +124,7 @@ export function LoginForm() {
         {/* Password Input */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-[#092244]">
+            <label className="text-xs font-bold text-[#0a0a0a]">
               Password
             </label>
             <Link
@@ -139,7 +139,7 @@ export function LoginForm() {
               type={showPassword ? "text" : "password"}
               {...register("password")}
               placeholder="••••••••••••"
-              className={`pl-10 pr-10 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+              className={`pl-10 pr-10 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                 errors.password ? "border-rose-500" : "border-[#EAE6DF]"
               }`}
             />
@@ -149,7 +149,7 @@ export function LoginForm() {
               variant="ghost"
               size="icon"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-1.5 top-1 h-8 w-8 text-[#94A3B8] hover:text-[#092244] hover:bg-transparent"
+              className="absolute right-1.5 top-1 h-8 w-8 text-[#94A3B8] hover:text-[#0a0a0a] hover:bg-transparent"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -171,7 +171,7 @@ export function LoginForm() {
             <input
               type="checkbox"
               defaultChecked
-              className="h-4 w-4 rounded border-[#EAE6DF] text-[#092244] focus:ring-[#F3A712]"
+              className="h-4 w-4 rounded border-[#EAE6DF] text-[#0a0a0a] focus:ring-[#F3A712]"
             />
             <span>Remember this device</span>
           </label>

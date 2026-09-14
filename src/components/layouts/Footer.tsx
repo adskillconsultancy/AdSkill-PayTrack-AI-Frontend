@@ -24,12 +24,12 @@ export function Footer() {
             </Link>
             <p className="text-sm leading-relaxed text-[#475569] max-w-md">
               The official financial tracking and client management infrastructure for{" "}
-              <strong className="text-[#092244] font-semibold">AdSkill Consultancy Inc.</strong> Designed for
+              <strong className="text-[#0a0a0a] font-semibold">AdSkill Consultancy Inc.</strong> Designed for
               transparent installment schedules, automated milestone payments, and deterministic accounting across immigration and business cases.
             </p>
             <div className="flex items-center gap-3 pt-2 text-xs font-medium text-[#64748B]">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF8F5] border border-[#EAE6DF]">
-                <Lock className="h-3.5 w-3.5 text-[#092244]" />
+                <Lock className="h-3.5 w-3.5 text-[#0a0a0a]" />
                 <span>PCI-DSS Hosted Checkout</span>
               </span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#FAF8F5] border border-[#EAE6DF]">
@@ -41,32 +41,32 @@ export function Footer() {
 
           {/* Quick Links: Services */}
           <div className="md:col-span-3 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#092244]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#0a0a0a]">
               Consultancy Cases
             </h4>
             <ul className="space-y-2 text-sm text-[#475569]">
               <li>
-                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#0a0a0a] transition-colors">
                   EB-2 NIW National Interest Waiver
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#0a0a0a] transition-colors">
                   EB-1A Extraordinary Ability
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#0a0a0a] transition-colors">
                   EB-3 Employment-Based Petitions
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#0a0a0a] transition-colors">
                   E-2 & L-1 Business & Investor Visas
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.ADVISORY} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ADVISORY} className="hover:text-[#0a0a0a] transition-colors">
                   Corporate Formation & DMV/PSB
                 </Link>
               </li>
@@ -75,32 +75,32 @@ export function Footer() {
 
           {/* Quick Links: Platform */}
           <div className="md:col-span-2 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#092244]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#0a0a0a]">
               Platform
             </h4>
             <ul className="space-y-2 text-sm text-[#475569]">
               <li>
-                <Link href={ROUTES.ABOUT} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.ABOUT} className="hover:text-[#0a0a0a] transition-colors">
                   About AdSkill
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.PRICING} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.PRICING} className="hover:text-[#0a0a0a] transition-colors">
                   Fee Separation Policy
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.LOGIN} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.LOGIN} className="hover:text-[#0a0a0a] transition-colors">
                   Client Portal Login
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.REGISTER} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.REGISTER} className="hover:text-[#0a0a0a] transition-colors">
                   Client Case Onboarding
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.CONTACT} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.CONTACT} className="hover:text-[#0a0a0a] transition-colors">
                   Consultant Inquiry
                 </Link>
               </li>
@@ -109,17 +109,17 @@ export function Footer() {
 
           {/* Quick Links: Governance & Legal */}
           <div className="md:col-span-2 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#092244]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#0a0a0a]">
               Governance
             </h4>
             <ul className="space-y-2 text-sm text-[#475569]">
               <li>
-                <Link href={ROUTES.PRIVACY_POLICY} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.PRIVACY_POLICY} className="hover:text-[#0a0a0a] transition-colors">
                   Privacy Notice
                 </Link>
               </li>
               <li>
-                <Link href={ROUTES.TERMS} className="hover:text-[#092244] transition-colors">
+                <Link href={ROUTES.TERMS} className="hover:text-[#0a0a0a] transition-colors">
                   Terms of Agreement
                 </Link>
               </li>

@@ -8,15 +8,15 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[#092244] text-white shadow-sm hover:bg-[#071933] hover:shadow-md active:bg-[#051326]",
+          "bg-[#0a0a0a] text-white shadow-sm hover:bg-[#171717] hover:shadow-md active:bg-[#262626]",
         outline:
-          "border border-[#EAE6DF] bg-white text-[#092244] shadow-xs hover:bg-[#FAF8F5] hover:border-[#CBD5E1] hover:text-[#092244]",
+          "border border-[#EAE6DF] bg-white text-[#0a0a0a] shadow-xs hover:bg-[#FAF8F5] hover:border-[#CBD5E1] hover:text-[#0a0a0a]",
         secondary:
-          "bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] shadow-xs hover:bg-[#F3EFE6] hover:border-[#CBD5E1]",
+          "bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] shadow-xs hover:bg-[#F3EFE6] hover:border-[#CBD5E1]",
         subtle:
-          "bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] hover:bg-[#F1ECE4] hover:border-[#092244]/25 hover:text-[#092244] font-medium shadow-none",
+          "bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] hover:bg-[#F1ECE4] hover:border-[#0a0a0a]/25 hover:text-[#0a0a0a] font-medium shadow-none",
         ghost:
-          "text-[#092244] hover:bg-[#092244]/5 hover:text-[#092244]",
+          "text-[#0a0a0a] hover:bg-[#0a0a0a]/5 hover:text-[#0a0a0a]",
         link:
           "text-[#B47B00] underline-offset-4 hover:underline hover:text-[#8E6100]",
         destructive:

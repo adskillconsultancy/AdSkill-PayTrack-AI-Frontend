@@ -40,7 +40,7 @@ export default function ProtectedLayout({
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#092244] flex">
+    <div className="min-h-screen bg-white text-[#0a0a0a] flex">
       {/* Sidebar Navigation */}
       <Sidebar />
 
@@ -59,7 +59,7 @@ export default function ProtectedLayout({
               variant="ghost"
               size="icon"
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden h-9 w-9 rounded-xl text-[#092244] hover:bg-[#FAF8F5]">
+              className="lg:hidden h-9 w-9 rounded-xl text-[#0a0a0a] hover:bg-[#FAF8F5]">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open menu</span>
             </Button>
@@ -81,7 +81,7 @@ export default function ProtectedLayout({
 
             {/* Brand Title on Left */}
             <div className="flex items-center gap-2">
-              <span className="text-base sm:text-lg font-black tracking-tight text-[#092244]">
+              <span className="text-base sm:text-lg font-black tracking-tight text-[#0a0a0a]">
                 AdSkill PayTrack AI
               </span>
             </div>
@@ -96,7 +96,7 @@ export default function ProtectedLayout({
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
                 placeholder="Search clients, invoices, payments..."
-                className="pl-9 pr-3 h-9 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal shadow-2xs focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
+                className="pl-9 pr-3 h-9 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal shadow-2xs focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
               />
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#94A3B8]" />
             </div>
@@ -113,7 +113,7 @@ export default function ProtectedLayout({
             <button
               type="button"
               title="Settings"
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#092244] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
               <Settings className="h-4 w-4" />
             </button>
 
@@ -122,7 +122,7 @@ export default function ProtectedLayout({
               type="button"
               onClick={toggleFullscreen}
               title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#092244] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
               <Maximize2 className="h-4 w-4" />
             </button>
 
@@ -130,14 +130,14 @@ export default function ProtectedLayout({
             <button
               type="button"
               title="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#092244] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
               <Bell className="h-4 w-4" />
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#E11D48] ring-2 ring-white" />
             </button>
 
             {/* User Profile Badge */}
             <div className="flex items-center gap-2.5 pl-1 sm:pl-2 cursor-pointer group">
-              <div className="relative h-9 w-9 rounded-full overflow-hidden border border-[#EAE6DF] bg-[#092244] text-[#F3A712] flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+              <div className="relative h-9 w-9 rounded-full overflow-hidden border border-[#EAE6DF] bg-[#0a0a0a] text-[#F3A712] flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
                 <img
                   src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"
                   alt="Patel"
@@ -145,14 +145,14 @@ export default function ProtectedLayout({
                 />
               </div>
               <div className="hidden sm:block text-left">
-                <div className="text-xs font-bold text-[#092244] leading-none group-hover:text-[#F3A712] transition-colors">
+                <div className="text-xs font-bold text-[#0a0a0a] leading-none group-hover:text-[#F3A712] transition-colors">
                   Patel
                 </div>
                 <div className="text-[10px] font-medium text-[#64748B] mt-0.5">
                   Senior Consultant
                 </div>
               </div>
-              <ChevronDown className="h-3.5 w-3.5 text-[#64748B] group-hover:text-[#092244] transition-colors" />
+              <ChevronDown className="h-3.5 w-3.5 text-[#64748B] group-hover:text-[#0a0a0a] transition-colors" />
             </div>
           </div>
         </header>

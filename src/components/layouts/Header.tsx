@@ -41,7 +41,7 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-[#475569]">
+        <nav className="hidden md:flex items-center gap-8 text-[15px] font-medium text-[#171717]">
           {navLinks.map((link) => {
             const isActive =
               link.href === ROUTES.HOME
@@ -52,10 +52,10 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative py-1 transition-colors hover:text-[#092244] ${
+                className={`relative py-1 transition-colors hover:text-[#0a0a0a] ${
                   isActive
-                    ? "font-semibold text-[#092244]"
-                    : "text-[#475569]"
+                    ? "font-semibold text-[#0a0a0a]"
+                    : "text-[#171717]"
                 }`}
               >
                 {link.label}
@@ -90,7 +90,7 @@ export function Header() {
           variant="ghost"
           size="icon"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden text-[#092244] hover:bg-[#EFECE6] h-10 w-10"
+          className="md:hidden text-[#0a0a0a] hover:bg-[#EFECE6] h-10 w-10"
           aria-label="Toggle navigation"
         >
           {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -106,7 +106,7 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="px-3 py-2 text-base font-medium text-[#092244] rounded-lg hover:bg-[#EFECE6]"
+                className="px-3 py-2 text-base font-medium text-[#0a0a0a] rounded-lg hover:bg-[#EFECE6]"
               >
                 {link.label}
               </Link>

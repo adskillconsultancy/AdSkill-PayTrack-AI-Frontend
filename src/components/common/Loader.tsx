@@ -28,7 +28,7 @@ export function Loader({
       <div className={cn("flex items-center justify-center gap-2.5", className)}>
         <Loader2 className={cn("animate-spin text-[#F3A712]", spinnerSizes[size])} />
         {text && (
-          <span className="text-xs font-semibold text-[#092244]">{text}</span>
+          <span className="text-xs font-semibold text-[#0a0a0a]">{text}</span>
         )}
       </div>
     );
@@ -42,7 +42,7 @@ export function Loader({
           <Plane className="h-4 w-4 text-[#F3A712] fill-[#F3A712] animate-plane-fly drop-shadow-xs" />
         </div>
         {text && (
-          <span className="text-xs font-semibold text-[#092244]">{text}</span>
+          <span className="text-xs font-semibold text-[#0a0a0a]">{text}</span>
         )}
       </div>
     );
@@ -52,7 +52,7 @@ export function Loader({
     return (
       <div className={cn("flex flex-col items-center justify-center gap-3 p-4", className)}>
         {/* Radar & Plane Hub */}
-        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-[#092244] shadow-md border border-[#F3A712]/30">
+        <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0a0a0a] shadow-md border border-[#F3A712]/30">
           <div className="absolute inset-0 rounded-2xl bg-[#F3A712]/15 animate-ping" />
           <Plane className="h-6 w-6 text-[#F3A712] fill-[#F3A712] animate-plane-fly drop-shadow-sm" />
         </div>
@@ -60,7 +60,7 @@ export function Loader({
         {/* Text */}
         <div className="text-center space-y-1">
           {text && (
-            <div className="text-sm font-bold text-[#092244]">{text}</div>
+            <div className="text-sm font-bold text-[#0a0a0a]">{text}</div>
           )}
           {subtext && (
             <div className="text-xs text-[#64748B]">{subtext}</div>
@@ -96,7 +96,7 @@ export function Loader({
         <div className="absolute inset-3 rounded-full border border-[#F3A712]/30 animate-ping opacity-60" />
 
         {/* Central Dark Navy Globe Pod */}
-        <div className="relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-[#092244] shadow-[0_10px_25px_-5px_rgba(9,34,68,0.35)] border-2 border-[#F3A712]/40">
+        <div className="relative z-10 flex h-20 w-20 items-center justify-center rounded-full bg-[#0a0a0a] shadow-[0_10px_25px_-5px_rgba(10, 10, 10,0.35)] border-2 border-[#F3A712]/40">
           <Globe className="h-9 w-9 text-[#F3A712] animate-pulse" />
         </div>
       </div>
@@ -106,7 +106,7 @@ export function Loader({
         <div className="text-[11px] font-bold uppercase tracking-widest text-[#B47B00]">
           AdSkill Visa &amp; Milestone Network
         </div>
-        <h3 className="text-base sm:text-lg font-extrabold text-[#092244]">
+        <h3 className="text-base sm:text-lg font-extrabold text-[#0a0a0a]">
           {text || "Connecting to Visa Portal..."}
         </h3>
         <p className="text-xs text-[#64748B] leading-relaxed">

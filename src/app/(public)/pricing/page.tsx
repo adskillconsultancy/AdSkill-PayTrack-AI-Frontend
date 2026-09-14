@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function PricingPage() {
   return (
-    <div className="bg-[#FAF8F5] text-[#092244] min-h-screen">
+    <div className="bg-[#FAF8F5] text-[#0a0a0a] min-h-screen">
       {/* ── HEADER ── */}
       <section className="pt-14 pb-16 border-b border-[#EAE6DF]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-center space-y-4">
@@ -31,7 +31,7 @@ export default function PricingPage() {
             <BadgePercent className="h-3.5 w-3.5" />
             <span>Deterministic Payment Models</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#092244]">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0a0a0a]">
             Transparent Milestone Plans
           </h1>
           <p className="text-base sm:text-lg text-[#475569] leading-relaxed max-w-2xl mx-auto">
@@ -47,7 +47,7 @@ export default function PricingPage() {
             
             {/* Model 1: Milestone Installments */}
             <div className="rounded-2xl border-2 border-[#F3A712]/50 bg-white p-7 shadow-sm flex flex-col justify-between space-y-6 relative">
-              <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-[#092244] text-white text-[11px] font-bold uppercase tracking-wider">
+              <div className="absolute -top-3 left-6 px-3 py-0.5 rounded-full bg-[#0a0a0a] text-white text-[11px] font-bold uppercase tracking-wider">
                 Most Popular
               </div>
 
@@ -55,7 +55,7 @@ export default function PricingPage() {
                 <div className="text-xs font-bold uppercase tracking-wider text-[#B47B00]">
                   Deliverable-Based
                 </div>
-                <h3 className="text-2xl font-bold text-[#092244]">
+                <h3 className="text-2xl font-bold text-[#0a0a0a]">
                   3-Stage Milestone Plan
                 </h3>
                 <p className="text-sm text-[#475569] leading-relaxed">
@@ -63,15 +63,15 @@ export default function PricingPage() {
                 </p>
 
                 <div className="pt-4 border-t border-[#EAE6DF] space-y-2.5 text-xs text-[#475569]">
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span><strong>Deposit (40%):</strong> Retainer & evidence audit</span>
                   </div>
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span><strong>Milestone 2 (30%):</strong> Draft & brief delivery</span>
                   </div>
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span><strong>Milestone 3 (30%):</strong> Final filing readiness</span>
                   </div>
@@ -92,7 +92,7 @@ export default function PricingPage() {
                 <div className="text-xs font-bold uppercase tracking-wider text-[#B47B00]">
                   Predictable Budgeting
                 </div>
-                <h3 className="text-2xl font-bold text-[#092244]">
+                <h3 className="text-2xl font-bold text-[#0a0a0a]">
                   Monthly Recurring Installments
                 </h3>
                 <p className="text-sm text-[#475569] leading-relaxed">
@@ -100,15 +100,15 @@ export default function PricingPage() {
                 </p>
 
                 <div className="pt-4 border-t border-[#EAE6DF] space-y-2.5 text-xs text-[#475569]">
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span>Fixed recurring monthly invoice amount</span>
                   </div>
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span>Automatic payment receipts &amp; PDF generation</span>
                   </div>
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span>Grace period with zero hidden compounding interest</span>
                   </div>
@@ -129,7 +129,7 @@ export default function PricingPage() {
                 <div className="text-xs font-bold uppercase tracking-wider text-[#B47B00]">
                   Corporate &amp; Investor
                 </div>
-                <h3 className="text-2xl font-bold text-[#092244]">
+                <h3 className="text-2xl font-bold text-[#0a0a0a]">
                   Custom Corporate Retainer
                 </h3>
                 <p className="text-sm text-[#475569] leading-relaxed">
@@ -137,15 +137,15 @@ export default function PricingPage() {
                 </p>
 
                 <div className="pt-4 border-t border-[#EAE6DF] space-y-2.5 text-xs text-[#475569]">
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span>Multi-beneficiary grouped billing statements</span>
                   </div>
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span>Separate state statutory filing escrow tracking</span>
                   </div>
-                  <div className="flex items-center gap-2 font-medium text-[#092244]">
+                  <div className="flex items-center gap-2 font-medium text-[#0a0a0a]">
                     <Check className="h-4 w-4 text-[#F3A712]" />
                     <span>Direct CPA/Attorney fee reconciliation</span>
                   </div>
@@ -170,7 +170,7 @@ export default function PricingPage() {
           <span className="text-xs font-bold uppercase tracking-wider text-[#B47B00]">
             Payment Gateways &amp; Methods
           </span>
-          <h2 className="text-2xl font-bold text-[#092244]">
+          <h2 className="text-2xl font-bold text-[#0a0a0a]">
             Accepted Payment Channels
           </h2>
           <p className="text-sm text-[#475569] max-w-xl mx-auto">

@@ -148,7 +148,7 @@ export function UserListView() {
   // Role Badge Styling (Dynamic from Database)
   const renderRoleBadge = (role: UserRole) => {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF]">
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-mono font-bold bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF]">
         {role}
       </span>
     );
@@ -236,13 +236,13 @@ export function UserListView() {
               />
             </div>
           ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#092244]/10 text-sm font-black text-[#092244]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a]/10 text-sm font-black text-[#0a0a0a]">
               {item.initials || item.name.charAt(0)}
             </div>
           )}
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-[#092244] leading-tight">
+              <span className="text-sm font-bold text-[#0a0a0a] leading-tight">
                 {item.name}
               </span>
               {item.clientId && (
@@ -252,7 +252,7 @@ export function UserListView() {
               )}
             </div>
             <div className="flex items-center gap-2 text-xs font-mono font-medium text-[#64748B] mt-0.5">
-              <span className="text-[#092244] font-semibold">{item.username}</span>
+              <span className="text-[#0a0a0a] font-semibold">{item.username}</span>
               <span>·</span>
               <span className="text-[#94A3B8] truncate max-w-[170px]">{item.email}</span>
             </div>
@@ -302,7 +302,7 @@ export function UserListView() {
       header: "JOINED DATE",
       cell: (item) => (
         <div>
-          <div className="text-xs font-semibold text-[#092244]">
+          <div className="text-xs font-semibold text-[#0a0a0a]">
             {item.createdAt}
           </div>
           <div className="text-[11px] text-[#64748B] mt-0.5 font-medium">
@@ -329,7 +329,7 @@ export function UserListView() {
                 router.push(`/users/${targetSlugOrId}`);
               }}
               title="View User Full Dossier"
-              className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#092244] hover:bg-[#EAE6DF] transition-colors cursor-pointer shadow-2xs"
+              className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#0a0a0a] hover:bg-[#EAE6DF] transition-colors cursor-pointer shadow-2xs"
             >
               <Eye className="h-4 w-4" />
               <span className="sr-only">View</span>
@@ -345,8 +345,8 @@ export function UserListView() {
                 }}
                 title="More Options"
                 className={cn(
-                  "flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#64748B] hover:bg-[#EAE6DF] hover:text-[#092244] transition-colors cursor-pointer shadow-2xs",
-                  isMenuOpen && "bg-[#092244] text-white hover:bg-[#092244]"
+                  "flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#64748B] hover:bg-[#EAE6DF] hover:text-[#0a0a0a] transition-colors cursor-pointer shadow-2xs",
+                  isMenuOpen && "bg-[#0a0a0a] text-white hover:bg-[#0a0a0a]"
                 )}
               >
                 <MoreVertical className="h-4 w-4" />
@@ -361,7 +361,7 @@ export function UserListView() {
                 >
                   <Link
                     href={`/users/${targetSlugOrId}`}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#092244] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#0a0a0a] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
                   >
                     <Eye className="h-3.5 w-3.5 text-[#64748B]" />
                     <span>View Full Profile</span>
@@ -421,17 +421,17 @@ export function UserListView() {
       {/* 1. TOP BREADCRUMB & PAGE TITLE */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] shadow-2xs">
-            <Users className="h-5 w-5 text-[#092244]" />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] shadow-2xs">
+            <Users className="h-5 w-5 text-[#0a0a0a]" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
               User Management
             </h1>
             <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
               <span>Super Admin</span>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#092244] font-bold">User Directory</span>
+              <span className="text-[#0a0a0a] font-bold">User Directory</span>
             </div>
           </div>
         </div>

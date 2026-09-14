@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ServiceSummaryStats } from "../types";
+import type { ServiceSummaryStats } from "../types";
 import {
   Briefcase,
   CheckCircle2,
   DollarSign,
   Layers,
-  Sparkles,
-  TrendingUp,
+  ShieldCheck,
 } from "lucide-react";
 
 interface ServiceMetricCardsProps {
@@ -21,13 +20,13 @@ interface ServiceMetricCardsProps {
 
 export function ServiceMetricCards({
   stats = {
-    totalServices: 12,
-    activePrograms: 10,
-    avgProfessionalFee: 5125,
-    totalPassThroughTracked: 34,
+    totalServices: 0,
+    activePrograms: 0,
+    avgProfessionalFee: 0,
+    totalPassThroughTracked: 0,
   },
   className,
-  activeFilter,
+  activeFilter = "ALL",
   onFilterSelect,
 }: ServiceMetricCardsProps) {
   const cards = [
@@ -37,64 +36,64 @@ export function ServiceMetricCards({
       value: stats.totalServices.toString(),
       statusText: "Catalog Offerings",
       icon: (
-        <div className="flex h-12 w-12 sm:h-13 sm:w-13 shrink-0 items-center justify-center rounded-full bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF] shadow-2xs">
-          <Briefcase className="h-5 w-5 text-[#092244]" />
+        <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] shadow-2xs">
+          <Briefcase className="h-5 w-5 text-[#0a0a0a]" />
         </div>
       ),
       indicatorIcon: (
-        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[#092244]">
+        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[#0a0a0a]">
           <Layers className="h-2.5 w-2.5" />
         </span>
       ),
-      indicatorColor: "text-[#092244]",
+      indicatorColor: "text-[#0a0a0a]",
     },
     {
-      id: "Active",
-      label: "ACTIVE PROGRAMS",
+      id: "ACTIVE",
+      label: "ACTIVE OFFERINGS",
       value: stats.activePrograms.toString(),
       statusText: "Live & Intake Ready",
       icon: (
-        <div className="flex h-12 w-12 sm:h-13 sm:w-13 shrink-0 items-center justify-center rounded-full bg-[#ECFDF5] text-[#059669] ring-4 ring-[#ECFDF5]/50 shadow-2xs">
+        <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#ECFDF5] text-[#059669] ring-4 ring-[#ECFDF5]/50 shadow-2xs">
           <CheckCircle2 className="h-5 w-5 text-[#059669]" />
         </div>
       ),
       indicatorIcon: (
         <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[#059669]">
-          <Sparkles className="h-2.5 w-2.5" />
+          <CheckCircle2 className="h-2.5 w-2.5" />
         </span>
       ),
       indicatorColor: "text-[#059669]",
     },
     {
-      id: "AVG_FEE",
-      label: "AVG. ADVISORY FEE",
-      value: `$${stats.avgProfessionalFee.toLocaleString()}`,
-      statusText: "Firm Revenue Baseline",
+      id: "AVG_BASE",
+      label: "AVG ADVISORY FEE",
+      value: `$${stats.avgProfessionalFee.toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+      statusText: "AdSkill Advisory Base",
       icon: (
-        <div className="flex h-12 w-12 sm:h-13 sm:w-13 shrink-0 items-center justify-center rounded-full bg-[#FFFBEB] text-[#D97706] ring-4 ring-[#FFFBEB]/50 shadow-2xs">
+        <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#FFFBEB] text-[#D97706] ring-4 ring-[#FFFBEB]/50 shadow-2xs">
           <DollarSign className="h-5 w-5 text-[#D97706]" />
         </div>
       ),
       indicatorIcon: (
         <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[#D97706]">
-          <TrendingUp className="h-2.5 w-2.5" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#D97706]" />
         </span>
       ),
       indicatorColor: "text-[#D97706]",
     },
     {
       id: "PASS_THROUGH",
-      label: "PASS-THROUGH ITEMS",
+      label: "PASS-THROUGH TRACKED",
       value: stats.totalPassThroughTracked.toString(),
-      statusText: "Non-Revenue Expenses",
+      statusText: "Active Fee Channels",
       icon: (
-        <div className="flex h-12 w-12 sm:h-13 sm:w-13 shrink-0 items-center justify-center rounded-full bg-[#EFF6FF] text-[#2563EB] ring-4 ring-[#EFF6FF]/50 shadow-2xs">
-          <Layers className="h-5 w-5 text-[#2563EB]" />
+        <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-full bg-[#EFF6FF] text-[#2563EB] ring-4 ring-[#EFF6FF]/50 shadow-2xs">
+          <ShieldCheck className="h-5 w-5 text-[#2563EB]" />
         </div>
       ),
       indicatorIcon: (
         <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[#2563EB]">
-          <Layers className="h-2.5 w-2.5" />
+          <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB]" />
         </span>
       ),
       indicatorColor: "text-[#2563EB]",
@@ -104,45 +103,48 @@ export function ServiceMetricCards({
   return (
     <div
       className={cn(
-        "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4",
+        "grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4",
         className
       )}
     >
       {cards.map((card) => {
-        const isSelected = activeFilter === card.id;
+        const isSelected =
+          activeFilter === card.id ||
+          (card.id === "ALL" && activeFilter === "ALL");
+        const isClickable = Boolean(onFilterSelect && (card.id === "ALL" || card.id === "ACTIVE"));
 
         return (
           <div
             key={card.id}
-            onClick={() => onFilterSelect && onFilterSelect(card.id)}
-            role={onFilterSelect ? "button" : undefined}
-            tabIndex={onFilterSelect ? 0 : undefined}
+            onClick={() => isClickable && onFilterSelect?.(card.id)}
+            role={isClickable ? "button" : undefined}
+            tabIndex={isClickable ? 0 : undefined}
             className={cn(
-              "relative flex items-center justify-between overflow-hidden rounded-3xl border bg-white p-5 sm:p-6 transition-all duration-200",
-              onFilterSelect && "cursor-pointer hover:-translate-y-0.5 hover:shadow-md",
+              "group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-4 sm:p-5 transition-all duration-200",
+              isClickable ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md" : "",
               isSelected
-                ? "border-[#092244] shadow-[0_8px_20px_rgb(9,34,68,0.08)] ring-1 ring-[#092244]"
-                : "border-[#EAE6DF] shadow-[0_4px_20px_rgb(0,0,0,0.02)]"
+                ? "border-[#0a0a0a] bg-white shadow-xs ring-1 ring-[#0a0a0a]"
+                : "border-[#EAE6DF] bg-white hover:border-[#CBD5E1]"
             )}
           >
-            <div className="flex flex-col justify-between space-y-2">
-              <span className="text-[11px] font-extrabold tracking-wider uppercase text-[#64748B]">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-mono text-[11px] font-bold tracking-wider text-[#64748B] uppercase">
                 {card.label}
               </span>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-2xl sm:text-3xl font-black text-[#092244] tracking-tight">
-                  {card.value}
-                </span>
+              {card.icon}
+            </div>
+
+            <div className="mt-3">
+              <div className="font-mono text-2xl sm:text-3xl font-black tracking-tight text-[#0a0a0a]">
+                {card.value}
               </div>
-              <div className="flex items-center space-x-1.5 pt-0.5">
+              <div className="mt-1 flex items-center gap-1.5">
                 {card.indicatorIcon}
-                <span className={cn("text-xs font-bold", card.indicatorColor)}>
+                <span className={cn("text-xs font-semibold", card.indicatorColor)}>
                   {card.statusText}
                 </span>
               </div>
             </div>
-
-            {card.icon}
           </div>
         );
       })}

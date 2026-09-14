@@ -208,7 +208,7 @@ export function ApplicationsTable({
     >
       {/* ── CARD TITLE & SORT BAR ── */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-[#F0ECE6]">
-        <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#092244]">
+        <h3 className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#0a0a0a]">
           {title}
         </h3>
 
@@ -219,7 +219,7 @@ export function ApplicationsTable({
             variant="ghost"
             size="sm"
             onClick={() => onSortChange?.(selectedSort)}
-            className="h-auto p-0 font-bold text-[#092244] hover:text-[#F3A712] hover:bg-transparent gap-1"
+            className="h-auto p-0 font-bold text-[#0a0a0a] hover:text-[#F3A712] hover:bg-transparent gap-1"
           >
             <span>{selectedSort}</span>
             <ChevronDown className="h-3.5 w-3.5 text-[#64748B]" />
@@ -235,22 +235,22 @@ export function ApplicationsTable({
         >
           <TableHeader className="bg-[#FAF8F5] border-b border-[#EAE6DF]">
             <TableRow className="border-b border-[#EAE6DF] hover:bg-transparent">
-              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#092244]">
+              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#0a0a0a]">
                 CLIENT &amp; ID
               </TableHead>
-              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#092244]">
+              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#0a0a0a]">
                 DESTINATION
               </TableHead>
-              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#092244]">
+              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#0a0a0a]">
                 VISA CATEGORY
               </TableHead>
-              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#092244]">
+              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#0a0a0a]">
                 SUBMISSION DATE
               </TableHead>
-              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#092244]">
+              <TableHead className="h-11 px-6 text-left text-[11px] font-extrabold uppercase tracking-wider text-[#0a0a0a]">
                 STATUS
               </TableHead>
-              <TableHead className="h-11 px-6 text-right text-[11px] font-extrabold uppercase tracking-wider text-[#092244]">
+              <TableHead className="h-11 px-6 text-right text-[11px] font-extrabold uppercase tracking-wider text-[#0a0a0a]">
                 ACTIONS
               </TableHead>
             </TableRow>
@@ -277,12 +277,12 @@ export function ApplicationsTable({
                         />
                       </div>
                     ) : (
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#092244]/10 text-sm font-bold text-[#092244]">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a]/10 text-sm font-bold text-[#0a0a0a]">
                         {item.client.initials || item.client.name.charAt(0)}
                       </div>
                     )}
                     <div>
-                      <div className="text-sm font-bold text-[#092244] leading-tight">
+                      <div className="text-sm font-bold text-[#0a0a0a] leading-tight">
                         {item.client.name}
                       </div>
                       <div className="text-xs font-mono font-medium text-[#64748B] mt-0.5">
@@ -295,10 +295,10 @@ export function ApplicationsTable({
                 {/* 2. Destination */}
                 <TableCell className="px-6 py-4.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#092244]">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#0a0a0a]">
                       {item.destination.code}
                     </span>
-                    <span className="text-sm font-semibold text-[#092244]">
+                    <span className="text-sm font-semibold text-[#0a0a0a]">
                       {item.destination.country}
                     </span>
                   </div>
@@ -307,7 +307,7 @@ export function ApplicationsTable({
                 {/* 3. Visa Category */}
                 <TableCell className="px-6 py-4.5">
                   <div>
-                    <div className="text-sm font-bold text-[#092244] leading-tight">
+                    <div className="text-sm font-bold text-[#0a0a0a] leading-tight">
                       {item.visaCategory.title}
                     </div>
                     <div className="text-xs text-[#94A3B8] mt-0.5">
@@ -319,7 +319,7 @@ export function ApplicationsTable({
                 {/* 4. Submission Date */}
                 <TableCell className="px-6 py-4.5">
                   <div>
-                    <div className="text-sm font-bold text-[#092244] leading-tight">
+                    <div className="text-sm font-bold text-[#0a0a0a] leading-tight">
                       {item.submission.date}
                     </div>
                     <div className="text-xs text-[#64748B] mt-0.5">
@@ -342,7 +342,7 @@ export function ApplicationsTable({
                       size="icon"
                       onClick={() => onView?.(item)}
                       title="View Application Details"
-                      className="h-8.5 w-8.5 rounded-full bg-[#FAF8F5] text-[#092244] hover:bg-[#F1F5F9] transition-colors"
+                      className="h-8.5 w-8.5 rounded-full bg-[#FAF8F5] text-[#0a0a0a] hover:bg-[#F1F5F9] transition-colors"
                     >
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">View</span>
@@ -353,7 +353,7 @@ export function ApplicationsTable({
                       size="icon"
                       onClick={() => onMore?.(item)}
                       title="More Options"
-                      className="h-8.5 w-8.5 rounded-full bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0] hover:text-[#092244] transition-colors"
+                      className="h-8.5 w-8.5 rounded-full bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0] hover:text-[#0a0a0a] transition-colors"
                     >
                       <MoreVertical className="h-4 w-4" />
                       <span className="sr-only">More</span>
@@ -370,8 +370,8 @@ export function ApplicationsTable({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-[#F0ECE6] bg-white">
         <div className="text-xs text-[#64748B]">
           Showing{" "}
-          <span className="font-bold text-[#092244]">1-10</span> of{" "}
-          <span className="font-bold text-[#092244]">
+          <span className="font-bold text-[#0a0a0a]">1-10</span> of{" "}
+          <span className="font-bold text-[#0a0a0a]">
             {totalCount.toLocaleString()}
           </span>{" "}
           applications

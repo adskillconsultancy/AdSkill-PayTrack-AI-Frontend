@@ -34,7 +34,7 @@ export function RoleDirectory({
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-sm font-black text-[#092244]">
+                <span className="font-mono text-sm font-black text-[#0a0a0a]">
                   {role.name}
                 </span>
                 {role.isSystemRole ? (
@@ -61,7 +61,7 @@ export function RoleDirectory({
                 onClick={() => onConfigure(role)}
                 className="h-8 px-3 rounded-lg text-xs font-bold gap-1 cursor-pointer"
               >
-                <Settings2 className="h-3.5 w-3.5 text-[#092244]" />
+                <Settings2 className="h-3.5 w-3.5 text-[#0a0a0a]" />
                 <span>Configure</span>
               </Button>
 
@@ -91,7 +91,7 @@ export function RoleDirectory({
                   <span
                     key={p.id}
                     title={p.description || p.name}
-                    className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF]"
+                    className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF]"
                   >
                     {p.name}
                   </span>

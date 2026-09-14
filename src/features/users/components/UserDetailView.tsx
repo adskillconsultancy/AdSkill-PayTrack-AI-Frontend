@@ -127,7 +127,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
       );
     }
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF] shadow-2xs">
+      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] shadow-2xs">
         {roleName.replace(/_/g, " ")}
       </span>
     );
@@ -198,27 +198,27 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
             asChild
             variant="outline"
             size="icon"
-            className="h-10 w-10 rounded-2xl border-[#EAE6DF] bg-white text-[#092244] hover:bg-[#FAF8F5] shadow-2xs"
+            className="h-10 w-10 rounded-2xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs"
           >
             <Link href={ROUTES.USERS}>
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="text-xl font-black text-[#092244]">User Profile</h1>
+          <h1 className="text-xl font-black text-[#0a0a0a]">User Profile</h1>
         </div>
 
         <div className="p-8 sm:p-12 rounded-3xl border border-[#EAE6DF] bg-white text-center space-y-4 max-w-lg mx-auto shadow-sm">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF1F2] text-[#E11D48] mx-auto">
             <AlertCircle className="h-7 w-7" />
           </div>
-          <h2 className="text-lg font-black text-[#092244]">User Dossier Not Found</h2>
+          <h2 className="text-lg font-black text-[#0a0a0a]">User Dossier Not Found</h2>
           <p className="text-xs text-[#64748B] leading-relaxed">
             No account exists in PostgreSQL matching identifier{" "}
-            <span className="font-mono font-bold text-[#092244]">"{userId}"</span>.
+            <span className="font-mono font-bold text-[#0a0a0a]">"{userId}"</span>.
             The user may have been deleted or the link is invalid.
           </p>
           <div className="pt-2">
-            <Button asChild className="rounded-xl bg-[#092244] text-white hover:bg-[#071933] text-xs font-bold">
+            <Button asChild className="rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold">
               <Link href={ROUTES.USERS}>
                 <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
                 Return to User Directory
@@ -272,7 +272,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
             asChild
             variant="outline"
             size="icon"
-            className="h-10 w-10 rounded-2xl border-[#EAE6DF] bg-white text-[#092244] hover:bg-[#FAF8F5] shadow-2xs"
+            className="h-10 w-10 rounded-2xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs"
           >
             <Link href={ROUTES.USERS}>
               <ArrowLeft className="h-4 w-4" />
@@ -280,17 +280,17 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
               User Profile &amp; Dossier
             </h1>
             <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
               <span>Security</span>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <Link href={ROUTES.USERS} className="hover:text-[#092244] transition-colors">
+              <Link href={ROUTES.USERS} className="hover:text-[#0a0a0a] transition-colors">
                 Users
               </Link>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#092244] font-bold">{user.name}</span>
+              <span className="text-[#0a0a0a] font-bold">{user.name}</span>
             </div>
           </div>
         </div>
@@ -341,7 +341,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
           {user.whatsapp && (
             <Button
               asChild
-              className="h-10 px-4 rounded-xl bg-[#092244] text-white hover:bg-[#071933] text-xs font-bold gap-2 shadow-xs cursor-pointer"
+              className="h-10 px-4 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold gap-2 shadow-xs cursor-pointer"
             >
               <a
                 href={`https://wa.me/${user.whatsapp.replace(/[^0-9]/g, "")}`}
@@ -360,13 +360,13 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
       <div className="p-6 sm:p-8 rounded-3xl sm:rounded-[32px] border border-[#EAE6DF] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.03)]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-full bg-[#092244]/10 text-2xl font-black text-[#092244] border-4 border-[#FAF8F5] shadow-md">
+            <div className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a]/10 text-2xl font-black text-[#0a0a0a] border-4 border-[#FAF8F5] shadow-md">
               {initials}
             </div>
 
             <div className="space-y-2">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-2xl sm:text-3xl font-black text-[#092244] tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#0a0a0a] tracking-tight">
                   {user.name}
                 </h2>
                 {renderRoleBadge(user.role?.name)}
@@ -376,7 +376,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-[#64748B] font-medium">
                 {user.preferredName && (
                   <>
-                    <span className="font-semibold text-[#092244]">
+                    <span className="font-semibold text-[#0a0a0a]">
                       @{user.preferredName.toLowerCase()}
                     </span>
                     <span>•</span>
@@ -427,8 +427,8 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
         <div className="lg:col-span-2 space-y-6">
           {/* Identity & Contact Card */}
           <div className="p-6 sm:p-7 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-5">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-2">
-              <Shield className="h-4 w-4 text-[#092244]" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
+              <Shield className="h-4 w-4 text-[#0a0a0a]" />
               <span>Contact &amp; Account Identity</span>
             </h3>
 
@@ -437,7 +437,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                   Official Email
                 </span>
-                <div className="text-sm font-bold text-[#092244] flex items-center gap-1.5 break-all">
+                <div className="text-sm font-bold text-[#0a0a0a] flex items-center gap-1.5 break-all">
                   <Mail className="h-3.5 w-3.5 text-[#64748B] shrink-0" />
                   <a href={`mailto:${user.email}`} className="hover:underline">
                     {user.email}
@@ -449,7 +449,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                   WhatsApp Number
                 </span>
-                <div className="text-sm font-bold text-[#092244] flex items-center gap-1.5 font-mono">
+                <div className="text-sm font-bold text-[#0a0a0a] flex items-center gap-1.5 font-mono">
                   <Phone className="h-3.5 w-3.5 text-[#25D366] shrink-0" />
                   <span>{user.whatsapp || user.phone || "Not recorded"}</span>
                 </div>
@@ -459,7 +459,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                   Registered Address
                 </span>
-                <div className="text-sm font-bold text-[#092244] flex items-center gap-1.5">
+                <div className="text-sm font-bold text-[#0a0a0a] flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5 text-[#0284C7] shrink-0" />
                   <span className="truncate">{fullAddress || "No physical address provided"}</span>
                 </div>
@@ -469,7 +469,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                   Member Since
                 </span>
-                <div className="text-sm font-bold text-[#092244] flex items-center gap-1.5">
+                <div className="text-sm font-bold text-[#0a0a0a] flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-[#F3A712] shrink-0" />
                   <span>{formattedCreated}</span>
                 </div>
@@ -480,7 +480,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
           {/* PBAC Capabilities Matrix Card */}
           <div className="p-6 sm:p-7 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-2">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-[#059669]" />
                 <span>Granted PBAC Privileges &amp; Capabilities</span>
               </h3>
@@ -491,7 +491,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
 
             <div className="p-4.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#092244]">
+                <span className="text-xs font-bold text-[#0a0a0a]">
                   Assigned Security Role:
                 </span>
                 {renderRoleBadge(user.role?.name)}
@@ -500,7 +500,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               
                 <p className="text-xs text-[#64748B] leading-relaxed">
                   Policy-Based Access Control (PBAC) dynamically grants fine-grained permissions attached to role{" "}
-                  <strong className="text-[#092244] font-mono">{user.role?.name}</strong>.
+                  <strong className="text-[#0a0a0a] font-mono">{user.role?.name}</strong>.
                 </p>
               
 
@@ -519,7 +519,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                     {effectivePermissions.map((perm) => (
                       <span
                         key={perm}
-                        className="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-white text-[#092244] border border-[#EAE6DF] shadow-2xs"
+                        className="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-white text-[#0a0a0a] border border-[#EAE6DF] shadow-2xs"
                       >
                         {perm}
                       </span>
@@ -544,7 +544,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
                 <MessageCircle className="h-6 w-6 fill-current" />
               </div>
               <div>
-                <h4 className="text-sm font-black text-[#092244]">
+                <h4 className="text-sm font-black text-[#0a0a0a]">
                   WhatsApp Direct
                 </h4>
                 <p className="text-xs text-[#059669] font-semibold">
@@ -575,14 +575,14 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
 
           {/* Security & System Identifiers Card */}
           <div className="p-6 sm:p-7 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-2">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
               <Lock className="h-4 w-4 text-[#7E22CE]" />
               <span>Security &amp; System Info</span>
             </h3>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF]">
-                <span className="text-xs font-bold text-[#092244]">
+                <span className="text-xs font-bold text-[#0a0a0a]">
                   Two-Factor Auth (2FA)
                 </span>
                 {user.isMfaEnabled ? (
@@ -597,7 +597,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF]">
-                <span className="text-xs font-bold text-[#092244]">
+                <span className="text-xs font-bold text-[#0a0a0a]">
                   Business Client ID
                 </span>
                 <span className="text-xs font-mono font-bold text-[#0284C7]">
@@ -606,7 +606,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF]">
-                <span className="text-xs font-bold text-[#092244]">
+                <span className="text-xs font-bold text-[#0a0a0a]">
                   Database UUID
                 </span>
                 <span className="text-[10px] font-mono text-[#64748B] truncate max-w-[130px]" title={user.id}>
@@ -615,7 +615,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF]">
-                <span className="text-xs font-bold text-[#092244]">
+                <span className="text-xs font-bold text-[#0a0a0a]">
                   Last Profile Update
                 </span>
                 <span className="text-xs font-medium text-[#64748B]">

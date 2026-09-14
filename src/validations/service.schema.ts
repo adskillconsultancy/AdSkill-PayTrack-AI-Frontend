@@ -1,60 +1,43 @@
 import { z } from "zod";
 
-export const passThroughFeeSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(2, "Fee title is required"),
-  category: z.enum([
-    "USCIS & Government",
-    "Attorney Representation",
-    "Business Plan Drafting",
-    "Credential Evaluation",
-    "Certified Translation",
-    "Corporate & State Filing",
-    "Other Expense",
-  ]),
-  amount: z.number().min(0, "Amount cannot be negative"),
-  isMandatory: z.boolean(),
-  description: z.string().optional(),
-  payableTo: z.string().min(1, "Payable recipient is required"),
-});
-
-export const serviceMilestoneSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(2, "Phase name is required"),
-  percentage: z.number().min(1).max(100, "Percentage must be between 1 and 100"),
-  amount: z.number().optional(),
-  triggerEvent: z.string().min(2, "Trigger requirement is required"),
-});
+export const SERVICE_CATEGORIES = [
+  "IMMIGRATION",
+  "BUSINESS",
+  "CONSULTATION",
+  "DMV_PSB",
+  "CUSTOM",
+] as const;
 
 export const createServiceSchema = z.object({
+  name: z
+    .string({ required_error: "Service name is required" })
+    .min(2, "Service name must be at least 2 characters"),
   code: z
-    .string()
-    .min(3, "Program code must be at least 3 characters")
-    .regex(/^[A-Za-z0-9\-_]+$/, "Code may only contain letters, numbers, hyphens, and underscores"),
-  title: z.string().min(2, "Service title must be at least 2 characters"),
-  subCategory: z.string().min(2, "Sub-category specialization is required"),
-  category: z.enum([
-    "Employment Immigration",
-    "Priority & Talent",
-    "Permanent Residency",
-    "Investor & Corporate",
-    "Student & Education",
-    "Family & Dependent",
-    "Corporate Advisory",
-  ]),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  destinationCountry: z.string().min(1, "Destination country is required"),
-  destinationCode: z.string().min(2, "Country code is required"),
-  destinationFlag: z.string().min(1, "Flag emoji is required"),
-  professionalFee: z.number().min(0, "AdSkill advisory fee cannot be negative"),
-  currency: z.string(),
-  schedulePreset: z.enum(["deposit_2_milestones", "deposit_3_monthly", "single", "custom"]),
-  passThroughFees: z.array(passThroughFeeSchema),
-  defaultMilestones: z.array(serviceMilestoneSchema),
-  status: z.enum(["Active", "Draft", "Archived"]),
-  estimatedLeadTime: z.string(),
-  internalNotes: z.string().optional(),
-  eligibilityChecklist: z.array(z.string()).optional(),
+    .string({ required_error: "Service code / SKU is required" })
+    .min(2, "Service code must be at least 2 characters")
+    .regex(
+      /^[A-Za-z0-9\-_]+$/,
+      "Code may only contain letters, numbers, hyphens, and underscores"
+    ),
+  category: z.enum(SERVICE_CATEGORIES, {
+    required_error: "Service category is required",
+  }),
+  description: z.string().optional(),
+  baseFee: z
+    .number({ required_error: "Base professional fee is required" })
+    .min(0, "Base fee cannot be negative"),
+  estimatedGovFee: z.number().min(0).optional(),
+  estimatedAttorneyFee: z.number().min(0).optional(),
+  estimatedThirdPartyFee: z.number().min(0).optional(),
+  currency: z.string().optional(),
+  defaultDeposit: z.number().min(0).optional(),
+  defaultInstallments: z
+    .number()
+    .int("Installments must be an integer")
+    .min(1, "Default installments must be at least 1")
+    .optional(),
+  estimatedDuration: z.string().optional(),
+  isActive: z.boolean().optional(),
 });
 
 export type CreateServiceFormValues = z.infer<typeof createServiceSchema>;

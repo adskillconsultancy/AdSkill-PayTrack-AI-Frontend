@@ -10,7 +10,7 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
   ({ className, containerClassName, ...props }, ref) => (
     <div
       className={cn(
-        "relative w-full overflow-auto rounded-lg border border-[#EAE6DF] bg-white text-[#092244] shadow-xs",
+        "relative w-full overflow-auto rounded-lg border border-[#EAE6DF] bg-white text-[#0a0a0a] shadow-xs",
         containerClassName
       )}
     >

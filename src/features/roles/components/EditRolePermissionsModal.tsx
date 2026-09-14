@@ -65,7 +65,7 @@ export function EditRolePermissionsModal({
         <div className="flex items-center justify-between border-b border-[#EAE6DF] pb-3">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-black text-[#092244]">
+              <h3 className="text-base font-black text-[#0a0a0a]">
                 Configure Capabilities: {role.name}
               </h3>
               {role.isSystemRole && (
@@ -81,7 +81,7 @@ export function EditRolePermissionsModal({
           <button
             type="button"
             onClick={onClose}
-            className="text-[#94A3B8] hover:text-[#092244] font-bold text-sm cursor-pointer"
+            className="text-[#94A3B8] hover:text-[#0a0a0a] font-bold text-sm cursor-pointer"
           >
             ✕
           </button>
@@ -121,7 +121,7 @@ export function EditRolePermissionsModal({
                       );
                     }
                   }}
-                  className="text-[11px] font-bold text-[#092244] hover:underline cursor-pointer"
+                  className="text-[11px] font-bold text-[#0a0a0a] hover:underline cursor-pointer"
                 >
                   Toggle All
                 </button>
@@ -135,7 +135,7 @@ export function EditRolePermissionsModal({
                       key={perm.id}
                       className={`flex items-start gap-2.5 p-2.5 rounded-xl border transition-colors cursor-pointer ${
                         isChecked
-                          ? "bg-white border-[#092244] shadow-2xs"
+                          ? "bg-white border-[#0a0a0a] shadow-2xs"
                           : "bg-white/60 border-[#EAE6DF] hover:bg-white"
                       }`}
                     >
@@ -143,10 +143,10 @@ export function EditRolePermissionsModal({
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => togglePerm(perm.id)}
-                        className="h-4 w-4 mt-0.5 rounded text-[#092244]"
+                        className="h-4 w-4 mt-0.5 rounded text-[#0a0a0a]"
                       />
                       <div className="min-w-0">
-                        <div className="font-mono text-xs font-bold text-[#092244] truncate">
+                        <div className="font-mono text-xs font-bold text-[#0a0a0a] truncate">
                           {perm.name}
                         </div>
                         <div className="text-[10px] text-[#64748B] leading-tight mt-0.5">
@@ -179,7 +179,7 @@ export function EditRolePermissionsModal({
               type="button"
               onClick={handleSavePermissions}
               disabled={isUpdating}
-              className="h-10 px-6 rounded-xl bg-[#092244] text-white hover:bg-[#071933] text-xs font-bold"
+              className="h-10 px-6 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold"
             >
               {isUpdating ? "Saving..." : "Save Capabilities"}
             </Button>

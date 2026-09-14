@@ -18,17 +18,17 @@ export function DashboardOverview() {
     <div className="space-y-5">
       {/* ── 1. TOP BREADCRUMB & HEADER SECTION ── */}
       <div className="flex items-center gap-3.5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white border border-[#EAE6DF] text-[#092244] shadow-2xs">
-          <Home className="h-5 w-5 text-[#092244]" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white border border-[#EAE6DF] text-[#0a0a0a] shadow-2xs">
+          <Home className="h-5 w-5 text-[#0a0a0a]" />
         </div>
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
             Agency Overview
           </h1>
           <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
             <span>Dashboards</span>
             <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-            <span className="text-[#092244] font-bold">Agency Overview</span>
+            <span className="text-[#0a0a0a] font-bold">Agency Overview</span>
           </div>
         </div>
       </div>
@@ -36,7 +36,7 @@ export function DashboardOverview() {
       {/* ── 2. WELCOME BANNER & ACTION ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
             Welcome back, Patel!
           </h2>
           <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-medium">
@@ -68,7 +68,7 @@ export function DashboardOverview() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-[#092244] tracking-tight">
+            <div className="text-3xl font-black text-[#0a0a0a] tracking-tight">
               12,482
             </div>
             <div className="flex items-center justify-between mt-2">
@@ -95,7 +95,7 @@ export function DashboardOverview() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-[#092244] tracking-tight">
+            <div className="text-3xl font-black text-[#0a0a0a] tracking-tight">
               32 Days
             </div>
             <div className="flex items-center justify-between mt-2">
@@ -122,7 +122,7 @@ export function DashboardOverview() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-[#092244] tracking-tight">
+            <div className="text-3xl font-black text-[#0a0a0a] tracking-tight">
               $842,391
             </div>
             <div className="flex items-center justify-between mt-2">
@@ -149,7 +149,7 @@ export function DashboardOverview() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-[#092244] tracking-tight">
+            <div className="text-3xl font-black text-[#0a0a0a] tracking-tight">
               94.2%
             </div>
             <div className="flex items-center justify-between mt-2">

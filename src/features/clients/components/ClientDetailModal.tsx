@@ -76,11 +76,11 @@ export function ClientDetailModal({
         {/* Modal Top Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#F0ECE6] bg-[#FAF8F5]">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white border border-[#EAE6DF] text-[#092244] shadow-2xs">
-              <FileText className="h-5 w-5 text-[#092244]" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white border border-[#EAE6DF] text-[#0a0a0a] shadow-2xs">
+              <FileText className="h-5 w-5 text-[#0a0a0a]" />
             </div>
             <div>
-              <h3 className="text-base font-black text-[#092244] tracking-tight">
+              <h3 className="text-base font-black text-[#0a0a0a] tracking-tight">
                 Client Case Dossier
               </h3>
               <p className="text-xs font-mono font-medium text-[#64748B]">
@@ -91,7 +91,7 @@ export function ClientDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-[#EAE6DF] text-[#64748B] hover:text-[#092244] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-xl bg-white border border-[#EAE6DF] text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -114,12 +114,12 @@ export function ClientDetailModal({
                   />
                 </div>
               ) : (
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#092244]/10 text-base font-bold text-[#092244]">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a]/10 text-base font-bold text-[#0a0a0a]">
                   {client.initials || client.name.charAt(0)}
                 </div>
               )}
               <div>
-                <h4 className="text-lg font-black text-[#092244] tracking-tight">
+                <h4 className="text-lg font-black text-[#0a0a0a] tracking-tight">
                   {client.name}
                 </h4>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-[#64748B] mt-1 font-medium">
@@ -152,7 +152,7 @@ export function ClientDetailModal({
                 <MapPin className="h-3.5 w-3.5 text-[#F3A712]" />
                 <span>Destination</span>
               </div>
-              <div className="text-sm font-black text-[#092244]">
+              <div className="text-sm font-black text-[#0a0a0a]">
                 {client.destination.code} — {client.destination.country}
               </div>
             </div>
@@ -163,7 +163,7 @@ export function ClientDetailModal({
                 <ShieldCheck className="h-3.5 w-3.5 text-[#059669]" />
                 <span>Visa Category</span>
               </div>
-              <div className="text-sm font-black text-[#092244]">
+              <div className="text-sm font-black text-[#0a0a0a]">
                 {client.visaCategory.title}
               </div>
               <div className="text-xs text-[#94A3B8]">
@@ -177,7 +177,7 @@ export function ClientDetailModal({
                 <Calendar className="h-3.5 w-3.5 text-[#0284C7]" />
                 <span>Submission Date</span>
               </div>
-              <div className="text-sm font-black text-[#092244]">
+              <div className="text-sm font-black text-[#0a0a0a]">
                 {client.submission.date}
               </div>
               <div className="text-xs text-[#64748B]">
@@ -191,7 +191,7 @@ export function ClientDetailModal({
                 <User className="h-3.5 w-3.5 text-[#7E22CE]" />
                 <span>Passport Number</span>
               </div>
-              <div className="text-sm font-mono font-black text-[#092244]">
+              <div className="text-sm font-mono font-black text-[#0a0a0a]">
                 {client.passportNumber || "Not recorded"}
               </div>
             </div>
@@ -200,7 +200,7 @@ export function ClientDetailModal({
           {/* Financial Overview */}
           <div className="p-4 rounded-2xl border border-[#EAE6DF] bg-[#FAF8F5]/60 space-y-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#092244]">
+              <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
                 <CreditCard className="h-4 w-4 text-[#F3A712]" />
                 <span>Payment Plan Summary</span>
               </div>
@@ -210,7 +210,7 @@ export function ClientDetailModal({
                 <div className="text-[10px] font-extrabold uppercase text-[#64748B]">
                   Contract Fee
                 </div>
-                <div className="text-sm sm:text-base font-black text-[#092244] mt-0.5">
+                <div className="text-sm sm:text-base font-black text-[#0a0a0a] mt-0.5">
                   ${client.totalFee?.toLocaleString() || "4,500"}
                 </div>
               </div>
@@ -239,7 +239,7 @@ export function ClientDetailModal({
               <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                 Internal Case Notes
               </div>
-              <p className="text-xs text-[#092244] leading-relaxed">
+              <p className="text-xs text-[#0a0a0a] leading-relaxed">
                 {client.notes}
               </p>
             </div>

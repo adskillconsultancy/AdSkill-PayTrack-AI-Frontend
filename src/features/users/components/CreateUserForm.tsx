@@ -235,11 +235,11 @@ export function CreateUserForm() {
       {/* 🧭 1. TOP BREADCRUMB & PAGE HEADER (FULL WIDTH MATCHING USER DIRECTORY) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] shadow-2xs">
-            <UserPlus className="h-5 w-5 text-[#092244]" />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] shadow-2xs">
+            <UserPlus className="h-5 w-5 text-[#0a0a0a]" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
               Create New User Account
             </h1>
             <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
@@ -247,12 +247,12 @@ export function CreateUserForm() {
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
               <Link
                 href={ROUTES.USERS}
-                className="hover:text-[#092244] transition-colors"
+                className="hover:text-[#0a0a0a] transition-colors"
               >
                 User Directory
               </Link>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#092244] font-bold">New Account Registration</span>
+              <span className="text-[#0a0a0a] font-bold">New Account Registration</span>
             </div>
           </div>
         </div>
@@ -295,11 +295,11 @@ export function CreateUserForm() {
             {/* Section 1: Identity & Credentials */}
             <div className="p-6 sm:p-7 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-5">
               <div className="flex items-center gap-2.5 pb-3 border-b border-[#F0ECE6]">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FAF8F5] text-[#092244]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FAF8F5] text-[#0a0a0a]">
                   <User className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#092244]">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
                     1. Identity &amp; Account Credentials
                   </h3>
                   <p className="text-[11px] text-[#64748B]">
@@ -318,7 +318,7 @@ export function CreateUserForm() {
                     placeholder="Enter full name"
                     value={name}
                     onChange={(e) => handleNameChange(e.target.value)}
-                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                   />
                 </div>
 
@@ -330,7 +330,7 @@ export function CreateUserForm() {
                     placeholder="Enter nickname (optional)"
                     value={preferredName}
                     onChange={(e) => setPreferredName(e.target.value)}
-                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                   />
                 </div>
 
@@ -346,7 +346,7 @@ export function CreateUserForm() {
                       placeholder="name@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                      className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                     />
                   </div>
                 </div>
@@ -363,7 +363,7 @@ export function CreateUserForm() {
                       placeholder="Enter password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                      className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                     />
                   </div>
                 </div>
@@ -375,7 +375,7 @@ export function CreateUserForm() {
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as "ACTIVE" | "INACTIVE" | "SUSPENDED")}
-                    className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] cursor-pointer"
+                    className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] cursor-pointer"
                   >
                     <option value="ACTIVE">Active (Full Access)</option>
                     <option value="INACTIVE">Inactive (Pending Confirmation)</option>
@@ -392,7 +392,7 @@ export function CreateUserForm() {
                   <MessageCircle className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#092244]">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
                     2. Contact &amp; Physical Location
                   </h3>
                   <p className="text-[11px] text-[#64748B]">
@@ -411,7 +411,7 @@ export function CreateUserForm() {
                     <select
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
-                      className="w-full h-11 pl-10 pr-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] cursor-pointer"
+                      className="w-full h-11 pl-10 pr-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] cursor-pointer"
                     >
                       {COUNTRIES.map((c) => (
                         <option key={c} value={c}>
@@ -429,7 +429,7 @@ export function CreateUserForm() {
                   <select
                     value={countryCode}
                     onChange={(e) => setCountryCode(e.target.value)}
-                    className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-mono font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] cursor-pointer"
+                    className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-mono font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] cursor-pointer"
                   >
                     <option value="+1">+1 (USA / Canada)</option>
                     <option value="+880">+880 (Bangladesh)</option>
@@ -450,7 +450,7 @@ export function CreateUserForm() {
                       placeholder="Phone number"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                      className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                     />
                   </div>
                 </div>
@@ -477,7 +477,7 @@ export function CreateUserForm() {
                       placeholder="Street address (optional)"
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
-                      className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                      className="h-11 pl-10 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                     />
                   </div>
                 </div>
@@ -490,7 +490,7 @@ export function CreateUserForm() {
                     placeholder="City"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                   />
                 </div>
 
@@ -503,13 +503,13 @@ export function CreateUserForm() {
                       placeholder="State"
                       value={state}
                       onChange={(e) => setState(e.target.value)}
-                      className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                      className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                     />
                     <Input
                       placeholder="Postal Code"
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
-                      className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                      className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
                     />
                   </div>
                 </div>
@@ -523,7 +523,7 @@ export function CreateUserForm() {
                   <Shield className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-[#092244]">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
                     3. Role &amp; Access Level
                   </h3>
                   <p className="text-[11px] text-[#64748B]">
@@ -541,7 +541,7 @@ export function CreateUserForm() {
                     value={selectedRole}
                     onChange={(e) => handleRoleChange(e.target.value)}
                     disabled={isRolesLoading}
-                    className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#092244] focus:outline-none focus:ring-1 focus:ring-[#092244] cursor-pointer"
+                    className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] cursor-pointer"
                   >
                     {isRolesLoading ? (
                       <option>Loading roles...</option>
@@ -558,7 +558,7 @@ export function CreateUserForm() {
                 {/* Role Info Callout */}
                 <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs leading-relaxed">
                   <div>
-                    <span className="font-bold text-[#092244]">
+                    <span className="font-bold text-[#0a0a0a]">
                       Role: {selectedRole.replace(/_/g, " ")}
                     </span>
                     {currentRoleMeta?.permissions?.length ? (
@@ -583,7 +583,7 @@ export function CreateUserForm() {
                         -{deniedPermissionIds.length} Revoked
                       </span>
                     )}
-                    <span className="text-[11px] font-mono font-bold text-[#092244] bg-white px-2 py-0.5 rounded-lg border border-[#EAE6DF]">
+                    <span className="text-[11px] font-mono font-bold text-[#0a0a0a] bg-white px-2 py-0.5 rounded-lg border border-[#EAE6DF]">
                       Total: {effectiveCount} Active
                     </span>
                   </div>
@@ -596,10 +596,10 @@ export function CreateUserForm() {
                     onClick={() => setShowCustomPermissions(!showCustomPermissions)}
                     className="w-full flex items-center justify-between p-3.5 rounded-2xl border border-[#EAE6DF] bg-white hover:bg-[#FAF8F5] transition-all cursor-pointer shadow-2xs group"
                   >
-                    <div className="flex items-center gap-2.5 text-xs font-bold text-[#092244]">
+                    <div className="flex items-center gap-2.5 text-xs font-bold text-[#0a0a0a]">
                       <div className={cn(
-                        "flex h-6 w-6 items-center justify-center rounded-lg border border-[#EAE6DF] bg-[#FAF8F5] transition-transform text-[#092244]",
-                        showCustomPermissions && "bg-[#092244] text-white border-[#092244]"
+                        "flex h-6 w-6 items-center justify-center rounded-lg border border-[#EAE6DF] bg-[#FAF8F5] transition-transform text-[#0a0a0a]",
+                        showCustomPermissions && "bg-[#0a0a0a] text-white border-[#0a0a0a]"
                       )}>
                         {showCustomPermissions ? (
                           <ChevronDown className="h-3.5 w-3.5" />
@@ -651,7 +651,7 @@ export function CreateUserForm() {
                             return (
                               <div key={group.module} className="p-3.5 rounded-xl bg-white border border-[#EAE6DF] space-y-2.5">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-black uppercase tracking-wider text-[#092244] flex items-center gap-1.5">
+                                  <span className="text-[11px] font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-1.5">
                                     <Layers className="h-3 w-3 text-[#64748B]" />
                                     <span>{group.module} MODULE</span>
                                   </span>
@@ -675,23 +675,23 @@ export function CreateUserForm() {
                                           isRevoked
                                             ? "bg-rose-50/60 border-rose-200 text-[#E11D48]"
                                             : isExtraGranted
-                                            ? "bg-[#F0F9FF] border-[#0284C7]/40 text-[#092244] shadow-2xs"
+                                            ? "bg-[#F0F9FF] border-[#0284C7]/40 text-[#0a0a0a] shadow-2xs"
                                             : isRoleBase
-                                            ? "bg-[#FAF8F5] border-[#EAE6DF] text-[#092244]"
-                                            : "bg-white border-[#EAE6DF] text-[#64748B] hover:border-[#092244]/30"
+                                            ? "bg-[#FAF8F5] border-[#EAE6DF] text-[#0a0a0a]"
+                                            : "bg-white border-[#EAE6DF] text-[#64748B] hover:border-[#0a0a0a]/30"
                                         )}
                                       >
                                         <input
                                           type="checkbox"
                                           checked={isActive}
                                           onChange={() => handleTogglePermission(perm.id)}
-                                          className="mt-0.5 h-4 w-4 rounded text-[#092244] focus:ring-[#092244] cursor-pointer"
+                                          className="mt-0.5 h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a] cursor-pointer"
                                         />
                                         <div className="flex-1 min-w-0">
                                           <div className="flex items-center gap-1.5 flex-wrap">
                                             <span className={cn(
                                               "font-mono font-bold text-[11px]",
-                                              isRevoked ? "line-through text-[#E11D48]" : "text-[#092244]"
+                                              isRevoked ? "line-through text-[#E11D48]" : "text-[#0a0a0a]"
                                             )}>
                                               {perm.name}
                                             </span>
@@ -737,7 +737,7 @@ export function CreateUserForm() {
             {/* Live User Profile Preview Card */}
             <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-[#F0ECE6]">
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-1.5">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-1.5">
                   <Sparkles className="h-3.5 w-3.5 text-[#F3A712]" />
                   <span>Live Dossier Preview</span>
                 </h4>
@@ -747,15 +747,15 @@ export function CreateUserForm() {
               </div>
 
               <div className="flex items-center gap-4 pt-1">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#092244]/10 text-lg font-black text-[#092244] border-2 border-[#FAF8F5] shadow-xs">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#0a0a0a]/10 text-lg font-black text-[#0a0a0a] border-2 border-[#FAF8F5] shadow-xs">
                   {initials}
                 </div>
                 <div className="min-w-0 space-y-1">
-                  <div className="text-base font-black text-[#092244] truncate">
+                  <div className="text-base font-black text-[#0a0a0a] truncate">
                     {name.trim() || "New User"}
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FAF8F5] text-[#092244] border border-[#EAE6DF]">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF]">
                       {selectedRole.replace(/_/g, " ")}
                     </span>
                     <span className="inline-flex items-center text-[10px] font-mono font-bold text-[#0284C7] bg-[#F0F9FF] px-2 py-0.5 rounded-md border border-[#0284C7]/20">
@@ -768,7 +768,7 @@ export function CreateUserForm() {
               <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-2 text-xs">
                 <div className="flex items-center justify-between text-[#64748B]">
                   <span>Email:</span>
-                  <span className="font-bold text-[#092244] truncate max-w-[170px]" title={email}>
+                  <span className="font-bold text-[#0a0a0a] truncate max-w-[170px]" title={email}>
                     {email || "name@example.com"}
                   </span>
                 </div>
@@ -780,7 +780,7 @@ export function CreateUserForm() {
                 </div>
                 <div className="flex items-center justify-between text-[#64748B]">
                   <span>Country:</span>
-                  <span className="font-bold text-[#092244]">{country}</span>
+                  <span className="font-bold text-[#0a0a0a]">{country}</span>
                 </div>
                 <div className="flex items-center justify-between text-[#64748B] pt-1 border-t border-[#EAE6DF]">
                   <span>Granted Powers:</span>
@@ -805,7 +805,7 @@ export function CreateUserForm() {
 
             {/* Onboarding & Password Options */}
             <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-1.5">
+              <h4 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-1.5">
                 <KeyRound className="h-3.5 w-3.5 text-[#D97706]" />
                 <span>Onboarding &amp; Credentials</span>
               </h4>
@@ -816,10 +816,10 @@ export function CreateUserForm() {
                     type="checkbox"
                     checked={sendWelcomeWhatsApp}
                     onChange={(e) => setSendWelcomeWhatsApp(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded text-[#092244] focus:ring-[#092244]"
+                    className="mt-0.5 h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a]"
                   />
                   <div className="text-xs">
-                    <span className="font-bold text-[#092244] block">
+                    <span className="font-bold text-[#0a0a0a] block">
                       Send WhatsApp Welcome
                     </span>
                     <span className="text-[#64748B] text-[11px] leading-tight block mt-0.5">
@@ -833,10 +833,10 @@ export function CreateUserForm() {
                     type="checkbox"
                     checked={requirePasswordReset}
                     onChange={(e) => setRequirePasswordReset(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded text-[#092244] focus:ring-[#092244]"
+                    className="mt-0.5 h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a]"
                   />
                   <div className="text-xs">
-                    <span className="font-bold text-[#092244] block">
+                    <span className="font-bold text-[#0a0a0a] block">
                       Require Password Change
                     </span>
                     <span className="text-[#64748B] text-[11px] leading-tight block mt-0.5">
@@ -852,7 +852,7 @@ export function CreateUserForm() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-12 rounded-xl bg-[#092244] text-white hover:bg-[#071933] text-sm font-bold shadow-md cursor-pointer gap-2"
+                className="w-full h-12 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-sm font-bold shadow-md cursor-pointer gap-2"
               >
                 <UserPlus className="h-4.5 w-4.5 text-[#F3A712]" />
                 <span>{isSubmitting ? "Creating User..." : "Save & Create User"}</span>

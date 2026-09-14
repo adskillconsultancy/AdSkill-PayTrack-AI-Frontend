@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="bg-[#FAF8F5] text-[#092244] min-h-screen">
+    <div className="bg-[#FAF8F5] text-[#0a0a0a] min-h-screen">
       {/* ── HERO ── */}
       <section className="pt-14 pb-16 border-b border-[#EAE6DF]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-center space-y-4">
@@ -30,7 +30,7 @@ export default function AboutPage() {
             <Building2 className="h-3.5 w-3.5" />
             <span>AdSkill Consultancy Inc.</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#092244]">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0a0a0a]">
             Engineering Financial Trust for Global Clients
           </h1>
           <p className="text-base sm:text-lg text-[#475569] leading-relaxed max-w-2xl mx-auto">
@@ -47,7 +47,7 @@ export default function AboutPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-[#B47B00]">
                 Our Background
               </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#092244]">
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#0a0a0a]">
                 From Fragmented Spreadsheets to Bank-Grade Certainty
               </h2>
               <p className="text-sm leading-relaxed text-[#475569]">
@@ -59,7 +59,7 @@ export default function AboutPage() {
             </div>
 
             <div className="md:col-span-5 rounded-2xl border border-[#EAE6DF] bg-white p-7 shadow-xs space-y-4">
-              <h3 className="text-base font-bold text-[#092244]">
+              <h3 className="text-base font-bold text-[#0a0a0a]">
                 Key Platform Guarantees
               </h3>
               <ul className="space-y-3 text-xs text-[#475569]">
@@ -92,7 +92,7 @@ export default function AboutPage() {
             <span className="text-xs font-bold uppercase tracking-wider text-[#B47B00]">
               Specification Section 14
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#092244] mt-1">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0a0a0a] mt-1">
               Ethical & Controlled AI Boundaries
             </h2>
             <p className="text-sm text-[#475569] mt-2">
@@ -135,7 +135,7 @@ export default function AboutPage() {
       {/* ── BOTTOM CTA ── */}
       <section className="py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-center space-y-4">
-          <h2 className="text-2xl font-bold text-[#092244]">
+          <h2 className="text-2xl font-bold text-[#0a0a0a]">
             Ready to View Your Milestone Plan?
           </h2>
           <p className="text-sm text-[#475569] max-w-xl mx-auto">

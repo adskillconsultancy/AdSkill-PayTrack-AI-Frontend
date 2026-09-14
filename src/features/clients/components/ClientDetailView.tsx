@@ -92,7 +92,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
             asChild
             variant="outline"
             size="icon"
-            className="h-10 w-10 rounded-2xl border-[#EAE6DF] bg-white text-[#092244] hover:bg-[#FAF8F5] shadow-2xs"
+            className="h-10 w-10 rounded-2xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs"
           >
             <Link href={ROUTES.CLIENTS}>
               <ArrowLeft className="h-4 w-4" />
@@ -100,7 +100,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
             </Link>
           </Button>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
               Client Case Dossier
             </h1>
             <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
@@ -108,12 +108,12 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
               <Link
                 href={ROUTES.CLIENTS}
-                className="hover:text-[#092244] transition-colors"
+                className="hover:text-[#0a0a0a] transition-colors"
               >
                 Client List
               </Link>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#092244] font-bold">{client.name}</span>
+              <span className="text-[#0a0a0a] font-bold">{client.name}</span>
             </div>
           </div>
         </div>
@@ -131,7 +131,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
 
           <Button
             asChild
-            className="h-10 px-4 rounded-xl bg-[#092244] text-white hover:bg-[#071933] text-xs font-bold gap-2 shadow-xs"
+            className="h-10 px-4 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold gap-2 shadow-xs"
           >
             <a
               href={`https://wa.me/${whatsappClean}`}
@@ -161,24 +161,24 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 />
               </div>
             ) : (
-              <div className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-full bg-[#092244]/10 text-2xl font-black text-[#092244]">
+              <div className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a]/10 text-2xl font-black text-[#0a0a0a]">
                 {client.initials || client.name.charAt(0)}
               </div>
             )}
 
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-2xl sm:text-3xl font-black text-[#092244] tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#0a0a0a] tracking-tight">
                   {client.name}
                 </h2>
                 {getStatusBadge(client.status)}
               </div>
               <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-[#64748B] font-medium">
-                <span className="font-mono text-[#092244] font-bold">
+                <span className="font-mono text-[#0a0a0a] font-bold">
                   ID: {client.clientId}
                 </span>
                 <span>•</span>
-                <span className="flex items-center gap-1 font-bold text-[#092244]">
+                <span className="flex items-center gap-1 font-bold text-[#0a0a0a]">
                   <MapPin className="h-3.5 w-3.5 text-[#F3A712]" />
                   {client.destination.code} — {client.destination.country}
                 </span>
@@ -201,7 +201,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
         <div className="lg:col-span-2 space-y-6">
           {/* Case & Visa Dossier Card */}
           <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-2">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-[#059669]" />
               <span>Immigration &amp; Visa Case Dossier</span>
             </h3>
@@ -211,8 +211,8 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                   Target Destination
                 </span>
-                <div className="text-sm font-bold text-[#092244] flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider bg-[#092244] text-white px-2 py-0.5 rounded-md">
+                <div className="text-sm font-bold text-[#0a0a0a] flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider bg-[#0a0a0a] text-white px-2 py-0.5 rounded-md">
                     {client.destination.code}
                   </span>
                   <span>{client.destination.country}</span>
@@ -223,7 +223,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                   Visa Category
                 </span>
-                <div className="text-sm font-bold text-[#092244]">
+                <div className="text-sm font-bold text-[#0a0a0a]">
                   {client.visaCategory.title}
                 </div>
                 <div className="text-xs text-[#94A3B8]">
@@ -235,7 +235,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                   Submission Date &amp; Agent
                 </span>
-                <div className="text-sm font-bold text-[#092244] flex items-center gap-1.5">
+                <div className="text-sm font-bold text-[#0a0a0a] flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-[#0284C7]" />
                   <span>{client.submission.date}</span>
                 </div>
@@ -248,7 +248,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                   Passport Identifier
                 </span>
-                <div className="text-sm font-mono font-bold text-[#092244] flex items-center gap-1.5">
+                <div className="text-sm font-mono font-bold text-[#0a0a0a] flex items-center gap-1.5">
                   <User className="h-3.5 w-3.5 text-[#7E22CE]" />
                   <span>{client.passportNumber || "Not recorded"}</span>
                 </div>
@@ -258,7 +258,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
 
           {/* Payment Plan & Milestone Summary */}
           <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-2">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-[#F3A712]" />
               <span>Contract Fee &amp; Payment Schedule</span>
             </h3>
@@ -268,7 +268,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 <div className="text-[10px] sm:text-xs font-extrabold uppercase text-[#64748B]">
                   Contract Fee
                 </div>
-                <div className="text-base sm:text-xl font-black text-[#092244] mt-1">
+                <div className="text-base sm:text-xl font-black text-[#0a0a0a] mt-1">
                   ${client.totalFee?.toLocaleString() || "4,500"}
                 </div>
               </div>
@@ -293,7 +293,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
 
           {/* Activity & Milestone History */}
           <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-2">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
               <History className="h-4 w-4 text-[#0284C7]" />
               <span>Case Milestones &amp; Audit Logs</span>
             </h3>
@@ -303,7 +303,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 {client.activityLogs.map((log) => (
                   <div key={log.id} className="py-3 flex items-start justify-between gap-4">
                     <div>
-                      <div className="text-xs font-bold text-[#092244]">
+                      <div className="text-xs font-bold text-[#0a0a0a]">
                         {log.action}
                       </div>
                       <div className="text-[11px] text-[#64748B] mt-0.5">
@@ -311,7 +311,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <div className="text-[11px] font-semibold text-[#092244]">
+                      <div className="text-[11px] font-semibold text-[#0a0a0a]">
                         {log.timestamp}
                       </div>
                       <div className="text-[10px] font-medium text-[#94A3B8]">
@@ -338,7 +338,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 <MessageCircle className="h-6 w-6 fill-current" />
               </div>
               <div>
-                <h4 className="text-sm font-black text-[#092244]">
+                <h4 className="text-sm font-black text-[#0a0a0a]">
                   WhatsApp Direct
                 </h4>
                 <p className="text-xs text-[#059669] font-medium">
@@ -369,7 +369,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
 
           {/* Contact Details Card */}
           <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#092244] flex items-center gap-2">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
               <Mail className="h-4 w-4 text-[#F3A712]" />
               <span>Contact Channels</span>
             </h3>
@@ -379,7 +379,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 <span className="text-[10px] font-extrabold uppercase text-[#64748B]">
                   Email Address
                 </span>
-                <div className="text-xs font-bold text-[#092244] break-all">
+                <div className="text-xs font-bold text-[#0a0a0a] break-all">
                   {client.email || "No email on record"}
                 </div>
               </div>
@@ -398,7 +398,7 @@ export function ClientDetailView({ clientId }: ClientDetailViewProps) {
                 <span className="text-[10px] font-extrabold uppercase text-[#64748B]">
                   Direct Phone
                 </span>
-                <div className="text-xs font-mono font-bold text-[#092244]">
+                <div className="text-xs font-mono font-bold text-[#0a0a0a]">
                   {client.phone || "Not recorded"}
                 </div>
               </div>

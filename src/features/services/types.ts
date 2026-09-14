@@ -1,4 +1,4 @@
-// ─── Service Catalog & Fee Separation Types ──────────────────────────
+// 🌟 Service Catalog & Fee Separation Types 🌟
 
 export type ServiceCategory =
   | "Employment Immigration"
@@ -7,7 +7,19 @@ export type ServiceCategory =
   | "Investor & Corporate"
   | "Student & Education"
   | "Family & Dependent"
-  | "Corporate Advisory";
+  | "Corporate Advisory"
+  | "IMMIGRATION"
+  | "BUSINESS"
+  | "CONSULTATION"
+  | "DMV_PSB"
+  | "CUSTOM";
+
+export type BackendServiceCategory =
+  | "IMMIGRATION"
+  | "BUSINESS"
+  | "CONSULTATION"
+  | "DMV_PSB"
+  | "CUSTOM";
 
 export type PassThroughFeeCategory =
   | "USCIS & Government"
@@ -92,4 +104,70 @@ export interface CreateServiceInput {
   eligibilityChecklist?: string[];
   estimatedLeadTime: string;
   internalNotes?: string;
+}
+
+// Backend Prisma Model Types
+export interface BackendAuditActor {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface BackendService {
+  id: string;
+  name: string;
+  code: string;
+  category: BackendServiceCategory;
+  description?: string | null;
+  baseFee: number;
+  estimatedGovFee: number;
+  estimatedAttorneyFee: number;
+  estimatedThirdPartyFee: number;
+  currency: string;
+  defaultDeposit?: number | null;
+  defaultInstallments?: number | null;
+  estimatedDuration?: string | null;
+  isActive: boolean;
+  createdById: string;
+  createdBy?: BackendAuditActor | null;
+  updatedById?: string | null;
+  updatedBy?: BackendAuditActor | null;
+  isDeleted: boolean;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GetServicesQueryParams {
+  page?: number;
+  limit?: number;
+  searchTerm?: string;
+  category?: BackendServiceCategory | "";
+  currency?: string;
+  isActive?: boolean | string;
+  isDeleted?: boolean;
+  startDate?: string;
+  endDate?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+}
+
+export interface CreateBackendServiceRequest {
+  name: string;
+  code: string;
+  category?: BackendServiceCategory;
+  description?: string;
+  baseFee: number;
+  estimatedGovFee?: number;
+  estimatedAttorneyFee?: number;
+  estimatedThirdPartyFee?: number;
+  currency?: string;
+  defaultDeposit?: number;
+  defaultInstallments?: number;
+  estimatedDuration?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateBackendServiceRequest extends Partial<CreateBackendServiceRequest> {
+  isDeleted?: boolean;
 }

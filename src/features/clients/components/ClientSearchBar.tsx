@@ -88,13 +88,13 @@ export function ClientSearchBar({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search by client name, passport or ID..."
-          className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-[#EAE6DF] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all focus:outline-none focus:border-[#092244] focus:ring-2 focus:ring-[#092244]/15"
+          className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-[#EAE6DF] text-sm text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all focus:outline-none focus:border-[#0a0a0a] focus:ring-2 focus:ring-[#0a0a0a]/15"
         />
         {searchQuery && (
           <button
             type="button"
             onClick={() => onSearchChange("")}
-            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#94A3B8] hover:text-[#092244] transition-colors cursor-pointer"
+            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#94A3B8] hover:text-[#0a0a0a] transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
@@ -110,14 +110,14 @@ export function ClientSearchBar({
             variant="outline"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={cn(
-              "h-12 px-4.5 rounded-2xl border-[#EAE6DF] bg-white text-xs sm:text-sm font-bold text-[#092244] shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:bg-[#FAF8F5] gap-2 cursor-pointer transition-all",
-              activeFiltersCount > 0 && "border-[#092244] text-[#092244]"
+              "h-12 px-4.5 rounded-2xl border-[#EAE6DF] bg-white text-xs sm:text-sm font-bold text-[#0a0a0a] shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:bg-[#FAF8F5] gap-2 cursor-pointer transition-all",
+              activeFiltersCount > 0 && "border-[#0a0a0a] text-[#0a0a0a]"
             )}
           >
             <SlidersHorizontal className="h-4 w-4 text-[#64748B]" />
             <span>Filters</span>
             {activeFiltersCount > 0 && (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#092244] text-[10px] font-bold text-white">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0a0a0a] text-[10px] font-bold text-white">
                 {activeFiltersCount}
               </span>
             )}
@@ -127,7 +127,7 @@ export function ClientSearchBar({
           {isFilterOpen && (
             <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border border-[#EAE6DF] bg-white p-4 shadow-xl z-30 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="flex items-center justify-between pb-3 border-b border-[#F0ECE6]">
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#092244]">
+                <h4 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
                   Filter Clients
                 </h4>
                 {activeFiltersCount > 0 && (
@@ -158,8 +158,8 @@ export function ClientSearchBar({
                         className={cn(
                           "px-2.5 py-1 text-xs font-semibold rounded-lg transition-all cursor-pointer",
                           isSelected
-                            ? "bg-[#092244] text-white shadow-2xs"
-                            : "bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1ECE4] hover:text-[#092244]"
+                            ? "bg-[#0a0a0a] text-white shadow-2xs"
+                            : "bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1ECE4] hover:text-[#0a0a0a]"
                         )}
                       >
                         {opt.label}
@@ -181,8 +181,8 @@ export function ClientSearchBar({
                     className={cn(
                       "px-2.5 py-1 text-left text-xs font-semibold rounded-lg transition-all flex items-center justify-between cursor-pointer",
                       destinationFilter === "ALL"
-                        ? "bg-[#092244] text-white"
-                        : "bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1ECE4] hover:text-[#092244]"
+                        ? "bg-[#0a0a0a] text-white"
+                        : "bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1ECE4] hover:text-[#0a0a0a]"
                     )}
                   >
                     <span>All Countries</span>
@@ -198,8 +198,8 @@ export function ClientSearchBar({
                         className={cn(
                           "px-2.5 py-1 text-left text-xs font-semibold rounded-lg transition-all flex items-center justify-between cursor-pointer",
                           isSelected
-                            ? "bg-[#092244] text-white"
-                            : "bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1ECE4] hover:text-[#092244]"
+                            ? "bg-[#0a0a0a] text-white"
+                            : "bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1ECE4] hover:text-[#0a0a0a]"
                         )}
                       >
                         <span className="truncate">{country}</span>
@@ -228,7 +228,7 @@ export function ClientSearchBar({
         {/* "+ New Client" Primary CTA button linking to dedicated /clients/create */}
         <Button
           asChild
-          className="h-12 px-5 sm:px-6 rounded-2xl bg-[#092244] text-white hover:bg-[#071933] shadow-[0_4px_16px_rgba(9,34,68,0.2)] gap-2 font-bold text-xs sm:text-sm cursor-pointer transition-all"
+          className="h-12 px-5 sm:px-6 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10, 10, 10,0.2)] gap-2 font-bold text-xs sm:text-sm cursor-pointer transition-all"
         >
           <Link href={ROUTES.CLIENT_CREATE}>
             <Plus className="h-4 w-4 text-[#F3A712]" />

@@ -82,7 +82,7 @@ const services = [
 
 export default function AdvisoryPage() {
   return (
-    <div className="bg-[#FAF8F5] text-[#092244] min-h-screen">
+    <div className="bg-[#FAF8F5] text-[#0a0a0a] min-h-screen">
       {/* ── HEADER INTRO ── */}
       <section className="pt-14 pb-16 border-b border-[#EAE6DF] bg-[#FAF8F5]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-center space-y-4">
@@ -90,7 +90,7 @@ export default function AdvisoryPage() {
             <Sparkles className="h-3.5 w-3.5" />
             <span>AdSkill Consultancy Inc. Service Catalog</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#092244]">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0a0a0a]">
             Consulting Services & Milestone Schedules
           </h1>
           <p className="text-base sm:text-lg text-[#475569] leading-relaxed max-w-2xl mx-auto">
@@ -104,11 +104,11 @@ export default function AdvisoryPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
           <div className="rounded-2xl border-2 border-[#F3A712]/40 bg-[#FFFDF9] p-6 sm:p-8 shadow-xs">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#092244] text-[#F3A712]">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0a0a0a] text-[#F3A712]">
                 <Shield className="h-6 w-6" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#092244]">
+                <h2 className="text-xl font-bold text-[#0a0a0a]">
                   Regulatory Fee Separation Policy
                 </h2>
                 <p className="text-xs text-[#64748B]">
@@ -123,19 +123,19 @@ export default function AdvisoryPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-5 text-xs">
               <div className="p-3 rounded-xl bg-white border border-[#EAE6DF]">
-                <div className="font-bold text-[#092244]">USCIS Government Fees</div>
+                <div className="font-bold text-[#0a0a0a]">USCIS Government Fees</div>
                 <div className="text-[#64748B] mt-1">Filing fees, biometric fees, and Premium Processing (Form I-907).</div>
               </div>
               <div className="p-3 rounded-xl bg-white border border-[#EAE6DF]">
-                <div className="font-bold text-[#092244]">Attorney Representation</div>
+                <div className="font-bold text-[#0a0a0a]">Attorney Representation</div>
                 <div className="text-[#64748B] mt-1">Separate retained legal counsel and attorney of record expenses.</div>
               </div>
               <div className="p-3 rounded-xl bg-white border border-[#EAE6DF]">
-                <div className="font-bold text-[#092244]">3rd Party Evaluations</div>
+                <div className="font-bold text-[#0a0a0a]">3rd Party Evaluations</div>
                 <div className="text-[#64748B] mt-1">Academic credential audits, certified translations, and expert letters.</div>
               </div>
               <div className="p-3 rounded-xl bg-white border border-[#EAE6DF]">
-                <div className="font-bold text-[#092244]">CPA & Licensing</div>
+                <div className="font-bold text-[#0a0a0a]">CPA & Licensing</div>
                 <div className="text-[#64748B] mt-1">Business formation statutory state filing fees and accounting fees.</div>
               </div>
             </div>
@@ -159,7 +159,7 @@ export default function AdvisoryPage() {
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#B47B00]">
                     {svc.category}
                   </span>
-                  <h3 className="text-xl font-bold text-[#092244]">
+                  <h3 className="text-xl font-bold text-[#0a0a0a]">
                     {svc.title}
                   </h3>
                   <p className="text-sm text-[#475569] leading-relaxed">
@@ -170,7 +170,7 @@ export default function AdvisoryPage() {
                 <div className="space-y-3 pt-4 border-t border-[#EAE6DF]">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[#64748B] font-medium">Standard Schedule:</span>
-                    <span className="font-bold text-[#092244] bg-[#FAF8F5] px-2.5 py-1 rounded-md border border-[#EAE6DF]">
+                    <span className="font-bold text-[#0a0a0a] bg-[#FAF8F5] px-2.5 py-1 rounded-md border border-[#EAE6DF]">
                       {svc.installments}
                     </span>
                   </div>
@@ -195,7 +195,7 @@ export default function AdvisoryPage() {
       {/* ── BOTTOM BANNER ── */}
       <section className="py-14 border-t border-[#EAE6DF] bg-[#F5F2EC]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-center space-y-4">
-          <h2 className="text-2xl font-bold text-[#092244]">
+          <h2 className="text-2xl font-bold text-[#0a0a0a]">
             Have an Assigned Case Manager?
           </h2>
           <p className="text-sm text-[#475569] max-w-xl mx-auto">

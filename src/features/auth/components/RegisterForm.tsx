@@ -124,14 +124,14 @@ export function RegisterForm() {
   };
 
   return (
-    <div className="rounded-2xl border border-[#EAE6DF] bg-white p-7 sm:p-8 shadow-[0_8px_30px_-4px_rgba(9,34,68,0.06)]">
+    <div className="rounded-2xl border border-[#EAE6DF] bg-white p-7 sm:p-8 shadow-[0_8px_30px_-4px_rgba(10, 10, 10,0.06)]">
       {isSuccess ? (
         <div className="py-8 text-center space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F3A712]/15 text-[#F3A712]">
-            <CheckCircle2 className="h-8 w-8 text-[#092244]" />
+            <CheckCircle2 className="h-8 w-8 text-[#0a0a0a]" />
           </div>
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-[#092244]">
+            <h3 className="text-xl font-bold text-[#0a0a0a]">
               Account Created Successfully!
             </h3>
             <p className="text-xs text-[#64748B]">
@@ -141,7 +141,7 @@ export function RegisterForm() {
           <div className="pt-2">
             <Link
               href={ROUTES.DASHBOARD}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#092244] hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0a0a0a] hover:underline"
             >
               <span>Go to Dashboard</span>
               <ArrowRight className="h-3 w-3" />
@@ -151,7 +151,7 @@ export function RegisterForm() {
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="text-center mb-5">
-            <h2 className="text-xl font-bold text-[#092244]">
+            <h2 className="text-xl font-bold text-[#0a0a0a]">
               Create Client Account
             </h2>
             <p className="text-xs text-[#64748B] mt-0.5">
@@ -169,7 +169,7 @@ export function RegisterForm() {
 
           {/* Full Legal Name */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#092244]">
+            <label className="text-xs font-bold text-[#0a0a0a]">
               Full Legal Name *
             </label>
             <div className="relative">
@@ -177,7 +177,7 @@ export function RegisterForm() {
                 type="text"
                 {...register("name")}
                 placeholder="e.g. Mohammad Rahim"
-                className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                   errors.name ? "border-rose-500" : "border-[#EAE6DF]"
                 }`}
               />
@@ -192,7 +192,7 @@ export function RegisterForm() {
 
           {/* Email */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#092244]">
+            <label className="text-xs font-bold text-[#0a0a0a]">
               Email Address *
             </label>
             <div className="relative">
@@ -200,7 +200,7 @@ export function RegisterForm() {
                 type="email"
                 {...register("email")}
                 placeholder="client@example.com"
-                className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                   errors.email ? "border-rose-500" : "border-[#EAE6DF]"
                 }`}
               />
@@ -215,7 +215,7 @@ export function RegisterForm() {
 
           {/* Password */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#092244]">
+            <label className="text-xs font-bold text-[#0a0a0a]">
               Password *
             </label>
             <div className="relative">
@@ -223,7 +223,7 @@ export function RegisterForm() {
                 type={showPassword ? "text" : "password"}
                 {...register("password")}
                 placeholder="At least 6 characters"
-                className={`pl-10 pr-10 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                className={`pl-10 pr-10 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                   errors.password ? "border-rose-500" : "border-[#EAE6DF]"
                 }`}
               />
@@ -233,7 +233,7 @@ export function RegisterForm() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-1.5 top-1 h-8 w-8 text-[#94A3B8] hover:text-[#092244] hover:bg-transparent"
+                className="absolute right-1.5 top-1 h-8 w-8 text-[#94A3B8] hover:text-[#0a0a0a] hover:bg-transparent"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -252,7 +252,7 @@ export function RegisterForm() {
           {/* Phone & Country */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#092244]">
+              <label className="text-xs font-bold text-[#0a0a0a]">
                 Mobile / WhatsApp
               </label>
               <div className="relative">
@@ -260,7 +260,7 @@ export function RegisterForm() {
                   type="tel"
                   {...register("phone")}
                   placeholder="+1 (555) 000-0000"
-                  className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
+                  className={`pl-10 pr-3.5 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712] ${
                     errors.phone ? "border-rose-500" : "border-[#EAE6DF]"
                   }`}
                 />
@@ -274,14 +274,14 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#092244]">
+              <label className="text-xs font-bold text-[#0a0a0a]">
                 Country of Residence
               </label>
               <div className="relative">
                 <select
                   {...register("country")}
                   defaultValue=""
-                  className={`w-full appearance-none pl-10 pr-9 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#092244] border transition-all cursor-pointer focus:bg-white focus:outline-none focus:border-[#F3A712] focus:ring-1 focus:ring-[#F3A712] ${
+                  className={`w-full appearance-none pl-10 pr-9 h-10 rounded-xl bg-[#FAF8F5] text-sm text-[#0a0a0a] border transition-all cursor-pointer focus:bg-white focus:outline-none focus:border-[#F3A712] focus:ring-1 focus:ring-[#F3A712] ${
                     errors.country ? "border-rose-500" : "border-[#EAE6DF]"
                   }`}
                 >

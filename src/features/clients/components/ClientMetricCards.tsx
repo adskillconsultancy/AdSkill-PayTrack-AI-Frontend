@@ -111,7 +111,7 @@ export function ClientMetricCards({
             className={cn(
               "group relative flex items-center justify-between p-5 sm:p-6 rounded-2xl sm:rounded-3xl border bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all duration-200 cursor-pointer",
               isSelected
-                ? "border-[#092244] ring-2 ring-[#092244]/15 shadow-md"
+                ? "border-[#0a0a0a] ring-2 ring-[#0a0a0a]/15 shadow-md"
                 : "border-[#EAE6DF] hover:border-[#CBD5E1] hover:shadow-md"
             )}
           >
@@ -120,7 +120,7 @@ export function ClientMetricCards({
               <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
                 {card.label}
               </span>
-              <div className="text-2xl sm:text-3xl font-black tracking-tight text-[#092244]">
+              <div className="text-2xl sm:text-3xl font-black tracking-tight text-[#0a0a0a]">
                 {card.value}
               </div>
               <div

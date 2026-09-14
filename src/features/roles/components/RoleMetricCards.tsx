@@ -17,9 +17,9 @@ export function RoleMetricCards({ roles, allPermissionsCount }: RoleMetricCardsP
       <div className="p-4 rounded-2xl bg-white border border-[#EAE6DF] shadow-2xs">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-[#64748B] uppercase">Total Roles</span>
-          <Layers className="h-4 w-4 text-[#092244]" />
+          <Layers className="h-4 w-4 text-[#0a0a0a]" />
         </div>
-        <div className="mt-2 text-2xl font-black text-[#092244]">{totalRoles}</div>
+        <div className="mt-2 text-2xl font-black text-[#0a0a0a]">{totalRoles}</div>
         <span className="text-[11px] text-[#64748B]">Configured in PostgreSQL</span>
       </div>
 
@@ -28,7 +28,7 @@ export function RoleMetricCards({ roles, allPermissionsCount }: RoleMetricCardsP
           <span className="text-xs font-bold text-[#64748B] uppercase">System Roles</span>
           <Lock className="h-4 w-4 text-[#F3A712]" />
         </div>
-        <div className="mt-2 text-2xl font-black text-[#092244]">{systemRoles}</div>
+        <div className="mt-2 text-2xl font-black text-[#0a0a0a]">{systemRoles}</div>
         <span className="text-[11px] text-[#64748B]">Protected from deletion</span>
       </div>
 
@@ -37,7 +37,7 @@ export function RoleMetricCards({ roles, allPermissionsCount }: RoleMetricCardsP
           <span className="text-xs font-bold text-[#64748B] uppercase">Custom Roles</span>
           <ShieldAlert className="h-4 w-4 text-[#7E22CE]" />
         </div>
-        <div className="mt-2 text-2xl font-black text-[#092244]">{customRoles}</div>
+        <div className="mt-2 text-2xl font-black text-[#0a0a0a]">{customRoles}</div>
         <span className="text-[11px] text-[#64748B]">Created dynamically</span>
       </div>
 
@@ -46,7 +46,7 @@ export function RoleMetricCards({ roles, allPermissionsCount }: RoleMetricCardsP
           <span className="text-xs font-bold text-[#64748B] uppercase">Capabilities</span>
           <KeyRound className="h-4 w-4 text-[#059669]" />
         </div>
-        <div className="mt-2 text-2xl font-black text-[#092244]">{allPermissionsCount}</div>
+        <div className="mt-2 text-2xl font-black text-[#0a0a0a]">{allPermissionsCount}</div>
         <span className="text-[11px] text-[#64748B]">Across 7 system modules</span>
       </div>
     </div>

@@ -202,12 +202,12 @@ export function ClientListView({
               />
             </div>
           ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#092244]/10 text-sm font-bold text-[#092244]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a]/10 text-sm font-bold text-[#0a0a0a]">
               {item.initials || item.name.charAt(0)}
             </div>
           )}
           <div>
-            <div className="text-sm font-bold text-[#092244] leading-tight">
+            <div className="text-sm font-bold text-[#0a0a0a] leading-tight">
               {item.name}
             </div>
             <div className="text-xs font-mono font-medium text-[#64748B] mt-0.5">
@@ -222,10 +222,10 @@ export function ClientListView({
       header: "DESTINATION",
       cell: (item) => (
         <div className="flex items-center gap-2">
-          <span className="text-xs font-black uppercase tracking-wider text-[#092244]">
+          <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
             {item.destination.code}
           </span>
-          <span className="text-sm font-semibold text-[#092244]">
+          <span className="text-sm font-semibold text-[#0a0a0a]">
             {item.destination.country}
           </span>
         </div>
@@ -236,7 +236,7 @@ export function ClientListView({
       header: "VISA CATEGORY",
       cell: (item) => (
         <div>
-          <div className="text-sm font-bold text-[#092244] leading-tight">
+          <div className="text-sm font-bold text-[#0a0a0a] leading-tight">
             {item.visaCategory.title}
           </div>
           <div className="text-xs text-[#94A3B8] mt-0.5">
@@ -250,7 +250,7 @@ export function ClientListView({
       header: "SUBMISSION DATE",
       cell: (item) => (
         <div>
-          <div className="text-sm font-bold text-[#092244] leading-tight">
+          <div className="text-sm font-bold text-[#0a0a0a] leading-tight">
             {item.submission.date}
           </div>
           <div className="text-xs text-[#64748B] mt-0.5">
@@ -304,7 +304,7 @@ export function ClientListView({
                 router.push(`/clients/${item.id}`);
               }}
               title="View Client Full Dossier"
-              className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#092244] hover:bg-[#EAE6DF] hover:text-[#092244] transition-colors cursor-pointer shadow-2xs"
+              className="flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#0a0a0a] hover:bg-[#EAE6DF] hover:text-[#0a0a0a] transition-colors cursor-pointer shadow-2xs"
             >
               <Eye className="h-4 w-4" />
               <span className="sr-only">View</span>
@@ -320,8 +320,8 @@ export function ClientListView({
                 }}
                 title="More Options"
                 className={cn(
-                  "flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#64748B] hover:bg-[#EAE6DF] hover:text-[#092244] transition-colors cursor-pointer shadow-2xs",
-                  isMenuOpen && "bg-[#092244] text-white hover:bg-[#092244]"
+                  "flex h-8.5 w-8.5 items-center justify-center rounded-full bg-[#FAF8F5] text-[#64748B] hover:bg-[#EAE6DF] hover:text-[#0a0a0a] transition-colors cursor-pointer shadow-2xs",
+                  isMenuOpen && "bg-[#0a0a0a] text-white hover:bg-[#0a0a0a]"
                 )}
               >
                 <MoreVertical className="h-4 w-4" />
@@ -336,7 +336,7 @@ export function ClientListView({
                 >
                   <Link
                     href={`/clients/${item.id}`}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#092244] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#0a0a0a] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
                   >
                     <Eye className="h-3.5 w-3.5 text-[#64748B]" />
                     <span>View Full Dossier</span>
@@ -358,7 +358,7 @@ export function ClientListView({
                       navigator.clipboard?.writeText(item.clientId);
                       setActiveMenuId(null);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#092244] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#0a0a0a] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
                   >
                     <Copy className="h-3.5 w-3.5 text-[#64748B]" />
                     <span>Copy Client ID</span>
@@ -370,7 +370,7 @@ export function ClientListView({
                       alert(`Sent payment reminder to ${item.name}`);
                       setActiveMenuId(null);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#092244] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#0a0a0a] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
                   >
                     <Send className="h-3.5 w-3.5 text-[#F3A712]" />
                     <span>Send Reminder</span>
@@ -402,17 +402,17 @@ export function ClientListView({
     <div className="space-y-6">
       {/* ── 1. TOP BREADCRUMB & PAGE TITLE ── */}
       <div className="flex items-center gap-3.5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#092244] shadow-2xs">
-          <FileText className="h-5 w-5 text-[#092244]" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] shadow-2xs">
+          <FileText className="h-5 w-5 text-[#0a0a0a]" />
         </div>
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#092244] tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
             {pageTitle}
           </h1>
           <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
             <span>{parentBreadcrumb}</span>
             <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-            <span className="text-[#092244] font-bold">{pageTitle}</span>
+            <span className="text-[#0a0a0a] font-bold">{pageTitle}</span>
           </div>
         </div>
       </div>
