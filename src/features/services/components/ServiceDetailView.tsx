@@ -27,6 +27,7 @@ import {
   Landmark,
   Layers,
   Lock,
+  Pencil,
   Receipt,
   Scale,
   Share2,
@@ -387,6 +388,13 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
             SKU
           </Button>
 
+          <Button asChild variant="outline" size="sm" className="h-10 gap-2 px-3.5 border-[#EAE6DF] hover:bg-[#FAF8F5]">
+            <Link href={`/services/${service.code || service.id}/edit`}>
+              <Pencil className="h-3.5 w-3.5 text-[#F3A712]" />
+              <span>Edit Offering</span>
+            </Link>
+          </Button>
+
           <Button asChild size="sm" className="h-10 gap-2 px-4">
             <Link href={ROUTES.CLIENT_CREATE}>
               <UserPlus className="h-4 w-4 text-[#F3A712]" />
@@ -660,7 +668,14 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
               Actions
             </div>
             <div className="space-y-2">
-              <Button asChild className="h-11 w-full justify-start gap-2">
+              <Button asChild className="h-11 w-full justify-start gap-2 bg-[#0a0a0a] text-white hover:bg-[#171717]">
+                <Link href={`/services/${service.code || service.id}/edit`}>
+                  <Pencil className="h-4 w-4 text-[#F3A712]" />
+                  Edit Service Offering
+                </Link>
+              </Button>
+
+              <Button asChild variant="outline" className="h-11 w-full justify-start gap-2 border-[#EAE6DF] hover:bg-[#FAF8F5]">
                 <Link href={ROUTES.CLIENT_CREATE}>
                   <UserPlus className="h-4 w-4 text-[#F3A712]" />
                   Enroll client with this package

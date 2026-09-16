@@ -1,4 +1,4 @@
-﻿// 🧭 Application Route Constants 🧭
+// 🧭 Application Route Constants 🧭
 
 export const ROUTES = {
   // Public
@@ -22,6 +22,7 @@ export const ROUTES = {
   CLIENT_CREATE: "/clients/create",
   SERVICES: "/services",
   SERVICE_CREATE: "/services/create",
+  SERVICE_EDIT: (id: string) => `/services/${id}/edit`,
   PAYMENTS: "/payments",
   TRACKING: "/tracking",
   REPORTS: "/reports",
@@ -30,6 +31,7 @@ export const ROUTES = {
   SETTINGS: "/settings",
   USERS: "/users",
   USER_CREATE: "/users/create",
+  USER_EDIT: (id: string) => `/users/${id}/edit`,
   ROLES: "/roles",
   ROLES_CREATE: "/roles/create",
 } as const;

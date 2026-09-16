@@ -28,6 +28,7 @@ import {
   Clock,
   RotateCw,
   FileSpreadsheet,
+  Pencil,
   Trash2,
   UserPlus,
   Scale,
@@ -462,6 +463,18 @@ export function ServiceListView({
               >
                 <Eye className="h-3.5 w-3.5 text-[#64748B]" />
                 <span>View Full Service Dossier</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  router.push(`/services/${item.code || item.id}/edit`);
+                  setActiveMenuId(null);
+                }}
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
+              >
+                <Pencil className="h-3.5 w-3.5 text-[#F3A712]" />
+                <span>Edit Service Offering</span>
               </button>
 
               <button

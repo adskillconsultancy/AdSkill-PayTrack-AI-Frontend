@@ -20,6 +20,7 @@ import {
   CheckCircle,
   ExternalLink,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import {
   useGetUsersQuery,
@@ -365,6 +366,14 @@ export function UserListView() {
                   >
                     <Eye className="h-3.5 w-3.5 text-[#64748B]" />
                     <span>View Full Profile</span>
+                  </Link>
+
+                  <Link
+                    href={`/users/${targetSlugOrId}/edit`}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-[#0a0a0a] rounded-xl hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-[#64748B]" />
+                    <span>Edit User Account</span>
                   </Link>
 
                   <a

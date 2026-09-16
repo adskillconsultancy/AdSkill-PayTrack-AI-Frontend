@@ -27,6 +27,7 @@ import {
   MapPin,
   Sparkles,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import {
@@ -296,6 +297,19 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Edit Profile Button */}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-10 px-3.5 rounded-xl text-xs font-bold gap-2 cursor-pointer border-[#EAE6DF] bg-white hover:bg-[#FAF8F5] text-[#0a0a0a] shadow-2xs"
+          >
+            <Link href={ROUTES.USER_EDIT(user.clientId || user.id)}>
+              <Pencil className="h-3.5 w-3.5 text-[#0a0a0a]" />
+              <span>Edit Profile</span>
+            </Link>
+          </Button>
+
           {/* Status Toggle Button */}
           <Button
             variant="outline"
