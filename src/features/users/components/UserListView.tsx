@@ -437,7 +437,10 @@ export function UserListView() {
         </div>
       </div>
 
-      {/* 2. SEARCH BAR & ACTION TOOLBAR */}
+      {/* 2. 4 METRIC SUMMARY KPI CARDS */}
+      <UserMetricCards stats={stats} />
+
+      {/* 3. SEARCH BAR & ACTION TOOLBAR */}
       <UserSearchBar
         searchQuery={searchQuery}
         onSearchChange={(q) => {
@@ -452,22 +455,6 @@ export function UserListView() {
         statusFilter={statusFilter}
         onStatusFilterChange={(s) => {
           setStatusFilter(s);
-          setCurrentPage(1);
-        }}
-      />
-
-      {/* 3. 4 METRIC SUMMARY KPI CARDS */}
-      <UserMetricCards
-        stats={stats}
-        activeFilter={roleFilter !== "ALL" ? roleFilter : statusFilter}
-        onFilterSelect={(filter) => {
-          if (filter === "Active" || filter === "Pending") {
-            setStatusFilter(filter);
-            setRoleFilter("ALL");
-          } else {
-            setRoleFilter(filter);
-            setStatusFilter("ALL");
-          }
           setCurrentPage(1);
         }}
       />

@@ -8,7 +8,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   return {
-    title: `Service Offering #${id} — AdSkill PayTrack AI`,
+    title: `Service Offering (${id}) — AdSkill PayTrack AI`,
     description:
       "Detailed service offering dossier, regulatory fee separation architecture, pass-through disbursements, and milestone schedules.",
   };

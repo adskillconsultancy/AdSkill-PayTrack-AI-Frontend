@@ -1,52 +1,45 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/common/Button";
+import { Input } from "@/components/common/Input";
+import { ROUTES } from "@/constants/routes";
+import { cn } from "@/lib/utils";
+import { useGetServicesQuery } from "@/services/api/services/servicesApi";
+import { useGetUsersQuery } from "@/services/api/users/usersApi";
 import {
   createClientSchema,
   type CreateClientFormValues,
 } from "@/validations/client.schema";
-import { Button } from "@/components/common/Button";
-import { Input } from "@/components/common/Input";
-import { ClientItem, ClientStatus } from "../types";
-import { addMockClient, getMockClients } from "../mockData";
-import { useGetUsersQuery } from "@/services/api/users/usersApi";
-import { useGetServicesQuery } from "@/services/api/services/servicesApi";
-import { ROUTES } from "@/constants/routes";
-import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  AlertTriangle,
   ArrowLeft,
+  CheckCircle2,
   ChevronRight,
+  CreditCard,
+  ExternalLink,
+  FileText,
+  Info,
+  MapPin,
+  MessageCircle,
+  Percent,
+  Plus,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  User,
+  UserCheck,
   UserPlus,
   Users,
-  Search,
-  UserCheck,
   X,
-  Link2,
-  MessageCircle,
-  ShieldCheck,
-  CreditCard,
-  User,
-  CheckCircle2,
-  MapPin,
-  Plus,
-  Trash2,
-  AlertTriangle,
-  Percent,
-  Info,
-  ExternalLink,
-  Sparkles,
-  DollarSign,
-  Calendar,
-  Globe,
-  Clock,
-  Check,
-  FileText,
 } from "lucide-react";
-
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { useFieldArray, useForm } from "react-hook-form";
+import { addMockClient, getMockClients } from "../mockData";
+import { ClientItem, ClientStatus } from "../types";
 
 const CONSULTANTS = [
   { name: "Sarah K.", role: "Senior Immigration Specialist", initials: "SK" },
@@ -85,10 +78,15 @@ function generateRandomCaseId(): string {
   return `#APP-2026-${rand}`;
 }
 
-function parsePhoneAndDialCode(rawPhoneOrWhatsapp?: string): { dialCode: string; number: string } {
+function parsePhoneAndDialCode(rawPhoneOrWhatsapp?: string): {
+  dialCode: string;
+  number: string;
+} {
   if (!rawPhoneOrWhatsapp) return { dialCode: "+1", number: "" };
   const cleaned = rawPhoneOrWhatsapp.trim();
-  const sortedCodes = [...COUNTRY_DIAL_CODES].sort((a, b) => b.code.length - a.code.length);
+  const sortedCodes = [...COUNTRY_DIAL_CODES].sort(
+    (a, b) => b.code.length - a.code.length,
+  );
   const matched = sortedCodes.find((c) => cleaned.startsWith(c.code));
   if (matched) {
     const num = cleaned.slice(matched.code.length).trim();
@@ -119,7 +117,10 @@ interface ExistingUserOption {
 }
 
 export function CreateClientForm() {
-  const { data: servicesResponse } = useGetServicesQuery({ limit: 100, isActive: "true" });
+  const { data: servicesResponse } = useGetServicesQuery({
+    limit: 100,
+    isActive: "true",
+  });
   const services = servicesResponse?.data || [];
   const router = useRouter();
 
@@ -131,13 +132,19 @@ export function CreateClientForm() {
   }, []);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
-  const [createdClientId, setCreatedClientId] = React.useState<string | null>(null);
+  const [createdClientId, setCreatedClientId] = React.useState<string | null>(
+    null,
+  );
 
   // Applicant Intake Mode: "new" = brand new applicant, "existing" = pick from registered users/clients
   const [intakeMode, setIntakeMode] = React.useState<"new" | "existing">("new");
-  const [selectedExistingUser, setSelectedExistingUser] = React.useState<ExistingUserOption | null>(null);
-  const [existingSearchQuery, setExistingSearchQuery] = React.useState<string>("");
-  const [existingUserCategory, setExistingUserCategory] = React.useState<"all" | "user" | "client">("all");
+  const [selectedExistingUser, setSelectedExistingUser] =
+    React.useState<ExistingUserOption | null>(null);
+  const [existingSearchQuery, setExistingSearchQuery] =
+    React.useState<string>("");
+  const [existingUserCategory, setExistingUserCategory] = React.useState<
+    "all" | "user" | "client"
+  >("all");
 
   // Live Users API Query to fetch registered portal users dynamically from database
   const {
@@ -239,7 +246,8 @@ export function CreateClientForm() {
           city: u.city || undefined,
           initials,
           badgeLabel: `Portal User (${roleName})`,
-          existingCaseRef: u.clientId || `USR-${u.id.slice(0, 8).toUpperCase()}`,
+          existingCaseRef:
+            u.clientId || `USR-${u.id.slice(0, 8).toUpperCase()}`,
           role: roleName,
           userId: u.id,
           status: u.status,
@@ -273,15 +281,25 @@ export function CreateClientForm() {
         });
       } else if (emailKey) {
         // Complement the portal user profile with historical client case data if missing
-        const existingOpt = options.find((o) => o.email.toLowerCase() === emailKey);
+        const existingOpt = options.find(
+          (o) => o.email.toLowerCase() === emailKey,
+        );
         if (existingOpt) {
-          if (!existingOpt.passportNumber && c.passportNumber) existingOpt.passportNumber = c.passportNumber;
-          if (!existingOpt.destinationCountry && c.destination?.country) existingOpt.destinationCountry = c.destination.country;
-          if (!existingOpt.visaCategory && c.visaCategory?.title) existingOpt.visaCategory = c.visaCategory.title;
+          if (!existingOpt.passportNumber && c.passportNumber)
+            existingOpt.passportNumber = c.passportNumber;
+          if (!existingOpt.destinationCountry && c.destination?.country)
+            existingOpt.destinationCountry = c.destination.country;
+          if (!existingOpt.visaCategory && c.visaCategory?.title)
+            existingOpt.visaCategory = c.visaCategory.title;
           if (!existingOpt.phone && c.phone) existingOpt.phone = c.phone;
-          if (!existingOpt.whatsapp && c.whatsapp) existingOpt.whatsapp = c.whatsapp;
-          if (!existingOpt.countryOfOrigin && (c.countryOfOrigin || c.destination?.country)) {
-            existingOpt.countryOfOrigin = c.countryOfOrigin || c.destination?.country;
+          if (!existingOpt.whatsapp && c.whatsapp)
+            existingOpt.whatsapp = c.whatsapp;
+          if (
+            !existingOpt.countryOfOrigin &&
+            (c.countryOfOrigin || c.destination?.country)
+          ) {
+            existingOpt.countryOfOrigin =
+              c.countryOfOrigin || c.destination?.country;
           }
           if (!existingOpt.city && c.city) existingOpt.city = c.city;
         }
@@ -311,7 +329,7 @@ export function CreateClientForm() {
         (u.passportNumber && u.passportNumber.toLowerCase().includes(q)) ||
         (u.countryOfOrigin && u.countryOfOrigin.toLowerCase().includes(q)) ||
         (u.city && u.city.toLowerCase().includes(q)) ||
-        (u.role && u.role.toLowerCase().includes(q))
+        (u.role && u.role.toLowerCase().includes(q)),
     );
   }, [existingUserOptions, existingSearchQuery, existingUserCategory]);
 
@@ -346,7 +364,7 @@ export function CreateClientForm() {
     if (!currentNotes.trim()) {
       setValue(
         "internalNotes",
-        `New case opened for registered portal client ${user.name} (${user.existingCaseRef || user.email}).`
+        `New case opened for registered portal client ${user.name} (${user.existingCaseRef || user.email}).`,
       );
     }
   };
@@ -400,14 +418,16 @@ export function CreateClientForm() {
   // Milestone sum and mathematical validation status
   const totalMilestonesSum = watchedMilestones.reduce(
     (acc, m) => acc + (Number(m.amount) || 0),
-    0
+    0,
   );
   const totalAllocated = watchedDeposit + totalMilestonesSum;
   const financialDiscrepancy = computedContractedFee - totalAllocated;
   const isMathValid = Math.abs(financialDiscrepancy) < 0.05;
 
   // Handle schedule type preset selection
-  const handleScheduleTypeChange = (type: CreateClientFormValues["scheduleType"]) => {
+  const handleScheduleTypeChange = (
+    type: CreateClientFormValues["scheduleType"],
+  ) => {
     setValue("scheduleType", type);
     const fee = computedContractedFee;
 
@@ -472,7 +492,8 @@ export function CreateClientForm() {
       setValue("discountReason", "");
       setValue("contractedFee", selected.baseFee);
 
-      const deposit = selected.defaultDeposit || Math.round(selected.baseFee * 0.4);
+      const deposit =
+        selected.defaultDeposit || Math.round(selected.baseFee * 0.4);
       const remaining = selected.baseFee - deposit;
       const installments = selected.defaultInstallments || 2;
       const instAmt = Math.round(remaining / installments);
@@ -484,7 +505,10 @@ export function CreateClientForm() {
           id: `m${i}`,
           name: `Milestone ${i} - Phase Deliverable`,
           dueDate: "2026-10-15",
-          amount: i === installments ? remaining - instAmt * (installments - 1) : instAmt,
+          amount:
+            i === installments
+              ? remaining - instAmt * (installments - 1)
+              : instAmt,
         });
       }
       replace(newMilestones);
@@ -523,9 +547,12 @@ export function CreateClientForm() {
   };
 
   // WhatsApp formatted link preview
-  const cleanPhone = (watchedCountryCode + watchedWhatsapp).replace(/[^\d+]/g, "");
+  const cleanPhone = (watchedCountryCode + watchedWhatsapp).replace(
+    /[^\d+]/g,
+    "",
+  );
   const whatsappPreviewUrl = `https://wa.me/${cleanPhone.replace("+", "")}?text=${encodeURIComponent(
-    `Hello ${watchedName || "Valued Client"}, welcome to AdSkill Consultancy! Your case ${caseIdentifier || "#APP-2026-••••"} has been opened.`
+    `Hello ${watchedName || "Valued Client"}, welcome to AdSkill Consultancy! Your case ${caseIdentifier || "#APP-2026-••••"} has been opened.`,
   )}`;
 
   // Form submit handler
@@ -635,8 +662,7 @@ export function CreateClientForm() {
             asChild
             variant="outline"
             size="icon"
-            className="h-11 w-11 rounded-2xl bg-white border border-[#EAE6DF] text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs shrink-0 cursor-pointer"
-          >
+            className="h-11 w-11 rounded-2xl bg-white border border-[#EAE6DF] text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs shrink-0 cursor-pointer">
             <Link href={ROUTES.CLIENTS}>
               <ArrowLeft className="h-5 w-5 text-[#0a0a0a]" />
               <span className="sr-only">Back to Client Directory</span>
@@ -655,19 +681,19 @@ export function CreateClientForm() {
             <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
               <Link
                 href={ROUTES.CLIENTS}
-                className="hover:text-[#0a0a0a] transition-colors"
-              >
+                className="hover:text-[#0a0a0a] transition-colors">
                 Visa Applications
               </Link>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
               <Link
                 href={ROUTES.CLIENTS}
-                className="hover:text-[#0a0a0a] transition-colors"
-              >
+                className="hover:text-[#0a0a0a] transition-colors">
                 Application List
               </Link>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#0a0a0a] font-bold">Create Client Case</span>
+              <span className="text-[#0a0a0a] font-bold">
+                Create Client Case
+              </span>
             </div>
           </div>
         </div>
@@ -682,8 +708,7 @@ export function CreateClientForm() {
               </span>
               <span
                 suppressHydrationWarning
-                className="font-mono font-black text-sm text-[#0a0a0a] mt-0.5 block"
-              >
+                className="font-mono font-black text-sm text-[#0a0a0a] mt-0.5 block">
                 {caseIdentifier || "#APP-2026-••••"}
               </span>
             </div>
@@ -693,8 +718,7 @@ export function CreateClientForm() {
           <Button
             asChild
             variant="outline"
-            className="h-11 px-4 rounded-2xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs text-xs font-bold gap-2 cursor-pointer"
-          >
+            className="h-11 px-4 rounded-2xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs text-xs font-bold gap-2 cursor-pointer">
             <Link href={ROUTES.CLIENTS}>
               <FileText className="h-4 w-4 text-[#64748B]" />
               <span className="hidden sm:inline">View Client List</span>
@@ -702,7 +726,6 @@ export function CreateClientForm() {
           </Button>
         </div>
       </div>
-
 
       {/* Success Notification Banner */}
       {isSuccess && (
@@ -716,15 +739,15 @@ export function CreateClientForm() {
                 Client Case Successfully Onboarded!
               </div>
               <p className="text-xs text-[#047857] mt-0.5">
-                Case dossier {caseIdentifier} initialized with milestone schedule. Redirecting to Application List...
+                Case dossier {caseIdentifier} initialized with milestone
+                schedule. Redirecting to Application List...
               </p>
             </div>
           </div>
           {createdClientId && (
             <Link
               href={`/clients/${createdClientId}`}
-              className="text-xs font-bold text-[#065F46] underline hover:text-[#047857] px-3 py-1.5 rounded-xl bg-white/60"
-            >
+              className="text-xs font-bold text-[#065F46] underline hover:text-[#047857] px-3 py-1.5 rounded-xl bg-white/60">
               Open Dossier Immediately &rarr;
             </Link>
           )}
@@ -740,13 +763,13 @@ export function CreateClientForm() {
               {selectedExistingUser
                 ? "EXISTING CLIENT DOSSIER"
                 : intakeMode === "existing"
-                ? "EXISTING USER LOOKUP"
-                : "NEW APPLICANT DOSSIER"}
+                  ? "EXISTING USER LOOKUP"
+                  : "NEW APPLICANT DOSSIER"}
             </span>
             <span className="text-xs font-semibold text-[#64748B]">
               {selectedExistingUser
                 ? `Opening new case for ${selectedExistingUser.name} (${selectedExistingUser.existingCaseRef})`
-                : "Deterministic Case Profile & Financial Ledger Initialization"}
+                : ""}
             </span>
           </div>
 
@@ -759,14 +782,15 @@ export function CreateClientForm() {
               <select
                 onChange={handleCatalogSelect}
                 defaultValue=""
-                className="h-10 pl-3 pr-8 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] shadow-2xs cursor-pointer"
-              >
+                className="h-10 pl-3 pr-8 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] shadow-2xs cursor-pointer">
                 <option value="" disabled>
                   Load Service Catalog Preset...
                 </option>
                 {services.map((s: any) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({s.code} - ${Number(s.baseFee || 0).toLocaleString()} {s.currency || "USD"})
+                    {s.name} ({s.code} - $
+                    {Number(s.baseFee || 0).toLocaleString()}{" "}
+                    {s.currency || "USD"})
                   </option>
                 ))}
               </select>
@@ -789,7 +813,8 @@ export function CreateClientForm() {
                     1. Applicant Identity &amp; Credentials
                   </h3>
                   <p className="text-xs text-[#64748B]">
-                    Legal full identity, passport credentials, and contact details
+                    Legal full identity, passport credentials, and contact
+                    details
                   </p>
                 </div>
               </div>
@@ -803,9 +828,8 @@ export function CreateClientForm() {
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
                     intakeMode === "new"
                       ? "bg-[#0a0a0a] text-white shadow-xs"
-                      : "text-[#64748B] hover:text-[#0a0a0a]"
-                  )}
-                >
+                      : "text-[#64748B] hover:text-[#0a0a0a]",
+                  )}>
                   <UserPlus className="h-3.5 w-3.5" />
                   New Applicant
                 </button>
@@ -816,9 +840,8 @@ export function CreateClientForm() {
                     "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
                     intakeMode === "existing"
                       ? "bg-[#0a0a0a] text-white shadow-xs"
-                      : "text-[#64748B] hover:text-[#0a0a0a]"
-                  )}
-                >
+                      : "text-[#64748B] hover:text-[#0a0a0a]",
+                  )}>
                   <Users className="h-3.5 w-3.5" />
                   Existing User / Client
                 </button>
@@ -842,7 +865,9 @@ export function CreateClientForm() {
                           </span>
                         </div>
                         <p className="text-xs text-[#64748B] mt-0.5">
-                          Search among registered portal clients and users to open a new case for them without re-entering their data.
+                          Search among registered portal clients and users to
+                          open a new case for them without re-entering their
+                          data.
                         </p>
                       </div>
                       <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -858,7 +883,9 @@ export function CreateClientForm() {
                         <Search className="h-4 w-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
                         <Input
                           value={existingSearchQuery}
-                          onChange={(e) => setExistingSearchQuery(e.target.value)}
+                          onChange={(e) =>
+                            setExistingSearchQuery(e.target.value)
+                          }
                           placeholder="Search by name, email, phone, passport, city, or reference ID..."
                           className="h-11 pl-10 pr-9 rounded-xl bg-white border-[#EAE6DF] text-xs font-medium text-[#0a0a0a]"
                         />
@@ -866,8 +893,7 @@ export function CreateClientForm() {
                           <button
                             type="button"
                             onClick={() => setExistingSearchQuery("")}
-                            className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#0a0a0a]"
-                          >
+                            className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#0a0a0a]">
                             <X className="h-4 w-4" />
                           </button>
                         )}
@@ -882,9 +908,8 @@ export function CreateClientForm() {
                             "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
                             existingUserCategory === "all"
                               ? "bg-[#0a0a0a] text-white"
-                              : "text-[#64748B] hover:text-[#0a0a0a]"
-                          )}
-                        >
+                              : "text-[#64748B] hover:text-[#0a0a0a]",
+                          )}>
                           All ({existingUserOptions.length})
                         </button>
                         <button
@@ -894,10 +919,15 @@ export function CreateClientForm() {
                             "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
                             existingUserCategory === "user"
                               ? "bg-[#0a0a0a] text-white"
-                              : "text-[#64748B] hover:text-[#0a0a0a]"
-                          )}
-                        >
-                          Portal Users ({existingUserOptions.filter((u) => u.source === "user").length})
+                              : "text-[#64748B] hover:text-[#0a0a0a]",
+                          )}>
+                          Portal Users (
+                          {
+                            existingUserOptions.filter(
+                              (u) => u.source === "user",
+                            ).length
+                          }
+                          )
                         </button>
                         <button
                           type="button"
@@ -906,10 +936,15 @@ export function CreateClientForm() {
                             "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
                             existingUserCategory === "client"
                               ? "bg-[#0a0a0a] text-white"
-                              : "text-[#64748B] hover:text-[#0a0a0a]"
-                          )}
-                        >
-                          Past Clients ({existingUserOptions.filter((u) => u.source === "client").length})
+                              : "text-[#64748B] hover:text-[#0a0a0a]",
+                          )}>
+                          Past Clients (
+                          {
+                            existingUserOptions.filter(
+                              (u) => u.source === "client",
+                            ).length
+                          }
+                          )
                         </button>
                       </div>
                     </div>
@@ -920,8 +955,7 @@ export function CreateClientForm() {
                         {[1, 2, 3, 4, 5, 6].map((idx) => (
                           <div
                             key={idx}
-                            className="p-3 rounded-xl bg-white border border-[#EAE6DF] animate-pulse flex items-start gap-3"
-                          >
+                            className="p-3 rounded-xl bg-white border border-[#EAE6DF] animate-pulse flex items-start gap-3">
                             <div className="h-9 w-9 rounded-xl bg-slate-200 shrink-0" />
                             <div className="flex-1 space-y-2">
                               <div className="h-3.5 bg-slate-200 rounded-md w-3/4" />
@@ -937,10 +971,10 @@ export function CreateClientForm() {
                             <div
                               key={user.id}
                               onClick={() => handleSelectExistingUser(user)}
-                              className="p-3 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#0a0a0a] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group relative overflow-hidden"
-                            >
+                              className="p-3 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#0a0a0a] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group relative overflow-hidden">
                               <div className="h-9 w-9 rounded-xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] font-extrabold text-xs flex items-center justify-center shrink-0 group-hover:bg-[#0a0a0a] group-hover:text-white transition-colors">
-                                {user.initials || user.name.slice(0, 2).toUpperCase()}
+                                {user.initials ||
+                                  user.name.slice(0, 2).toUpperCase()}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-1">
@@ -952,10 +986,11 @@ export function CreateClientForm() {
                                       "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 uppercase tracking-tight",
                                       user.source === "user"
                                         ? "bg-[#EBF8FF] text-[#0284C7] border border-[#BAE6FD]"
-                                        : "bg-[#FAF8F5] text-[#64748B] border border-[#EAE6DF]"
-                                    )}
-                                  >
-                                    {user.source === "user" ? (user.role || "User") : "Client"}
+                                        : "bg-[#FAF8F5] text-[#64748B] border border-[#EAE6DF]",
+                                    )}>
+                                    {user.source === "user"
+                                      ? user.role || "User"
+                                      : "Client"}
                                   </span>
                                 </div>
                                 <span className="text-[11px] text-[#64748B] truncate block">
@@ -976,7 +1011,8 @@ export function CreateClientForm() {
                           ))
                         ) : (
                           <div className="col-span-full py-6 text-center text-xs text-[#94A3B8] bg-white rounded-xl border border-dashed border-[#EAE6DF]">
-                            No records found matching &ldquo;{existingSearchQuery}&rdquo;.
+                            No records found matching &ldquo;
+                            {existingSearchQuery}&rdquo;.
                           </div>
                         )}
                       </div>
@@ -995,7 +1031,9 @@ export function CreateClientForm() {
                             {selectedExistingUser.name}
                           </span>
                           <span className="text-[10px] font-extrabold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded-md">
-                            {selectedExistingUser.source === "user" ? "Registered Portal User Linked" : "Existing Client Linked"}
+                            {selectedExistingUser.source === "user"
+                              ? "Registered Portal User Linked"
+                              : "Existing Client Linked"}
                           </span>
                           {selectedExistingUser.existingCaseRef && (
                             <span className="text-[10px] font-mono font-bold text-[#64748B] bg-[#FAF8F5] border border-[#EAE6DF] px-2 py-0.5 rounded-md">
@@ -1005,9 +1043,12 @@ export function CreateClientForm() {
                         </div>
                         <p className="text-xs text-[#64748B] mt-0.5">
                           {selectedExistingUser.email}
-                          {selectedExistingUser.phone && ` • ${selectedExistingUser.phone}`}
-                          {selectedExistingUser.whatsapp && ` • WA: ${selectedExistingUser.whatsapp}`}
-                          {selectedExistingUser.countryOfOrigin && ` • Origin: ${selectedExistingUser.countryOfOrigin}`}
+                          {selectedExistingUser.phone &&
+                            ` • ${selectedExistingUser.phone}`}
+                          {selectedExistingUser.whatsapp &&
+                            ` • WA: ${selectedExistingUser.whatsapp}`}
+                          {selectedExistingUser.countryOfOrigin &&
+                            ` • Origin: ${selectedExistingUser.countryOfOrigin}`}
                         </p>
                       </div>
                     </div>
@@ -1017,16 +1058,14 @@ export function CreateClientForm() {
                         type="button"
                         variant="outline"
                         onClick={handleClearExistingUser}
-                        className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
-                      >
+                        className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer">
                         Change Selection
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => handleSwitchIntakeMode("new")}
-                        className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 cursor-pointer"
-                      >
+                        className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 cursor-pointer">
                         Detach / New Applicant
                       </Button>
                     </div>
@@ -1128,7 +1167,8 @@ export function CreateClientForm() {
                   2. WhatsApp Channel &amp; Country Code Selector
                 </h3>
                 <p className="text-xs text-[#64748B]">
-                  Direct mobile line for automated payment reminders, milestone invoices, and document alerts
+                  Direct mobile line for automated payment reminders, milestone
+                  invoices, and document alerts
                 </p>
               </div>
             </div>
@@ -1140,8 +1180,7 @@ export function CreateClientForm() {
                 </label>
                 <select
                   {...register("countryCode")}
-                  className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
-                >
+                  className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
                   {COUNTRY_DIAL_CODES.map((item) => (
                     <option key={item.code} value={item.code}>
                       {item.flag} {item.label}
@@ -1176,8 +1215,7 @@ export function CreateClientForm() {
                       href={whatsappPreviewUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[#059669] hover:underline font-bold flex items-center gap-1"
-                    >
+                      className="text-[#059669] hover:underline font-bold flex items-center gap-1">
                       <ExternalLink className="h-3 w-3" />
                       Test wa.me link
                     </a>
@@ -1197,7 +1235,9 @@ export function CreateClientForm() {
                     Welcome &amp; Case Opening Automated Template
                   </span>
                   <p className="text-xs text-[#065F46] font-medium font-mono mt-0.5">
-                    "👋 Hello {watchedName || "[Client Name]"}, welcome to AdSkill! Your case has been registered under {caseIdentifier || "#APP-2026-••••"}."
+                    "👋 Hello {watchedName || "[Client Name]"}, welcome to
+                    AdSkill! Your case has been registered under{" "}
+                    {caseIdentifier || "#APP-2026-••••"}."
                   </p>
                 </div>
               </div>
@@ -1218,7 +1258,8 @@ export function CreateClientForm() {
                   3. Case Jurisdiction &amp; Visa Destination
                 </h3>
                 <p className="text-xs text-[#64748B]">
-                  Destination legal jurisdiction, visa stream, and assigned staff member
+                  Destination legal jurisdiction, visa stream, and assigned
+                  staff member
                 </p>
               </div>
             </div>
@@ -1231,8 +1272,7 @@ export function CreateClientForm() {
                 <select
                   value={watchedCountry}
                   onChange={(e) => handleCountryChange(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
-                >
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
                   <option value="Canada">🇨🇦 Canada (CA)</option>
                   <option value="United States">🇺🇸 United States (US)</option>
                   <option value="United Kingdom">🇬🇧 United Kingdom (GB)</option>
@@ -1274,11 +1314,16 @@ export function CreateClientForm() {
                 </label>
                 <select
                   {...register("status")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
-                >
-                  <option value="Processing">Processing (Initial Intake)</option>
-                  <option value="Under Review">Under Review (Legal Audit)</option>
-                  <option value="Missing Docs">Missing Docs (Action Required)</option>
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
+                  <option value="Processing">
+                    Processing (Initial Intake)
+                  </option>
+                  <option value="Under Review">
+                    Under Review (Legal Audit)
+                  </option>
+                  <option value="Missing Docs">
+                    Missing Docs (Action Required)
+                  </option>
                   <option value="Approved">Approved (Adjudicated)</option>
                   <option value="Delayed">Delayed (Embassy Backlog)</option>
                 </select>
@@ -1292,8 +1337,7 @@ export function CreateClientForm() {
                 </label>
                 <select
                   {...register("assignedConsultant")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
-                >
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
                   {CONSULTANTS.map((c) => (
                     <option key={c.name} value={c.name}>
                       {c.name} — {c.role}
@@ -1324,10 +1368,12 @@ export function CreateClientForm() {
               </div>
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  4. Professional Fees &amp; Milestone Payment Plan (Section 6 &amp; 8)
+                  4. Professional Fees &amp; Milestone Payment Plan (Section 6
+                  &amp; 8)
                 </h3>
                 <p className="text-xs text-[#64748B]">
-                  Contracted professional fees, discounts with required justification, and installment schedule
+                  Contracted professional fees, discounts with required
+                  justification, and installment schedule
                 </p>
               </div>
             </div>
@@ -1340,8 +1386,7 @@ export function CreateClientForm() {
                 </label>
                 <select
                   {...register("currency")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
-                >
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
                   {CURRENCIES.map((c) => (
                     <option key={c.code} value={c.code}>
                       {c.label}
@@ -1417,7 +1462,8 @@ export function CreateClientForm() {
                   className="h-10 rounded-xl bg-white border-[#FDE68A] text-xs font-semibold text-[#0a0a0a]"
                 />
                 <p className="text-[11px] text-[#92400E]">
-                  Section 6 Governance: Every fee deduction requires a recorded rationale in the company audit trail.
+                  Section 6 Governance: Every fee deduction requires a recorded
+                  rationale in the company audit trail.
                 </p>
               </div>
             )}
@@ -1442,24 +1488,26 @@ export function CreateClientForm() {
                 <div className="flex items-center gap-1.5 bg-[#FAF8F5] p-1.5 rounded-2xl border border-[#EAE6DF]">
                   <button
                     type="button"
-                    onClick={() => handleScheduleTypeChange("deposit_2_milestones")}
+                    onClick={() =>
+                      handleScheduleTypeChange("deposit_2_milestones")
+                    }
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       watchedScheduleType === "deposit_2_milestones"
                         ? "bg-[#0a0a0a] text-white shadow-2xs"
                         : "text-[#64748B] hover:text-[#0a0a0a]"
-                    }`}
-                  >
+                    }`}>
                     Deposit + 2 Milestones
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleScheduleTypeChange("deposit_3_monthly")}
+                    onClick={() =>
+                      handleScheduleTypeChange("deposit_3_monthly")
+                    }
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       watchedScheduleType === "deposit_3_monthly"
                         ? "bg-[#0a0a0a] text-white shadow-2xs"
                         : "text-[#64748B] hover:text-[#0a0a0a]"
-                    }`}
-                  >
+                    }`}>
                     Deposit + 3 Monthly
                   </button>
                   <button
@@ -1469,8 +1517,7 @@ export function CreateClientForm() {
                       watchedScheduleType === "single"
                         ? "bg-[#0a0a0a] text-white shadow-2xs"
                         : "text-[#64748B] hover:text-[#0a0a0a]"
-                    }`}
-                  >
+                    }`}>
                     100% Full Payment
                   </button>
                   <button
@@ -1480,8 +1527,7 @@ export function CreateClientForm() {
                       watchedScheduleType === "custom"
                         ? "bg-[#0a0a0a] text-white shadow-2xs"
                         : "text-[#64748B] hover:text-[#0a0a0a]"
-                    }`}
-                  >
+                    }`}>
                     Custom
                   </button>
                 </div>
@@ -1493,8 +1539,7 @@ export function CreateClientForm() {
                   {fields.map((field, idx) => (
                     <div
                       key={field.id}
-                      className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-white p-3 rounded-xl border border-[#EAE6DF] shadow-2xs"
-                    >
+                      className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-white p-3 rounded-xl border border-[#EAE6DF] shadow-2xs">
                       <div className="sm:col-span-1 text-center font-mono font-black text-xs text-[#94A3B8]">
                         #{idx + 1}
                       </div>
@@ -1531,8 +1576,7 @@ export function CreateClientForm() {
                         <button
                           type="button"
                           onClick={() => handleRemoveMilestone(idx)}
-                          className="text-[#94A3B8] hover:text-rose-600 transition-colors p-1.5 cursor-pointer"
-                        >
+                          className="text-[#94A3B8] hover:text-rose-600 transition-colors p-1.5 cursor-pointer">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -1544,8 +1588,7 @@ export function CreateClientForm() {
                     variant="outline"
                     size="sm"
                     onClick={handleAddMilestone}
-                    className="w-full h-10 rounded-xl border-dashed border-[#CBD5E1] text-xs font-bold text-[#0a0a0a] hover:bg-white gap-2 cursor-pointer"
-                  >
+                    className="w-full h-10 rounded-xl border-dashed border-[#CBD5E1] text-xs font-bold text-[#0a0a0a] hover:bg-white gap-2 cursor-pointer">
                     <Plus className="h-4 w-4" />
                     Add Another Custom Milestone Installment
                   </Button>
@@ -1558,8 +1601,7 @@ export function CreateClientForm() {
                   isMathValid
                     ? "bg-[#ECFDF5] border-[#059669]/30 text-[#065F46]"
                     : "bg-[#FFF1F2] border-[#E11D48]/30 text-[#9F1239]"
-                }`}
-              >
+                }`}>
                 <div className="flex items-center gap-2.5">
                   {isMathValid ? (
                     <CheckCircle2 className="h-5 w-5 text-[#059669] shrink-0" />
@@ -1581,8 +1623,13 @@ export function CreateClientForm() {
               <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs text-[#64748B] flex items-start gap-3">
                 <Info className="h-4.5 w-4.5 text-[#0a0a0a] shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  <strong className="text-[#0a0a0a]">Section 5 Accounting Separation Rule:</strong>{" "}
-                  AdSkill professional fees cover dedicated casework, consulting, and application preparation. Third-party filing fees (e.g. USCIS, IRCC, UKVI) and certified translations are strictly separated and are not recognized as company revenue.
+                  <strong className="text-[#0a0a0a]">
+                    Section 5 Accounting Separation Rule:
+                  </strong>{" "}
+                  AdSkill professional fees cover dedicated casework,
+                  consulting, and application preparation. Third-party filing
+                  fees (e.g. USCIS, IRCC, UKVI) and certified translations are
+                  strictly separated and are not recognized as company revenue.
                 </p>
               </div>
             </div>
@@ -1599,7 +1646,8 @@ export function CreateClientForm() {
                   5. Onboarding Preferences &amp; Case Notes
                 </h3>
                 <p className="text-xs text-[#64748B]">
-                  Client communication preferences and confidential internal intake notes
+                  Client communication preferences and confidential internal
+                  intake notes
                 </p>
               </div>
             </div>
@@ -1616,7 +1664,8 @@ export function CreateClientForm() {
                     WhatsApp Welcome Notice
                   </span>
                   <p className="text-[#64748B] text-[11px] mt-0.5">
-                    Dispatches Case ID and portal link to {watchedCountryCode} {watchedWhatsapp || "mobile"}
+                    Dispatches Case ID and portal link to {watchedCountryCode}{" "}
+                    {watchedWhatsapp || "mobile"}
                   </p>
                 </div>
               </label>
@@ -1632,7 +1681,8 @@ export function CreateClientForm() {
                     Email Portal Invitation
                   </span>
                   <p className="text-[#64748B] text-[11px] mt-0.5">
-                    Sends private client login credential invitation to {watchedEmail || "email"}
+                    Sends private client login credential invitation to{" "}
+                    {watchedEmail || "email"}
                   </p>
                 </div>
               </label>
@@ -1648,7 +1698,8 @@ export function CreateClientForm() {
                     Automated Payment Reminders
                   </span>
                   <p className="text-[#64748B] text-[11px] mt-0.5">
-                    Reminders 7 days and 3 days before due dates; halts instantly once paid
+                    Reminders 7 days and 3 days before due dates; halts
+                    instantly once paid
                   </p>
                 </div>
               </label>
@@ -1687,23 +1738,21 @@ export function CreateClientForm() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full sm:w-auto h-12 px-6 rounded-2xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
-              >
+                className="w-full sm:w-auto h-12 px-6 rounded-2xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer">
                 <Link href={ROUTES.CLIENTS}>Cancel &amp; Return</Link>
               </Button>
 
               <Button
                 type="submit"
                 disabled={isSubmitting || !isMathValid}
-                className="w-full sm:w-auto h-12 px-8 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10, 10, 10,0.2)] text-xs font-bold cursor-pointer gap-2 transition-all disabled:opacity-50"
-              >
+                className="w-full sm:w-auto h-12 px-8 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10, 10, 10,0.2)] text-xs font-bold cursor-pointer gap-2 transition-all disabled:opacity-50">
                 <UserPlus className="h-4 w-4 text-[#F3A712]" />
                 <span>
                   {isSubmitting
                     ? "Onboarding Client Case..."
                     : selectedExistingUser
-                    ? "Add Case for Existing Client"
-                    : "Save & Open Case"}
+                      ? "Add Case for Existing Client"
+                      : "Save & Open Case"}
                 </span>
               </Button>
             </div>

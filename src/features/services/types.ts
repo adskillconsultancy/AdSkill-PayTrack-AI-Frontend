@@ -154,7 +154,7 @@ export interface GetServicesQueryParams {
 
 export interface CreateBackendServiceRequest {
   name: string;
-  code: string;
+  code?: string;
   category?: BackendServiceCategory;
   description?: string;
   baseFee: number;
@@ -171,3 +171,4 @@ export interface CreateBackendServiceRequest {
 export interface UpdateBackendServiceRequest extends Partial<CreateBackendServiceRequest> {
   isDeleted?: boolean;
 }
+

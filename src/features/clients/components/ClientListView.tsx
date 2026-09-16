@@ -417,7 +417,10 @@ export function ClientListView({
         </div>
       </div>
 
-      {/* ── 2. SEARCH BAR & ACTION TOOLBAR ── */}
+      {/* ── 2. 4 METRIC SUMMARY KPI CARDS ── */}
+      <ClientMetricCards stats={INITIAL_CLIENT_STATS} />
+
+      {/* ── 3. SEARCH BAR & ACTION TOOLBAR ── */}
       <ClientSearchBar
         searchQuery={searchQuery}
         onSearchChange={(q) => {
@@ -435,16 +438,6 @@ export function ClientListView({
           setCurrentPage(1);
         }}
         onNewClientClick={() => setIsNewClientModalOpen(true)}
-      />
-
-      {/* ── 3. 4 METRIC SUMMARY KPI CARDS ── */}
-      <ClientMetricCards
-        stats={INITIAL_CLIENT_STATS}
-        activeFilter={statusFilter}
-        onFilterSelect={(status) => {
-          setStatusFilter(status);
-          setCurrentPage(1);
-        }}
       />
 
       {/* ── 4. REUSABLE DATA TABLE CONTAINER ── */}

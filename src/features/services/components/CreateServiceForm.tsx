@@ -1,36 +1,29 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/common/Button";
+import { Input } from "@/components/common/Input";
+import { ROUTES } from "@/constants/routes";
+import { useCreateServiceMutation } from "@/services/api/services/servicesApi";
 import {
   createServiceSchema,
   SERVICE_CATEGORIES,
   type CreateServiceFormValues,
 } from "@/validations/service.schema";
-import { Button } from "@/components/common/Button";
-import { Input } from "@/components/common/Input";
-import { useCreateServiceMutation } from "@/services/api/services/servicesApi";
-import { ROUTES } from "@/constants/routes";
-import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ArrowLeft,
-  ChevronRight,
-  Briefcase,
-  ShieldCheck,
-  CheckCircle2,
   AlertCircle,
-  Plus,
-  Scale,
-  FileSpreadsheet,
-  Info,
+  Briefcase,
+  CheckCircle2,
+  ChevronRight,
   Clock,
-  DollarSign,
-  Building2,
+  FileSpreadsheet,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { useForm } from "react-hook-form";
 
 export function CreateServiceForm() {
   const router = useRouter();
@@ -40,12 +33,24 @@ export function CreateServiceForm() {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   // RTK Query Live Mutation
-  const [createServiceMutation, { isLoading: isApiLoading }] = useCreateServiceMutation();
+  const [createServiceMutation, { isLoading: isApiLoading }] =
+    useCreateServiceMutation();
 
-  // Fee Separation Input States
-  const [govFee, setGovFee] = React.useState<number>(0);
-  const [attyFee, setAttyFee] = React.useState<number>(0);
-  const [thirdFee, setThirdFee] = React.useState<number>(0);
+  // Fee Separation Input States - empty strings so 0 does not show in front when typing
+  const [govFee, setGovFee] = React.useState<string>("");
+  const [attyFee, setAttyFee] = React.useState<string>("");
+  const [thirdFee, setThirdFee] = React.useState<string>("");
+
+  // Helper to prevent leading zeros when user types
+  const handleFeeInputChange =
+    (setter: React.Dispatch<React.SetStateAction<string>>) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      let val = e.target.value;
+      if (val.length > 1 && val.startsWith("0") && !val.startsWith("0.")) {
+        val = val.replace(/^0+/, "") || "0";
+      }
+      setter(val);
+    };
 
   // Initialize React Hook Form
   const {
@@ -58,49 +63,71 @@ export function CreateServiceForm() {
     resolver: zodResolver(createServiceSchema),
     defaultValues: {
       name: "",
-      code: "",
       category: "IMMIGRATION",
       description: "",
-      baseFee: 5000,
+      baseFee: undefined,
       currency: "USD",
-      defaultDeposit: 1500,
-      defaultInstallments: 4,
-      estimatedDuration: "6-9 months",
+      defaultDeposit: undefined,
+      defaultInstallments: undefined,
+      estimatedDuration: "",
       isActive: true,
     },
   });
 
-  const watchedBaseFee = watch("baseFee") || 0;
+  const watchedBaseFee = watch("baseFee");
+  const numBaseFee = Number(watchedBaseFee) || 0;
   const watchedName = watch("name") || "Untitled Service Offering";
-  const watchedCode = watch("code") || "SKU-CODE";
   const watchedCategory = watch("category") || "IMMIGRATION";
-  const watchedDuration = watch("estimatedDuration") || "6-9 months";
-  const watchedDeposit = watch("defaultDeposit") || 0;
-  const watchedInstallments = watch("defaultInstallments") || 1;
+  const watchedDuration = watch("estimatedDuration") || "";
+  const watchedDeposit = watch("defaultDeposit");
+  const numDeposit = Number(watchedDeposit) || 0;
+  const watchedInstallments = watch("defaultInstallments");
+  const numInstallments =
+    watchedInstallments !== undefined &&
+    watchedInstallments !== null &&
+    !Number.isNaN(Number(watchedInstallments))
+      ? Number(watchedInstallments)
+      : undefined;
+  const watchedCurrency = watch("currency") || "USD";
 
-  const totalPassThrough = govFee + attyFee + thirdFee;
-  const totalClientCost = Number(watchedBaseFee) + totalPassThrough;
+  const numGovFee = Number(govFee) || 0;
+  const numAttyFee = Number(attyFee) || 0;
+  const numThirdFee = Number(thirdFee) || 0;
+
+  const totalPassThrough = numGovFee + numAttyFee + numThirdFee;
+  const totalClientCost = numBaseFee + totalPassThrough;
 
   // Submit Handler (100% Live Backend API)
   const onSubmit = async (data: CreateServiceFormValues) => {
     setErrorMessage(null);
     setIsSubmitting(true);
 
+    const depositVal =
+      data.defaultDeposit !== undefined &&
+      data.defaultDeposit !== null &&
+      !Number.isNaN(Number(data.defaultDeposit))
+        ? Number(data.defaultDeposit)
+        : undefined;
+
+    const installmentsVal =
+      data.defaultInstallments !== undefined &&
+      data.defaultInstallments !== null &&
+      !Number.isNaN(Number(data.defaultInstallments))
+        ? Number(data.defaultInstallments)
+        : undefined;
+
     try {
       await createServiceMutation({
         name: data.name.trim(),
-        code: data.code.trim().toUpperCase(),
         category: data.category,
         description: data.description?.trim() || undefined,
         baseFee: Number(data.baseFee) || 0,
-        estimatedGovFee: govFee,
-        estimatedAttorneyFee: attyFee,
-        estimatedThirdPartyFee: thirdFee,
+        estimatedGovFee: numGovFee,
+        estimatedAttorneyFee: numAttyFee,
+        estimatedThirdPartyFee: numThirdFee,
         currency: data.currency || "USD",
-        defaultDeposit: data.defaultDeposit ? Number(data.defaultDeposit) : undefined,
-        defaultInstallments: data.defaultInstallments
-          ? Number(data.defaultInstallments)
-          : undefined,
+        defaultDeposit: depositVal,
+        defaultInstallments: installmentsVal,
         estimatedDuration: data.estimatedDuration?.trim() || undefined,
         isActive: data.isActive,
       }).unwrap();
@@ -138,8 +165,7 @@ export function CreateServiceForm() {
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
               <Link
                 href={ROUTES.SERVICES}
-                className="hover:text-[#0a0a0a] transition-colors"
-              >
+                className="hover:text-[#0a0a0a] transition-colors">
                 Service Catalog
               </Link>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
@@ -153,8 +179,7 @@ export function CreateServiceForm() {
             type="button"
             variant="outline"
             onClick={() => router.push(ROUTES.SERVICES)}
-            className="h-10 px-4 rounded-xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] cursor-pointer"
-          >
+            className="h-10 px-4 rounded-xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] cursor-pointer">
             Cancel
           </Button>
 
@@ -162,8 +187,7 @@ export function CreateServiceForm() {
             type="button"
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting || isApiLoading}
-            className="h-10 px-5 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold shadow-xs gap-1.5 cursor-pointer"
-          >
+            className="h-10 px-5 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold shadow-xs gap-1.5 cursor-pointer">
             {isSubmitting || isApiLoading ? (
               <span>Publishing...</span>
             ) : (
@@ -181,7 +205,8 @@ export function CreateServiceForm() {
         <div className="p-4 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center gap-3 text-xs text-[#065F46] font-bold animate-in fade-in slide-in-from-top-2">
           <CheckCircle2 className="h-5 w-5 text-[#059669] shrink-0" />
           <span>
-            Service Offering successfully registered into PostgreSQL! Redirecting to catalog...
+            Service Offering successfully registered into PostgreSQL!
+            Redirecting to catalog...
           </span>
         </div>
       )}
@@ -231,38 +256,19 @@ export function CreateServiceForm() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
-                    Program Code / SKU <span className="text-rose-500">*</span>
-                  </label>
-                  <Input
-                    {...register("code")}
-                    placeholder="e.g. EB2-NIW"
-                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] font-mono text-xs font-bold uppercase text-[#0a0a0a]"
-                  />
-                  {errors.code && (
-                    <p className="text-[11px] font-semibold text-rose-500">
-                      {errors.code.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
-                    Service Category <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    {...register("category")}
-                    className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] cursor-pointer"
-                  >
-                    {SERVICE_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat.replace("_", " ")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
+                  Service Category <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  {...register("category")}
+                  className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] cursor-pointer">
+                  {SERVICE_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.replace("_", " ")}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-1.5">
@@ -291,7 +297,8 @@ export function CreateServiceForm() {
                     2. Strict Regulatory Fee Separation Architecture
                   </h3>
                   <p className="text-[11px] text-[#64748B]">
-                    Isolate AdSkill advisory revenue from third-party pass-through disbursements.
+                    Isolate AdSkill advisory revenue from third-party
+                    pass-through disbursements.
                   </p>
                 </div>
               </div>
@@ -317,11 +324,32 @@ export function CreateServiceForm() {
                   <input
                     type="number"
                     step="any"
-                    {...register("baseFee", { valueAsNumber: true })}
-                    placeholder="5000"
+                    {...register("baseFee", {
+                      setValueAs: (v) =>
+                        v === "" || v === null || Number.isNaN(v) ? undefined : Number(v),
+                    })}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      if (val.length > 1 && val.startsWith("0") && !val.startsWith("0.")) {
+                        val = val.replace(/^0+/, "") || "0";
+                        e.target.value = val;
+                      }
+                      setValue(
+                        "baseFee",
+                        val === "" ? (undefined as unknown as number) : Number(val),
+                        { shouldValidate: true }
+                      );
+                    }}
+                    placeholder="0"
                     className="w-full h-10 pl-7 pr-3 rounded-xl bg-white border border-[#CBD5E1] font-mono text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                   />
                 </div>
+                {errors.baseFee && (
+                  <p className="text-[11px] font-semibold text-rose-500">
+                    {errors.baseFee.message}
+                  </p>
+                )}
                 <p className="text-[10px] text-[#64748B]">
                   Firm professional fee (treated as taxable earnings).
                 </p>
@@ -343,7 +371,8 @@ export function CreateServiceForm() {
                     type="number"
                     step="any"
                     value={govFee}
-                    onChange={(e) => setGovFee(Number(e.target.value) || 0)}
+                    onChange={handleFeeInputChange(setGovFee)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="0"
                     className="w-full h-10 pl-7 pr-3 rounded-xl bg-white border border-[#CBD5E1] font-mono text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                   />
@@ -369,7 +398,8 @@ export function CreateServiceForm() {
                     type="number"
                     step="any"
                     value={attyFee}
-                    onChange={(e) => setAttyFee(Number(e.target.value) || 0)}
+                    onChange={handleFeeInputChange(setAttyFee)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="0"
                     className="w-full h-10 pl-7 pr-3 rounded-xl bg-white border border-[#CBD5E1] font-mono text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                   />
@@ -395,7 +425,8 @@ export function CreateServiceForm() {
                     type="number"
                     step="any"
                     value={thirdFee}
-                    onChange={(e) => setThirdFee(Number(e.target.value) || 0)}
+                    onChange={handleFeeInputChange(setThirdFee)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="0"
                     className="w-full h-10 pl-7 pr-3 rounded-xl bg-white border border-[#CBD5E1] font-mono text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
                   />
@@ -417,16 +448,17 @@ export function CreateServiceForm() {
                     Total Client Out-of-Pocket Estimate
                   </div>
                   <div className="text-[11px] text-slate-400">
-                    AdSkill Base ($${(Number(watchedBaseFee) || 0).toLocaleString()}) + Total Pass-Through ($${totalPassThrough.toLocaleString()})
+                    AdSkill Base (${numBaseFee.toLocaleString()}) + Total
+                    Pass-Through (${totalPassThrough.toLocaleString()})
                   </div>
                 </div>
               </div>
 
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-2xl font-black text-[#F3A712]">
-                  $${totalClientCost.toLocaleString()}
+                  ${totalClientCost.toLocaleString()}
                 </span>
-                <span className="font-mono text-xs text-slate-400">USD</span>
+                <span className="font-mono text-xs text-slate-400">{watchedCurrency}</span>
               </div>
             </div>
 
@@ -437,8 +469,7 @@ export function CreateServiceForm() {
               </span>
               <select
                 {...register("currency")}
-                className="h-9 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none cursor-pointer"
-              >
+                className="h-9 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none cursor-pointer">
                 <option value="USD">USD ($) - United States Dollar</option>
                 <option value="CAD">CAD (C$) - Canadian Dollar</option>
                 <option value="GBP">GBP (£) - British Pound</option>
@@ -447,7 +478,7 @@ export function CreateServiceForm() {
             </div>
           </div>
 
-          {/* Section 3: Retainer & Milestone Schedule Terms */}
+          {/* Section 3: Client Payment Plan Defaults */}
           <div className="p-6 sm:p-7 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-5">
             <div className="flex items-center gap-2.5 pb-3 border-b border-[#F0ECE6]">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706]">
@@ -455,10 +486,11 @@ export function CreateServiceForm() {
               </div>
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
-                  3. Retainer &amp; Milestone Terms
+                  3. Client Payment Plan Defaults
                 </h3>
                 <p className="text-[11px] text-[#64748B]">
-                  Suggested financial milestone defaults for client payment plans
+                  Default deposit, milestone cadence, and delivery timeline for
+                  new client engagements.
                 </p>
               </div>
             </div>
@@ -466,38 +498,93 @@ export function CreateServiceForm() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
-                  Upfront Retainer Deposit ($)
+                  Initial Engagement Payment ($)
                 </label>
                 <Input
                   type="number"
                   step="any"
-                  {...register("defaultDeposit", { valueAsNumber: true })}
-                  placeholder="1500"
+                  {...register("defaultDeposit", {
+                    setValueAs: (v) =>
+                      v === "" || v === null || Number.isNaN(v) ? undefined : Number(v),
+                  })}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val.length > 1 && val.startsWith("0") && !val.startsWith("0.")) {
+                      val = val.replace(/^0+/, "") || "0";
+                      e.target.value = val;
+                    }
+                    setValue(
+                      "defaultDeposit",
+                      val === "" ? (undefined as unknown as number) : Number(val),
+                      { shouldValidate: true }
+                    );
+                  }}
+                  placeholder="0"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] font-mono text-xs font-bold text-[#0a0a0a]"
                 />
+                <p className="text-[10px] text-[#64748B]">
+                  Upfront retainer. If 0 or empty, engagement defaults to Full Payment.
+                </p>
+                {errors.defaultDeposit && (
+                  <p className="text-[11px] font-semibold text-rose-500">
+                    {errors.defaultDeposit.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
-                  Milestone Installments Count
+                  Number of Milestone Payments
                 </label>
                 <Input
                   type="number"
-                  {...register("defaultInstallments", { valueAsNumber: true })}
+                  min="0"
+                  step="1"
+                  {...register("defaultInstallments", {
+                    setValueAs: (v) =>
+                      v === "" || v === null || Number.isNaN(v) ? undefined : Number(v),
+                  })}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val.length > 1 && val.startsWith("0")) {
+                      val = val.replace(/^0+/, "") || "0";
+                      e.target.value = val;
+                    }
+                    setValue(
+                      "defaultInstallments",
+                      val === "" ? (undefined as unknown as number) : Number(val),
+                      { shouldValidate: true }
+                    );
+                  }}
                   placeholder="4"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] font-mono text-xs font-bold text-[#0a0a0a]"
                 />
+                <p className="text-[10px] text-[#64748B]">
+                  Milestone count. If 0 or 1, engagement is treated as Full Payment.
+                </p>
+                {errors.defaultInstallments && (
+                  <p className="text-[11px] font-semibold text-rose-500">
+                    {errors.defaultInstallments.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
-                  Estimated Duration
+                  Estimated Delivery Timeline <span className="text-rose-500">*</span>
                 </label>
                 <Input
                   {...register("estimatedDuration")}
                   placeholder="e.g. 6-9 months"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-bold text-[#0a0a0a]"
                 />
+                {errors.estimatedDuration && (
+                  <p className="text-[11px] font-semibold text-rose-500">
+                    {errors.estimatedDuration.message}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -507,7 +594,8 @@ export function CreateServiceForm() {
                   Active Offering Status
                 </span>
                 <span className="text-[11px] text-[#64748B]">
-                  Immediately make this service available for client case enrollment
+                  Immediately make this service available for client case
+                  enrollment
                 </span>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -535,7 +623,7 @@ export function CreateServiceForm() {
             <div className="space-y-4">
               <div>
                 <span className="font-mono text-xs font-bold text-[#0a0a0a] bg-[#FAF8F5] px-2 py-0.5 rounded-md border border-[#EAE6DF]">
-                  {watchedCode}
+                  Auto-Generated SKU
                 </span>
                 <h4 className="text-sm font-black text-[#0a0a0a] mt-1.5">
                   {watchedName}
@@ -549,35 +637,35 @@ export function CreateServiceForm() {
                 <div className="flex justify-between text-[#64748B]">
                   <span>AdSkill Advisory Base:</span>
                   <strong className="text-[#059669] font-mono">
-                    $${(Number(watchedBaseFee) || 0).toLocaleString()}
+                    ${numBaseFee.toLocaleString()}
                   </strong>
                 </div>
 
                 <div className="flex justify-between text-[#64748B]">
                   <span>USCIS / Filing Fee:</span>
                   <span className="font-mono text-[#2563EB] font-bold">
-                    $${govFee.toLocaleString()}
+                    ${numGovFee.toLocaleString()}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-[#64748B]">
                   <span>Attorney Fee:</span>
                   <span className="font-mono text-[#2563EB] font-bold">
-                    $${attyFee.toLocaleString()}
+                    ${numAttyFee.toLocaleString()}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-[#64748B]">
                   <span>3rd Party Evaluations:</span>
                   <span className="font-mono text-[#2563EB] font-bold">
-                    $${thirdFee.toLocaleString()}
+                    ${numThirdFee.toLocaleString()}
                   </span>
                 </div>
 
                 <div className="pt-2 border-t border-[#F0ECE6] flex justify-between text-xs font-extrabold text-[#0a0a0a]">
                   <span>Total Client Cost:</span>
                   <span className="font-mono text-base font-black text-[#0a0a0a]">
-                    $${totalClientCost.toLocaleString()} USD
+                    ${totalClientCost.toLocaleString()} {watchedCurrency}
                   </span>
                 </div>
               </div>
@@ -585,22 +673,38 @@ export function CreateServiceForm() {
               <div className="rounded-2xl bg-[#FAF8F5] p-3 border border-[#EAE6DF] space-y-1.5 text-[11px] text-[#64748B]">
                 <div className="flex items-center gap-1.5 font-bold text-[#0a0a0a]">
                   <Clock className="h-3.5 w-3.5 text-[#F3A712]" />
-                  <span>Timeline: {watchedDuration}</span>
+                  <span>
+                    Timeline: {watchedDuration ? watchedDuration : "Required — Please specify"}
+                  </span>
                 </div>
-                <div>
-                  Retainer: <strong>$${Number(watchedDeposit).toLocaleString()} upfront</strong>
-                </div>
-                <div>
-                  Installments: <strong>{watchedInstallments} milestones</strong>
-                </div>
+                {numDeposit > 0 && numInstallments !== undefined && numInstallments > 1 ? (
+                  <>
+                    <div>
+                      Retainer:{" "}
+                      <strong>
+                        ${numDeposit.toLocaleString()} upfront
+                      </strong>
+                    </div>
+                    <div>
+                      Installments:{" "}
+                      <strong>{numInstallments} milestones</strong>
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    Payment Structure:{" "}
+                    <strong className="text-[#059669]">
+                      Full Payment (100% upfront upon execution)
+                    </strong>
+                  </div>
+                )}
               </div>
 
               <Button
                 type="button"
                 onClick={handleSubmit(onSubmit)}
                 disabled={isSubmitting || isApiLoading}
-                className="w-full h-11 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold shadow-xs gap-1.5 cursor-pointer"
-              >
+                className="w-full h-11 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold shadow-xs gap-1.5 cursor-pointer">
                 {isSubmitting || isApiLoading ? (
                   <span>Publishing...</span>
                 ) : (

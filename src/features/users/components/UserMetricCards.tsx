@@ -8,8 +8,6 @@ import { Users, UserCheck, Shield, Clock } from "lucide-react";
 interface UserMetricCardsProps {
   stats?: UserSummaryStats;
   className?: string;
-  activeFilter?: string;
-  onFilterSelect?: (filter: string) => void;
 }
 
 export function UserMetricCards({
@@ -20,8 +18,6 @@ export function UserMetricCards({
     pendingInvitations: 12,
   },
   className,
-  activeFilter,
-  onFilterSelect,
 }: UserMetricCardsProps) {
   const cards = [
     {
@@ -101,18 +97,11 @@ export function UserMetricCards({
         className
       )}
     >
-      {cards.map((card) => {
-        const isSelected = activeFilter === card.id;
-
-        return (
+      {cards.map((card) => (
           <div
             key={card.id}
-            onClick={() => onFilterSelect?.(isSelected ? "ALL" : card.id)}
             className={cn(
-              "group relative flex items-center justify-between p-5 sm:p-6 rounded-2xl sm:rounded-3xl border bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all duration-200 cursor-pointer",
-              isSelected
-                ? "border-[#0a0a0a] ring-2 ring-[#0a0a0a]/15 shadow-md"
-                : "border-[#EAE6DF] hover:border-[#CBD5E1] hover:shadow-md"
+              "group relative flex items-center justify-between p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#EAE6DF] bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all duration-200",
             )}
           >
             {/* Left Info Stack */}
@@ -139,8 +128,7 @@ export function UserMetricCards({
               {card.icon}
             </div>
           </div>
-        );
-      })}
+      ))}
     </div>
   );
 }

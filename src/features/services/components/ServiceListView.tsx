@@ -20,7 +20,6 @@ import {
   ChevronRight,
   Eye,
   MoreVertical,
-  Plus,
   Shield,
   Layers,
   Sparkles,
@@ -417,7 +416,7 @@ export function ServiceListView({
           <button
             type="button"
             onClick={() => {
-              router.push(`/services/${item.id}`);
+              router.push(`/services/${item.code || item.id}`);
             }}
             title="View Service Dossier"
             className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FAF8F5] text-[#64748B] hover:text-[#0a0a0a] hover:bg-white border border-[#EAE6DF] transition-colors cursor-pointer shadow-2xs"
@@ -456,7 +455,7 @@ export function ServiceListView({
               <button
                 type="button"
                 onClick={() => {
-                  router.push(`/services/${item.id}`);
+                  router.push(`/services/${item.code || item.id}`);
                   setActiveMenuId(null);
                 }}
                 className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
@@ -544,28 +543,11 @@ export function ServiceListView({
             <span className="hidden sm:inline">Export CSV</span>
           </Button>
 
-          <Button
-            asChild
-            className="h-10 px-4 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold shadow-xs gap-1.5 cursor-pointer"
-          >
-            <Link href={ROUTES.SERVICE_CREATE}>
-              <Plus className="h-3.5 w-3.5 text-[#F3A712]" />
-              <span>Configure New Service</span>
-            </Link>
-          </Button>
         </div>
       </div>
 
       {/* KPI Metric Summary Cards */}
-      <ServiceMetricCards
-        stats={computedStats}
-        activeFilter={statusFilter}
-        onFilterSelect={(st) => {
-          if (st === "ALL") setStatusFilter("ALL");
-          else if (st === "ACTIVE") setStatusFilter("ACTIVE");
-          else setStatusFilter("ALL");
-        }}
-      />
+      <ServiceMetricCards stats={computedStats} />
 
       {/* Search & Filter Controls */}
       <ServiceSearchBar
@@ -607,7 +589,7 @@ export function ServiceListView({
         }}
         onPageChange={(page) => setCurrentPage(page)}
         onRowClick={(item) => {
-          router.push(`/services/${item.id}`);
+          router.push(`/services/${item.code || item.id}`);
         }}
         emptyTitle="No services matched your query"
         emptyDescription="No service offerings found matching your criteria. Try adjusting your search query or reset your filters."

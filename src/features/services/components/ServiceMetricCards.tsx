@@ -14,8 +14,6 @@ import {
 interface ServiceMetricCardsProps {
   stats?: ServiceSummaryStats;
   className?: string;
-  activeFilter?: string;
-  onFilterSelect?: (filter: string) => void;
 }
 
 export function ServiceMetricCards({
@@ -26,8 +24,6 @@ export function ServiceMetricCards({
     totalPassThroughTracked: 0,
   },
   className,
-  activeFilter = "ALL",
-  onFilterSelect,
 }: ServiceMetricCardsProps) {
   const cards = [
     {
@@ -107,24 +103,11 @@ export function ServiceMetricCards({
         className
       )}
     >
-      {cards.map((card) => {
-        const isSelected =
-          activeFilter === card.id ||
-          (card.id === "ALL" && activeFilter === "ALL");
-        const isClickable = Boolean(onFilterSelect && (card.id === "ALL" || card.id === "ACTIVE"));
-
-        return (
+      {cards.map((card) => (
           <div
             key={card.id}
-            onClick={() => isClickable && onFilterSelect?.(card.id)}
-            role={isClickable ? "button" : undefined}
-            tabIndex={isClickable ? 0 : undefined}
             className={cn(
-              "group relative flex flex-col justify-between overflow-hidden rounded-2xl border p-4 sm:p-5 transition-all duration-200",
-              isClickable ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md" : "",
-              isSelected
-                ? "border-[#0a0a0a] bg-white shadow-xs ring-1 ring-[#0a0a0a]"
-                : "border-[#EAE6DF] bg-white hover:border-[#CBD5E1]"
+              "group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-[#EAE6DF] bg-white p-4 sm:p-5 transition-all duration-200",
             )}
           >
             <div className="flex items-center justify-between gap-3">
@@ -146,8 +129,7 @@ export function ServiceMetricCards({
               </div>
             </div>
           </div>
-        );
-      })}
+      ))}
     </div>
   );
 }

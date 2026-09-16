@@ -17,19 +17,16 @@ import {
   CreditCard,
   FileBarChart,
   FileText,
-  FolderKanban,
   History,
   LayoutGrid,
   LogOut,
-  MessageSquare,
   Receipt,
   ShieldAlert,
-  UserPlus,
   Users,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 interface NavSubItem {
@@ -77,74 +74,53 @@ const navSections: NavSection[] = [
         title: "Dashboard",
         href: ROUTES.DASHBOARD,
         icon: LayoutGrid,
-        subItems: [
-          { title: "Overview", href: ROUTES.DASHBOARD },
-          {
-            title: "Financial Analytics",
-            href: ROUTES.REPORTS,
-            requiredPermission: "report:view",
-          },
-        ],
       },
+    ],
+  },
+  {
+    sectionTitle: "CLIENTS",
+    portalType: "MANAGEMENT",
+    items: [
       {
-        title: "Financial Reports",
-        href: ROUTES.REPORTS,
-        icon: FileBarChart,
-        requiredPermission: "report:export",
+        title: "Clients",
+        href: ROUTES.CLIENTS,
+        icon: Users,
+        requiredAnyPermissions: ["user:read", "user:create"],
         subItems: [
-          { title: "Receivables Aging", href: `${ROUTES.REPORTS}?tab=aging` },
-          { title: "Revenue by Service", href: `${ROUTES.REPORTS}?tab=services` },
-          { title: "Consultant Breakdown", href: `${ROUTES.REPORTS}?tab=consultants` },
+          {
+            title: "Client List",
+            href: ROUTES.CLIENTS,
+            requiredPermission: "user:read",
+          },
+          {
+            title: "Create Client",
+            href: ROUTES.CLIENT_CREATE,
+            requiredPermission: "user:create",
+          },
         ],
       },
     ],
   },
   {
-    sectionTitle: "CLIENTS & SERVICES",
+    sectionTitle: "SERVICES",
     portalType: "MANAGEMENT",
     items: [
       {
-        title: "Client List",
-        href: ROUTES.CLIENTS,
-        icon: Users,
-        requiredPermission: "user:read",
-        subItems: [
-          { title: "All Clients", href: ROUTES.CLIENTS },
-          {
-            title: "Active Cases",
-            href: `${ROUTES.CLIENTS}?status=Processing`,
-          },
-        ],
-      },
-      {
-        title: "Create Client",
-        href: ROUTES.CLIENT_CREATE,
-        icon: UserPlus,
-        requiredPermission: "user:create",
-      },
-      {
-        title: "Service Catalog",
+        title: "Services",
         href: ROUTES.SERVICES,
         icon: Briefcase,
-        requiredPermission: "service:read",
+        requiredAnyPermissions: ["service:read", "service:manage"],
         subItems: [
-          { title: "Service Offerings", href: ROUTES.SERVICES },
           {
-            title: "Configure Service",
+            title: "Service List",
+            href: ROUTES.SERVICES,
+            requiredPermission: "service:read",
+          },
+          {
+            title: "Create Service",
             href: ROUTES.SERVICE_CREATE,
             requiredPermission: "service:manage",
           },
-        ],
-      },
-      {
-        title: "Case Tracking",
-        href: ROUTES.TRACKING,
-        icon: FolderKanban,
-        requiredPermission: "service:read",
-        subItems: [
-          { title: "Active Cases", href: ROUTES.TRACKING },
-          { title: "Case Documents", href: `${ROUTES.TRACKING}?tab=documents` },
-          { title: "Milestones", href: `${ROUTES.TRACKING}?tab=milestones` },
         ],
       },
     ],
@@ -159,7 +135,10 @@ const navSections: NavSection[] = [
         icon: CalendarRange,
         requiredPermission: "plan:read",
         subItems: [
-          { title: "Milestone Schedules", href: `${ROUTES.PAYMENTS}?tab=plans` },
+          {
+            title: "Milestone Schedules",
+            href: `${ROUTES.PAYMENTS}?tab=plans`,
+          },
           {
             title: "Create Payment Plan",
             href: `${ROUTES.PAYMENTS}?action=new-plan`,
@@ -208,6 +187,18 @@ const navSections: NavSection[] = [
     ],
   },
   {
+    sectionTitle: "REPORTS",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "Financial Reports",
+        href: ROUTES.REPORTS,
+        icon: FileBarChart,
+        requiredPermission: "report:export",
+      },
+    ],
+  },
+  {
     sectionTitle: "COMMUNICATIONS",
     portalType: "MANAGEMENT",
     items: [
@@ -218,14 +209,11 @@ const navSections: NavSection[] = [
         requiredPermission: "note:read",
         subItems: [
           { title: "Scheduled Reminders", href: ROUTES.NOTIFICATIONS },
-          { title: "Outbound History", href: `${ROUTES.NOTIFICATIONS}?tab=logs` },
+          {
+            title: "Outbound History",
+            href: `${ROUTES.NOTIFICATIONS}?tab=logs`,
+          },
         ],
-      },
-      {
-        title: "Case Notes",
-        href: `${ROUTES.NOTIFICATIONS}?tab=notes`,
-        icon: MessageSquare,
-        requiredPermission: "note:read",
       },
     ],
   },
@@ -234,26 +222,39 @@ const navSections: NavSection[] = [
     portalType: "MANAGEMENT",
     items: [
       {
-        title: "User List",
+        title: "Users",
         href: ROUTES.USERS,
         icon: Users,
-        requiredPermission: "user:read",
+        requiredAnyPermissions: ["user:read", "user:create"],
         subItems: [
-          { title: "All Users", href: ROUTES.USERS },
-          { title: "Staff & Consultants", href: `${ROUTES.USERS}?role=staff` },
-          { title: "Client Accounts", href: `${ROUTES.USERS}?role=client` },
+          {
+            title: "User List",
+            href: ROUTES.USERS,
+            requiredPermission: "user:read",
+          },
+          {
+            title: "Create User",
+            href: ROUTES.USER_CREATE,
+            requiredPermission: "user:create",
+          },
         ],
-      },
-      {
-        title: "Create User",
-        href: ROUTES.USER_CREATE,
-        icon: UserPlus,
-        requiredPermission: "user:create",
       },
     ],
   },
   {
-    sectionTitle: "SECURITY & GOVERNANCE",
+    sectionTitle: "AUDIT TRAIL",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "Audit Trail",
+        href: `${ROUTES.SETTINGS}?tab=audit`,
+        icon: History,
+        requiredPermission: "user:manage-role",
+      },
+    ],
+  },
+  {
+    sectionTitle: "SECURITY",
     portalType: "MANAGEMENT",
     items: [
       {
@@ -266,12 +267,6 @@ const navSections: NavSection[] = [
           { title: "Permissions Matrix", href: `${ROUTES.ROLES}?tab=matrix` },
           { title: "Create New Role", href: `${ROUTES.ROLES}?action=create` },
         ],
-      },
-      {
-        title: "Audit Trail",
-        href: `${ROUTES.SETTINGS}?tab=audit`,
-        icon: History,
-        requiredPermission: "user:manage-role",
       },
     ],
   },
@@ -305,7 +300,10 @@ const navSections: NavSection[] = [
         requiredAnyPermissions: ["invoice:read", "receipt:read"],
         subItems: [
           { title: "Invoices", href: `${ROUTES.PAYMENTS}?tab=invoices` },
-          { title: "Payment Receipts", href: `${ROUTES.PAYMENTS}?tab=receipts` },
+          {
+            title: "Payment Receipts",
+            href: `${ROUTES.PAYMENTS}?tab=receipts`,
+          },
         ],
       },
       {
@@ -319,33 +317,34 @@ const navSections: NavSection[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, hasPermission, hasAnyPermission, isClientAccount } = usePermissions();
+  const searchParams = useSearchParams();
+  const { user, hasPermission, hasAnyPermission, isClientAccount } =
+    usePermissions();
   const { logout } = useAuth();
-  const { isOpen, isMobileOpen, toggleSidebar, setMobileOpen } =
+  const { isOpen, isMobileOpen, toggleSidebar, setSidebarOpen, setMobileOpen } =
     useSidebarStore();
 
   const [expandedItems, setExpandedItems] = React.useState<
     Record<string, boolean>
-  >({
-    Dashboard: false,
-    "Client List": false,
-    "User List": false,
-    "Service Catalog": false,
-    "Case Tracking": false,
-    "Payment Plans": false,
-    "Transactions Ledger": false,
-    "Invoices & Receipts": false,
-    "Reminders & Alerts": false,
-    "Role & PBAC Settings": false,
-  });
+  >({});
 
-  const toggleExpand = (title: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const toggleExpand = (title: string) => {
     setExpandedItems((prev) => ({
       ...prev,
       [title]: !prev[title],
     }));
+  };
+
+  const expandSidebarToItem = (title: string) => {
+    setSidebarOpen(true);
+    setExpandedItems((prev) => ({
+      ...prev,
+      [title]: true,
+    }));
+  };
+
+  const closeMobileSidebar = () => {
+    if (isMobileOpen) setMobileOpen(false);
   };
 
   const handleLogout = () => {
@@ -366,7 +365,10 @@ export function Sidebar() {
         const visibleItems = section.items
           .map((item) => {
             // Check top-level item capability
-            if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
+            if (
+              item.requiredPermission &&
+              !hasPermission(item.requiredPermission)
+            ) {
               return null;
             }
             if (
@@ -378,7 +380,10 @@ export function Sidebar() {
 
             // Filter subItems by capability if any
             const visibleSubItems = item.subItems?.filter((sub) => {
-              if (sub.requiredPermission && !hasPermission(sub.requiredPermission)) {
+              if (
+                sub.requiredPermission &&
+                !hasPermission(sub.requiredPermission)
+              ) {
                 return false;
               }
               if (
@@ -412,6 +417,106 @@ export function Sidebar() {
     () => filteredNavSections.flatMap((s) => s.items),
     [filteredNavSections],
   );
+
+  const currentPathWithQuery = React.useMemo(() => {
+    const query = searchParams.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }, [pathname, searchParams]);
+
+  const getPathFromHref = React.useCallback((href: string) => {
+    return href.split("?")[0];
+  }, []);
+
+  const isCreatePathForParent = React.useCallback(
+    (parentHref: string) => {
+      if (parentHref === ROUTES.CLIENTS)
+        return pathname === ROUTES.CLIENT_CREATE;
+      if (parentHref === ROUTES.SERVICES)
+        return pathname === ROUTES.SERVICE_CREATE;
+      if (parentHref === ROUTES.USERS) return pathname === ROUTES.USER_CREATE;
+      if (parentHref === ROUTES.ROLES) return pathname === ROUTES.ROLES_CREATE;
+      return false;
+    },
+    [pathname],
+  );
+
+  const isHrefActive = React.useCallback(
+    (href: string) => {
+      const hrefPath = getPathFromHref(href);
+      const hasQuery = href.includes("?");
+
+      if (hasQuery) {
+        return currentPathWithQuery === href;
+      }
+
+      if (pathname === hrefPath) {
+        return currentPathWithQuery === hrefPath;
+      }
+
+      return (
+        hrefPath !== ROUTES.DASHBOARD &&
+        pathname.startsWith(`${hrefPath}/`) &&
+        !isCreatePathForParent(hrefPath)
+      );
+    },
+    [currentPathWithQuery, getPathFromHref, isCreatePathForParent, pathname],
+  );
+
+  const isItemActive = React.useCallback(
+    (item: NavItem) => {
+      const hasActiveSubItem = item.subItems?.some((sub) =>
+        isHrefActive(sub.href),
+      );
+      return isHrefActive(item.href) || !!hasActiveSubItem;
+    },
+    [isHrefActive],
+  );
+
+  const navSignature = React.useMemo(
+    () =>
+      filteredNavSections
+        .map((section) =>
+          [
+            section.sectionTitle,
+            ...section.items.map((item) =>
+              [
+                item.title,
+                item.href,
+                ...(item.subItems?.map((sub) => sub.href) || []),
+              ].join(":"),
+            ),
+          ].join("|"),
+        )
+        .join("||"),
+    [filteredNavSections],
+  );
+
+  const autoExpandKey = `${currentPathWithQuery}::${navSignature}`;
+  const lastAutoExpandKeyRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (lastAutoExpandKeyRef.current === autoExpandKey) return;
+    lastAutoExpandKeyRef.current = autoExpandKey;
+
+    setExpandedItems((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      filteredNavSections.forEach((section) => {
+        section.items.forEach((item) => {
+          if (
+            item.subItems?.length &&
+            item.subItems.some((sub) => isHrefActive(sub.href))
+          ) {
+            if (!next[item.title]) changed = true;
+            next[item.title] = true;
+          }
+        });
+      });
+
+      return changed ? next : prev;
+    });
+  }, [autoExpandKey, filteredNavSections, isHrefActive]);
 
   const userInitials = React.useMemo(() => {
     if (!user?.name) return "AS";
@@ -452,6 +557,7 @@ export function Sidebar() {
             {/* Full Brand Lockup when Open */}
             <Link
               href={ROUTES.DASHBOARD}
+              onClick={closeMobileSidebar}
               className="flex items-center gap-3 overflow-hidden group">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] p-1.5 shadow-2xs group-hover:bg-[#F3A712]/10 transition-colors">
                 <Image
@@ -499,31 +605,57 @@ export function Sidebar() {
 
                 <div className="space-y-0.5">
                   {section.items.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      (item.href !== ROUTES.DASHBOARD &&
-                        pathname.startsWith(item.href));
+                    const isActive = isItemActive(item);
                     const isExpanded = !!expandedItems[item.title];
                     const hasSubItems = !!item.subItems?.length;
+                    const Icon = item.icon;
 
                     return (
                       <div key={item.title}>
-                        <div
-                          className={cn(
-                            "group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 cursor-pointer",
-                            isActive
-                              ? "bg-[#FAF8F5] text-[#0a0a0a] font-bold border-l-2 border-[#F3A712]"
-                              : "text-[#171717] hover:bg-[#FAF8F5] hover:text-[#0a0a0a]",
-                          )}
-                          onClick={(e) => {
-                            if (hasSubItems) {
-                              toggleExpand(item.title, e);
-                            }
-                          }}>
+                        {hasSubItems ? (
+                          <button
+                            type="button"
+                            className={cn(
+                              "group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all duration-150 cursor-pointer",
+                              isActive
+                                ? "bg-[#FAF8F5] text-[#0a0a0a] font-bold border-l-2 border-[#F3A712]"
+                                : "text-[#171717] hover:bg-[#FAF8F5] hover:text-[#0a0a0a]",
+                            )}
+                            aria-expanded={isExpanded}
+                            aria-controls={`sidebar-submenu-${item.title.replace(/\s+/g, "-").toLowerCase()}`}
+                            onClick={() => toggleExpand(item.title)}>
+                            <span className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden">
+                              <Icon
+                                className={cn(
+                                  "h-4.5 w-4.5 shrink-0 transition-colors",
+                                  isActive
+                                    ? "text-[#F3A712]"
+                                    : "text-[#525252] group-hover:text-[#0a0a0a]",
+                                )}
+                              />
+                              <span className="truncate text-[13.5px]">
+                                {item.title}
+                              </span>
+                            </span>
+
+                            <ChevronDown
+                              className={cn(
+                                "h-3.5 w-3.5 shrink-0 text-[#525252] transition-transform duration-200 group-hover:text-[#0a0a0a]",
+                                isExpanded && "rotate-180",
+                              )}
+                            />
+                          </button>
+                        ) : (
                           <Link
                             href={item.href}
-                            className="flex items-center gap-3 flex-1 overflow-hidden">
-                            <item.icon
+                            onClick={closeMobileSidebar}
+                            className={cn(
+                              "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150",
+                              isActive
+                                ? "bg-[#FAF8F5] text-[#0a0a0a] font-bold border-l-2 border-[#F3A712]"
+                                : "text-[#171717] hover:bg-[#FAF8F5] hover:text-[#0a0a0a]",
+                            )}>
+                            <Icon
                               className={cn(
                                 "h-4.5 w-4.5 shrink-0 transition-colors",
                                 isActive
@@ -535,30 +667,20 @@ export function Sidebar() {
                               {item.title}
                             </span>
                           </Link>
-
-                          {hasSubItems && (
-                            <div
-                              onClick={(e) => toggleExpand(item.title, e)}
-                              className="p-1 rounded-md text-[#525252] hover:text-[#0a0a0a] transition-colors">
-                              <ChevronDown
-                                className={cn(
-                                  "h-3.5 w-3.5 transition-transform duration-200",
-                                  isExpanded && "rotate-180",
-                                )}
-                              />
-                            </div>
-                          )}
-                        </div>
+                        )}
 
                         {/* Sub Items Accordion */}
                         {hasSubItems && isExpanded && (
-                          <div className="ml-7 pl-3 my-1 space-y-1 border-l-2 border-[#EAE6DF]">
+                          <div
+                            id={`sidebar-submenu-${item.title.replace(/\s+/g, "-").toLowerCase()}`}
+                            className="ml-7 pl-3 my-1 space-y-1 border-l-2 border-[#EAE6DF]">
                             {item.subItems?.map((sub) => {
-                              const isSubActive = pathname === sub.href;
+                              const isSubActive = isHrefActive(sub.href);
                               return (
                                 <Link
                                   key={sub.title}
                                   href={sub.href}
+                                  onClick={closeMobileSidebar}
                                   className={cn(
                                     "block rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
                                     isSubActive
@@ -593,23 +715,20 @@ export function Sidebar() {
             </Button>
 
             {allItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                (item.href !== ROUTES.DASHBOARD &&
-                  pathname.startsWith(item.href));
+              const isActive = isItemActive(item);
+              const Icon = item.icon;
+              const hasSubItems = !!item.subItems?.length;
 
-              return (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  title={item.title}
-                  className={cn(
-                    "flex h-9.5 w-9.5 items-center justify-center rounded-xl transition-all duration-150 group",
-                    isActive
-                      ? "bg-[#FAF8F5] text-[#0a0a0a] font-bold border border-[#F3A712]/40 shadow-xs"
-                      : "text-[#171717] hover:bg-[#FAF8F5] hover:text-[#0a0a0a]",
-                  )}>
-                  <item.icon
+              const collapsedClassName = cn(
+                "flex h-9.5 w-9.5 items-center justify-center rounded-xl transition-all duration-150 group",
+                isActive
+                  ? "bg-[#FAF8F5] text-[#0a0a0a] font-bold border border-[#F3A712]/40 shadow-xs"
+                  : "text-[#171717] hover:bg-[#FAF8F5] hover:text-[#0a0a0a]",
+              );
+
+              const icon = (
+                <>
+                  <Icon
                     className={cn(
                       "h-5 w-5 shrink-0 transition-colors",
                       isActive
@@ -619,6 +738,30 @@ export function Sidebar() {
                     strokeWidth={1.85}
                   />
                   <span className="sr-only">{item.title}</span>
+                </>
+              );
+
+              if (hasSubItems) {
+                return (
+                  <button
+                    key={item.title}
+                    type="button"
+                    onClick={() => expandSidebarToItem(item.title)}
+                    title={item.title}
+                    className={collapsedClassName}>
+                    {icon}
+                  </button>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.title}
+                  href={item.href}
+                  onClick={closeMobileSidebar}
+                  title={item.title}
+                  className={collapsedClassName}>
+                  {icon}
                 </Link>
               );
             })}
@@ -629,7 +772,9 @@ export function Sidebar() {
         <div
           className={cn(
             "border-t border-[#F0ECE6] bg-[#FAF8F5]/50 shrink-0",
-            isOpen ? "p-3.5 border-r border-[#EAE6DF]" : "py-3 flex justify-center",
+            isOpen
+              ? "p-3.5 border-r border-[#EAE6DF]"
+              : "py-3 flex justify-center",
           )}>
           {isOpen ? (
             <div className="flex items-center justify-between gap-3">

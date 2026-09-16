@@ -38,7 +38,7 @@ export const servicesApi = baseApi.injectEndpoints({
     }),
 
     getServiceById: builder.query<ApiResponse<BackendService>, string>({
-      query: (id) => `/services/${id}`,
+      query: (id) => `/services/${encodeURIComponent(id)}`,
       providesTags: (_result, _error, id) => [{ type: "Service", id }],
     }),
 
