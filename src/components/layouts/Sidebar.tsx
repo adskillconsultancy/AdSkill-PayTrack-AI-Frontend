@@ -33,6 +33,7 @@ interface NavSubItem {
   href: string;
   requiredPermission?: string;
   requiredAnyPermissions?: string[];
+  requiredSuperAdmin?: boolean;
 }
 
 interface NavItem {
@@ -42,6 +43,7 @@ interface NavItem {
   subItems?: NavSubItem[];
   requiredPermission?: string;
   requiredAnyPermissions?: string[];
+  requiredSuperAdmin?: boolean;
 }
 
 interface NavSection {
@@ -156,7 +158,7 @@ const navSections: NavSection[] = [
         title: "Financial Reports",
         href: ROUTES.REPORTS,
         icon: FileBarChart,
-        requiredPermission: "report:export",
+        requiredSuperAdmin: true,
       },
     ],
   },
@@ -280,7 +282,7 @@ const navSections: NavSection[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user, hasPermission, hasAnyPermission, isClientAccount } =
+  const { user, hasPermission, hasAnyPermission, isClientAccount, isSuperAdmin } =
     usePermissions();
   const { logout } = useAuth();
   const { isOpen, isMobileOpen, toggleSidebar, setSidebarOpen, setMobileOpen } =
@@ -326,6 +328,11 @@ export function Sidebar() {
 
         const visibleItems = section.items
           .map((item) => {
+            // Check Super Admin exclusivity
+            if (item.requiredSuperAdmin && !isSuperAdmin) {
+              return null;
+            }
+
             // Check top-level item capability
             if (
               item.requiredPermission &&
@@ -372,7 +379,7 @@ export function Sidebar() {
         };
       })
       .filter(Boolean) as NavSection[];
-  }, [hasPermission, hasAnyPermission, isClientAccount]);
+  }, [hasPermission, hasAnyPermission, isClientAccount, isSuperAdmin]);
 
   // Flattened items for pure icon column in collapsed mode
   const allItems = React.useMemo(

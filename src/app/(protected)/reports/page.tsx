@@ -1,22 +1,27 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/shared/PageHeader";
+import { Suspense } from "react";
+import { ReportListView } from "@/features/reports";
+import { SkeletonMetricCards } from "@/components/common/Skeleton";
 
 export const metadata: Metadata = {
-  title: "Reports",
+  title: "Executive Reports - AdSkill PayTrack AI",
+  description:
+    "Executive financial management reports, collections analytics, receivables tracking, and performance audit ledger.",
 };
 
 export default function ReportsPage() {
   return (
-    <div className="container py-10">
-      <PageHeader
-        title="Reports"
-        description="Generate and view reports."
-      />
-      <div className="rounded-lg border bg-card p-8 text-card-foreground">
-        <p className="text-sm text-muted-foreground">
-          Reports page content will be implemented here.
-        </p>
-      </div>
-    </div>
+    <Suspense
+      fallback={
+        <div className="space-y-6">
+          <div className="h-8 w-64 bg-slate-100 rounded-lg animate-pulse" />
+          <SkeletonMetricCards count={4} />
+          <div className="h-12 w-full bg-slate-100 rounded-2xl animate-pulse" />
+          <div className="h-96 w-full bg-slate-100 rounded-2xl animate-pulse" />
+        </div>
+      }
+    >
+      <ReportListView />
+    </Suspense>
   );
 }
