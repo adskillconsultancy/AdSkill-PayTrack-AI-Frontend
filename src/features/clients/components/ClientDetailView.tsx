@@ -21,6 +21,7 @@ import {
   FolderOpen,
   Globe,
   Loader2,
+  Lock,
   Mail,
   MapPin,
   MessageCircle,
@@ -43,6 +44,8 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
+import { RichTextEditor } from "@/components/common/RichTextEditor";
+import { CaseNotesTimeline } from "./CaseNotesTimeline";
 import { Input } from "@/components/common/Input";
 import { useGetClientCaseQuery, useUpdateClientCaseMutation } from "@/services/api/clients/clientCasesApi";
 import {
@@ -150,7 +153,7 @@ const inputDate = (value?: string | null) =>
   value ? new Date(value).toISOString().slice(0, 10) : "";
 
 export function ClientDetailView({ clientId }: { clientId: string }) {
-  const { hasPermission, isClientAccount } = usePermissions();
+  const { hasPermission, isClientAccount, isSuperAdmin } = usePermissions();
   const { data: caseResponse, isLoading, isError, refetch } = useGetClientCaseQuery(clientId);
   const clientCase = caseResponse?.data;
   const { data: documentsResponse } = useGetCaseDocumentsQuery(clientId, { skip: !clientCase });
@@ -510,6 +513,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                 item={clientCase}
                 busy={updateState.isLoading}
                 onCancel={() => setEditing(null)}
+                isSuperAdmin={isSuperAdmin}
                 onSave={async (body) => {
                   try {
                     await updateCase({ id: clientId, body }).unwrap();
@@ -531,14 +535,56 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                   <Info label="Last Activity" value={date(clientCase.updatedAt)} />
                 </div>
 
-                {clientCase.clientVisibleNotes && (
-                  <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                      Client-Visible Notes
-                    </span>
-                    <p className="text-xs font-medium text-slate-800 leading-relaxed">{clientCase.clientVisibleNotes}</p>
-                  </div>
-                )}
+                {/* 3-Tier Case Directives & Scoped Notes */}
+                <div className="mt-4 space-y-3">
+                  {clientCase.clientVisibleNotes && (
+                    <div className="rounded-2xl bg-blue-50/60 border border-blue-100 p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-extrabold uppercase tracking-wider">
+                          <Globe className="h-3 w-3" />
+                          Client Portal Visible Notes
+                        </span>
+                        <span className="text-[11px] text-blue-600 font-medium">Visible to client &amp; staff</span>
+                      </div>
+                      <div
+                        className="text-xs text-slate-800 leading-relaxed prose prose-xs max-w-none"
+                        dangerouslySetInnerHTML={{ __html: clientCase.clientVisibleNotes }}
+                      />
+                    </div>
+                  )}
+
+                  {!isClientAccount && clientCase.internalNotes && (
+                    <div className="rounded-2xl bg-amber-50/70 border border-amber-200/80 p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase tracking-wider">
+                          <Shield className="h-3 w-3 text-amber-700" />
+                          Internal Staff Notes
+                        </span>
+                        <span className="text-[11px] text-amber-700 font-medium">Restricted to caseworkers &amp; administration</span>
+                      </div>
+                      <div
+                        className="text-xs text-slate-800 leading-relaxed prose prose-xs max-w-none"
+                        dangerouslySetInnerHTML={{ __html: clientCase.internalNotes }}
+                      />
+                    </div>
+                  )}
+
+                  {isSuperAdmin && clientCase.superAdminNotes && (
+                    <div className="rounded-2xl bg-purple-50/70 border border-purple-200/80 p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 text-[10px] font-extrabold uppercase tracking-wider">
+                          <Lock className="h-3 w-3 text-purple-700" />
+                          Super Admin Confidential Notes
+                        </span>
+                        <span className="text-[11px] text-purple-700 font-medium">Exclusive executive directive (Hidden from staff &amp; clients)</span>
+                      </div>
+                      <div
+                        className="text-xs text-slate-800 leading-relaxed prose prose-xs max-w-none"
+                        dangerouslySetInnerHTML={{ __html: clientCase.superAdminNotes }}
+                      />
+                    </div>
+                  )}
+                </div>
 
                 {!isClientAccount && (
                   <div className="mt-4 flex flex-wrap items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
@@ -559,6 +605,13 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
               </>
             )}
           </Panel>
+
+          {/* CASE NOTES & DIRECTIVES ACTIVITY TIMELINE */}
+          <CaseNotesTimeline
+            caseId={clientId}
+            isClientAccount={isClientAccount}
+            isSuperAdmin={isSuperAdmin}
+          />
 
           {/* DOCUMENT VAULT PANEL */}
           <Panel
@@ -1240,11 +1293,13 @@ function CaseForm({
   busy,
   onCancel,
   onSave,
+  isSuperAdmin = false,
 }: {
   item: import("@/types/client-case.types").ClientCase;
   busy: boolean;
   onCancel: () => void;
   onSave: (body: import("@/types/client-case.types").UpdateClientCaseInput) => Promise<void>;
+  isSuperAdmin?: boolean;
 }) {
   const [form, setForm] = React.useState({
     destinationCountry: item.destinationCountry || "",
@@ -1254,7 +1309,10 @@ function CaseForm({
     serviceStartDate: inputDate(item.serviceStartDate),
     clientVisibleNotes: item.clientVisibleNotes || "",
     internalNotes: item.internalNotes || "",
+    superAdminNotes: item.superAdminNotes || "",
   });
+
+  const [activeNotesTab, setActiveNotesTab] = React.useState<"client" | "staff" | "superAdmin">("client");
 
   const set = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -1267,6 +1325,7 @@ function CaseForm({
           ...form,
           agreementDate: form.agreementDate || undefined,
           serviceStartDate: form.serviceStartDate || undefined,
+          superAdminNotes: isSuperAdmin ? (form.superAdminNotes || undefined) : undefined,
         });
       }}>
       <EditInput label="Destination Country" value={form.destinationCountry} onChange={(value) => set("destinationCountry", value)} />
@@ -1274,12 +1333,95 @@ function CaseForm({
       <EditInput label="Subcategory / Stream" value={form.caseSubcategory} onChange={(value) => set("caseSubcategory", value)} />
       <EditInput label="Agreement Date" type="date" value={form.agreementDate} onChange={(value) => set("agreementDate", value)} />
       <EditInput label="Service Start Date" type="date" value={form.serviceStartDate} onChange={(value) => set("serviceStartDate", value)} />
-      <div className="sm:col-span-2">
-        <EditInput label="Client Visible Notes" value={form.clientVisibleNotes} onChange={(value) => set("clientVisibleNotes", value)} />
+
+      {/* Scoped Case Directives & Rich Notes */}
+      <div className="sm:col-span-2 space-y-3 pt-3 border-t border-slate-200">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-bold text-slate-800 block">
+            Case Directives &amp; Multi-Tier Notes
+          </label>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setActiveNotesTab("client")}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                activeNotesTab === "client"
+                  ? "bg-blue-600 text-white shadow-2xs"
+                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100",
+              )}>
+              Client Portal
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveNotesTab("staff")}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                activeNotesTab === "staff"
+                  ? "bg-amber-600 text-white shadow-2xs"
+                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100",
+              )}>
+              Staff Only
+            </button>
+            {isSuperAdmin && (
+              <button
+                type="button"
+                onClick={() => setActiveNotesTab("superAdmin")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
+                  activeNotesTab === "superAdmin"
+                    ? "bg-purple-600 text-white shadow-2xs"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100",
+                )}>
+                Super Admin
+              </button>
+            )}
+          </div>
+        </div>
+
+        {activeNotesTab === "client" && (
+          <div className="space-y-1.5">
+            <span className="text-[11px] text-blue-700 font-semibold block">
+              Visible on client portal dashboard
+            </span>
+            <RichTextEditor
+              value={form.clientVisibleNotes}
+              onChange={(value) => set("clientVisibleNotes", value)}
+              placeholder="Notes or onboarding guidance visible to client..."
+              minHeight="120px"
+            />
+          </div>
+        )}
+
+        {activeNotesTab === "staff" && (
+          <div className="space-y-1.5">
+            <span className="text-[11px] text-amber-800 font-semibold block">
+              Internal staff confidential (Consultants &amp; Managers)
+            </span>
+            <RichTextEditor
+              value={form.internalNotes}
+              onChange={(value) => set("internalNotes", value)}
+              placeholder="Internal processing notes, caseworker instructions..."
+              minHeight="120px"
+            />
+          </div>
+        )}
+
+        {activeNotesTab === "superAdmin" && isSuperAdmin && (
+          <div className="space-y-1.5">
+            <span className="text-[11px] text-purple-800 font-semibold block">
+              Confidential executive note (Super Admin only - hidden from staff &amp; clients)
+            </span>
+            <RichTextEditor
+              value={form.superAdminNotes}
+              onChange={(value) => set("superAdminNotes", value)}
+              placeholder="Sensitive executive directives, risk notes..."
+              minHeight="120px"
+            />
+          </div>
+        )}
       </div>
-      <div className="sm:col-span-2">
-        <EditInput label="Internal Confidential Notes" value={form.internalNotes} onChange={(value) => set("internalNotes", value)} />
-      </div>
+
       <div className="flex gap-2 sm:col-span-2 pt-2 border-t border-slate-200">
         <Button
           type="submit"

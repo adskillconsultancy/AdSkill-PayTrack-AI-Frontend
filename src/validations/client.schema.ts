@@ -61,6 +61,7 @@ export const createClientSchema = z
     contractedFee: z.number().min(0, "Contracted fee cannot be negative"),
     depositAmount: z.number().min(0, "Deposit cannot be negative"),
     scheduleType: z.enum([
+      "service_default",
       "single",
       "deposit_2_milestones",
       "deposit_3_monthly",
@@ -71,7 +72,9 @@ export const createClientSchema = z
     // 5. Onboarding Preferences & Notes
     remindersEnabled: z.boolean(),
     sendEmailInvitation: z.boolean(),
+    clientVisibleNotes: z.string().optional(),
     internalNotes: z.string().optional(),
+    superAdminNotes: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     // If discount is applied, discount justification is mandatory

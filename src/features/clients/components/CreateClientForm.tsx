@@ -16,6 +16,8 @@ import {
   type CreateClientFormValues,
 } from "@/validations/client.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { RichTextEditor } from "@/components/common/RichTextEditor";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   AlertCircle,
   AlertTriangle,
@@ -29,6 +31,7 @@ import {
   FileText,
   Globe,
   Loader2,
+  Lock,
   Mail,
   MapPin,
   MessageCircle,
@@ -84,32 +87,7 @@ const CURRENCIES = [
   { code: "AUD", symbol: "A$", label: "AUD" },
 ];
 
-const SCHEDULE_PRESETS = [
-  {
-    id: "single",
-    title: "100% Upfront Retainer",
-    desc: "Single initial payment upon agreement",
-    badge: "100%",
-  },
-  {
-    id: "deposit_2_milestones",
-    title: "40% Retainer + 2 Phases",
-    desc: "40% deposit with 2 subsequent milestone releases",
-    badge: "Popular",
-  },
-  {
-    id: "deposit_3_monthly",
-    title: "34% Retainer + 3 Monthly",
-    desc: "Initial deposit followed by 3 monthly installments",
-    badge: "Monthly",
-  },
-  {
-    id: "custom",
-    title: "Custom Schedule",
-    desc: "Tailored installment breakdown and due dates",
-    badge: "Custom",
-  },
-] as const;
+
 
 const NOTE_TEMPLATES = [
   "Standard intake dossier opened following initial legal consultation.",
@@ -173,7 +151,9 @@ export function CreateClientForm() {
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [createdClientId, setCreatedClientId] = React.useState<string | null>(null);
   const [errorNotice, setErrorNotice] = React.useState<string>("");
-  const [activeTab, setActiveTab] = React.useState<"identity" | "service" | "finance">("identity");
+  const { isSuperAdmin } = usePermissions();
+  const [activeTab, setActiveTab] = React.useState<"service" | "identity" | "finance" | "notes">("service");
+  const [notesScope, setNotesScope] = React.useState<"client" | "staff" | "superAdmin">("client");
 
   // Applicant Intake Mode: "new" = brand new applicant, "existing" = pick from registered users
   const [intakeMode, setIntakeMode] = React.useState<"new" | "existing">("new");
@@ -276,11 +256,13 @@ export function CreateClientForm() {
       discountReason: "",
       contractedFee: 0,
       depositAmount: 0,
-      scheduleType: "deposit_2_milestones",
+      scheduleType: "service_default",
       milestones: [],
       remindersEnabled: true,
       sendEmailInvitation: true,
+      clientVisibleNotes: "",
       internalNotes: "",
+      superAdminNotes: "",
     },
   });
 
@@ -357,7 +339,9 @@ export function CreateClientForm() {
   const watchedDiscount = watch("discountAmount") || 0;
   const watchedDeposit = watch("depositAmount") || 0;
   const watchedMilestones = watch("milestones") || [];
-  const watchedScheduleType = watch("scheduleType");
+  const watchedClientNotes = watch("clientVisibleNotes") || "";
+  const watchedInternalNotes = watch("internalNotes") || "";
+  const watchedSuperAdminNotes = watch("superAdminNotes") || "";
 
   const currencySymbol =
     CURRENCIES.find((c) => c.code === watchedCurrency)?.symbol || "$";
@@ -378,73 +362,6 @@ export function CreateClientForm() {
   const financialDiscrepancy = computedContractedFee - totalAllocated;
   const isMathValid = Math.abs(financialDiscrepancy) < 0.05;
 
-  // Handle schedule type preset selection
-  const handleScheduleTypeChange = (
-    type: CreateClientFormValues["scheduleType"],
-  ) => {
-    setValue("scheduleType", type);
-    const fee = computedContractedFee;
-
-    const nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    const m1Date = nextMonth.toISOString().slice(0, 10);
-
-    const monthTwo = new Date();
-    monthTwo.setMonth(monthTwo.getMonth() + 2);
-    const m2Date = monthTwo.toISOString().slice(0, 10);
-
-    const monthThree = new Date();
-    monthThree.setMonth(monthThree.getMonth() + 3);
-    const m3Date = monthThree.toISOString().slice(0, 10);
-
-    if (type === "single") {
-      setValue("depositAmount", fee);
-      replace([]);
-    } else if (type === "deposit_2_milestones") {
-      const deposit = Math.round(fee * 0.4);
-      const halfRemaining = Math.round((fee - deposit) / 2);
-      setValue("depositAmount", deposit);
-      replace([
-        {
-          id: "m1",
-          name: "Milestone 1 — Document & Dossier Filing",
-          dueDate: m1Date,
-          amount: halfRemaining,
-        },
-        {
-          id: "m2",
-          name: "Milestone 2 — Final Adjudication & Decision",
-          dueDate: m2Date,
-          amount: fee - deposit - halfRemaining,
-        },
-      ]);
-    } else if (type === "deposit_3_monthly") {
-      const deposit = Math.round(fee * 0.34);
-      const perMonth = Math.round((fee - deposit) / 3);
-      setValue("depositAmount", deposit);
-      replace([
-        {
-          id: "m1",
-          name: "Installment #1 — First Month Retainer",
-          dueDate: m1Date,
-          amount: perMonth,
-        },
-        {
-          id: "m2",
-          name: "Installment #2 — Second Month Retainer",
-          dueDate: m2Date,
-          amount: perMonth,
-        },
-        {
-          id: "m3",
-          name: "Installment #3 — Third Month Retainer",
-          dueDate: m3Date,
-          amount: fee - deposit - perMonth * 2,
-        },
-      ]);
-    }
-  };
-
   // Handle selection from live service catalog
   const handleServiceSelect = (serviceId: string) => {
     const selected = services.find((s) => s.id === serviceId);
@@ -459,6 +376,7 @@ export function CreateClientForm() {
       setValue("discountAmount", 0);
       setValue("discountReason", "");
       setValue("contractedFee", fee);
+      setValue("scheduleType", "service_default");
 
       const deposit = selected.defaultDeposit
         ? Number(selected.defaultDeposit)
@@ -562,7 +480,9 @@ export function CreateClientForm() {
         destinationCountry: data.destinationCountry,
         caseCategory: data.visaCategory,
         caseSubcategory: data.subCategory || undefined,
-        clientVisibleNotes: data.internalNotes?.trim() || undefined,
+        clientVisibleNotes: data.clientVisibleNotes?.trim() || undefined,
+        internalNotes: data.internalNotes?.trim() || undefined,
+        superAdminNotes: isSuperAdmin ? (data.superAdminNotes?.trim() || undefined) : undefined,
       }).unwrap();
 
       const createdCase = created.data;
@@ -570,7 +490,7 @@ export function CreateClientForm() {
       setCreatedClientId(createdCase.id);
 
       // 2. Patch case with consultant / status if specified
-      if (data.assignedConsultantId || data.status !== "INTAKE" || data.internalNotes) {
+      if (data.assignedConsultantId || data.status !== "INTAKE" || data.internalNotes || data.superAdminNotes || data.clientVisibleNotes) {
         try {
           await updateClientCase({
             id: createdCase.id,
@@ -578,6 +498,8 @@ export function CreateClientForm() {
               assignedConsultantId: data.assignedConsultantId || undefined,
               caseStatus: data.status,
               internalNotes: data.internalNotes || undefined,
+              superAdminNotes: isSuperAdmin ? (data.superAdminNotes || undefined) : undefined,
+              clientVisibleNotes: data.clientVisibleNotes || undefined,
             },
           }).unwrap();
         } catch (updateErr) {
@@ -728,18 +650,18 @@ export function CreateClientForm() {
         <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap gap-2 sm:gap-3">
           {[
             {
-              id: "identity",
-              step: "1",
-              label: "Applicant Identity",
-              icon: User,
-              valid: Boolean(watchedName && watchedEmail && watchedWhatsapp),
-            },
-            {
               id: "service",
-              step: "2",
+              step: "1",
               label: "Case & Jurisdiction",
               icon: MapPin,
               valid: Boolean(watchedServiceId && watchedCountry),
+            },
+            {
+              id: "identity",
+              step: "2",
+              label: "Applicant Identity",
+              icon: User,
+              valid: Boolean(watchedName && watchedEmail && watchedWhatsapp),
             },
             {
               id: "finance",
@@ -747,6 +669,13 @@ export function CreateClientForm() {
               label: "Financial Ledger",
               icon: CreditCard,
               valid: Boolean(computedContractedFee > 0 && isMathValid),
+            },
+            {
+              id: "notes",
+              step: "4",
+              label: "Case Directives & Notes",
+              icon: FileText,
+              valid: true,
             },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -837,7 +766,172 @@ export function CreateClientForm() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* LEFT COLUMN: FORM SECTIONS (8 OF 12 COLS) */}
           <div className="lg:col-span-8 space-y-6">
-            {/* SECTION 1: APPLICANT IDENTITY & COMMUNICATION */}
+            {/* SECTION 1: CASE SCOPE & JURISDICTION */}
+            <div
+              id="section-service"
+              className={cn(
+                "rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs transition-all",
+                activeTab === "service" ? "ring-2 ring-amber-400/40" : "",
+              )}>
+              <div className="flex items-center gap-3 pb-5 border-b border-slate-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-2xs">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold tracking-tight text-slate-900">
+                    1. Service Scope &amp; Case Jurisdiction
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Catalog program, destination authority, and assigned caseworker
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-6">
+                {/* Service Catalog Dropdown */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
+                      Select Service Offering from Live Catalog *
+                    </span>
+                    {errors.serviceId && (
+                      <span className="text-rose-600 font-medium normal-case text-[11px]">
+                        {errors.serviceId.message}
+                      </span>
+                    )}
+                  </label>
+
+                  {isServicesLoading ? (
+                    <div className="text-xs text-slate-500 py-3 flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-slate-800" />
+                      Loading active service programs...
+                    </div>
+                  ) : (
+                    <select
+                      value={watchedServiceId}
+                      onChange={(e) => handleServiceSelect(e.target.value)}
+                      className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs cursor-pointer">
+                      <option value="">-- Choose active immigration or visa offering --</option>
+                      {services.map((s: any) => (
+                        <option key={s.id} value={s.id}>
+                          {`${s.name} [${s.code}] • Category: ${s.category} • Base Fee: $${Number(s.baseFee || 0).toLocaleString()} ${s.currency || "USD"}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Destination Country Grid */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    Destination Jurisdiction Authority *
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    {DESTINATIONS.map((dest) => {
+                      const isSelected = watchedCountry === dest.name;
+                      return (
+                        <button
+                          key={dest.code}
+                          type="button"
+                          onClick={() => handleCountryChange(dest.name)}
+                          className={cn(
+                            "p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1",
+                            isSelected
+                              ? "bg-blue-50 border-blue-600 text-blue-950 shadow-2xs ring-1 ring-blue-600/30"
+                              : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50",
+                          )}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">{dest.flag}</span>
+                            <span
+                              className={cn(
+                                "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded",
+                                isSelected ? "bg-blue-200 text-blue-900" : "bg-slate-100 text-slate-600",
+                              )}>
+                              {dest.code}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs font-extrabold block leading-tight">
+                              {dest.name}
+                            </span>
+                            <span
+                              className={cn(
+                                "text-[9px] block mt-0.5 leading-tight truncate",
+                                isSelected ? "text-blue-700" : "text-slate-500",
+                              )}>
+                              {dest.sub}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Subcategory, Consultant, Status */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Visa Category Title *</span>
+                      {errors.visaCategory && (
+                        <span className="text-rose-600 font-medium text-[11px]">
+                          {errors.visaCategory.message}
+                        </span>
+                      )}
+                    </label>
+                    <Input
+                      {...register("visaCategory")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Subcategory / Stream
+                    </label>
+                    <Input
+                      {...register("subCategory")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Assigned Case Consultant
+                    </label>
+                    <select
+                      value={watchedAssignedConsultantId || ""}
+                      onChange={(e) => handleConsultantChange(e.target.value)}
+                      className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                      <option value="">-- Unassigned Caseworker --</option>
+                      {staffConsultants.map((staff) => (
+                        <option key={staff.id} value={staff.id}>
+                          {`${staff.name} (${staff.role?.name || "Consultant"})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Initial Case Status
+                    </label>
+                    <select
+                      {...register("status")}
+                      className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                      <option value="INTAKE">Intake (Initial Review)</option>
+                      <option value="ACTIVE">Active (In Preparation)</option>
+                      <option value="ON_HOLD">On Hold (Pending Client)</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 2: APPLICANT IDENTITY & COMMUNICATION */}
             <div
               id="section-identity"
               className={cn(
@@ -851,7 +945,7 @@ export function CreateClientForm() {
                   </div>
                   <div>
                     <h2 className="text-base font-extrabold tracking-tight text-slate-900">
-                      1. Applicant Dossier &amp; Contact
+                      2. Applicant Dossier &amp; Contact
                     </h2>
                     <p className="text-xs text-slate-500">
                       Legal identity, verification credentials, and direct communication channels
@@ -1147,171 +1241,6 @@ export function CreateClientForm() {
               </div>
             </div>
 
-            {/* SECTION 2: CASE SCOPE & JURISDICTION */}
-            <div
-              id="section-service"
-              className={cn(
-                "rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs transition-all",
-                activeTab === "service" ? "ring-2 ring-amber-400/40" : "",
-              )}>
-              <div className="flex items-center gap-3 pb-5 border-b border-slate-100">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-2xs">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-extrabold tracking-tight text-slate-900">
-                    2. Service Scope &amp; Case Jurisdiction
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Catalog program, destination authority, and assigned caseworker
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 space-y-6">
-                {/* Service Catalog Dropdown */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
-                      Select Service Offering from Live Catalog *
-                    </span>
-                    {errors.serviceId && (
-                      <span className="text-rose-600 font-medium normal-case text-[11px]">
-                        {errors.serviceId.message}
-                      </span>
-                    )}
-                  </label>
-
-                  {isServicesLoading ? (
-                    <div className="text-xs text-slate-500 py-3 flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-slate-800" />
-                      Loading active service programs...
-                    </div>
-                  ) : (
-                    <select
-                      value={watchedServiceId}
-                      onChange={(e) => handleServiceSelect(e.target.value)}
-                      className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs cursor-pointer">
-                      <option value="">-- Choose active immigration or visa offering --</option>
-                      {services.map((s: any) => (
-                        <option key={s.id} value={s.id}>
-                          {`${s.name} [${s.code}] • Category: ${s.category} • Base Fee: $${Number(s.baseFee || 0).toLocaleString()} ${s.currency || "USD"}`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
-                {/* Destination Country Grid */}
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 block">
-                    Destination Jurisdiction Authority *
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                    {DESTINATIONS.map((dest) => {
-                      const isSelected = watchedCountry === dest.name;
-                      return (
-                        <button
-                          key={dest.code}
-                          type="button"
-                          onClick={() => handleCountryChange(dest.name)}
-                          className={cn(
-                            "p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1",
-                            isSelected
-                              ? "bg-blue-50 border-blue-600 text-blue-950 shadow-2xs ring-1 ring-blue-600/30"
-                              : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50",
-                          )}>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl">{dest.flag}</span>
-                            <span
-                              className={cn(
-                                "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded",
-                                isSelected ? "bg-blue-200 text-blue-900" : "bg-slate-100 text-slate-600",
-                              )}>
-                              {dest.code}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-xs font-extrabold block leading-tight">
-                              {dest.name}
-                            </span>
-                            <span
-                              className={cn(
-                                "text-[9px] block mt-0.5 leading-tight truncate",
-                                isSelected ? "text-blue-700" : "text-slate-500",
-                              )}>
-                              {dest.sub}
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Subcategory, Consultant, Status */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                      <span>Visa Category Title *</span>
-                      {errors.visaCategory && (
-                        <span className="text-rose-600 font-medium text-[11px]">
-                          {errors.visaCategory.message}
-                        </span>
-                      )}
-                    </label>
-                    <Input
-                      {...register("visaCategory")}
-                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700">
-                      Subcategory / Stream
-                    </label>
-                    <Input
-                      {...register("subCategory")}
-                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700">
-                      Assigned Case Consultant
-                    </label>
-                    <select
-                      value={watchedAssignedConsultantId || ""}
-                      onChange={(e) => handleConsultantChange(e.target.value)}
-                      className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600">
-                      <option value="">-- Unassigned Caseworker --</option>
-                      {staffConsultants.map((staff) => (
-                        <option key={staff.id} value={staff.id}>
-                          {`${staff.name} (${staff.role?.name || "Consultant"})`}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700">
-                      Initial Case Status
-                    </label>
-                    <select
-                      {...register("status")}
-                      className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600">
-                      <option value="INTAKE">Intake (Initial Review)</option>
-                      <option value="ACTIVE">Active (In Preparation)</option>
-                      <option value="ON_HOLD">On Hold (Pending Client)</option>
-                      <option value="COMPLETED">Completed</option>
-                      <option value="CANCELLED">Cancelled</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* SECTION 3: FINANCIAL TERMS & PAYMENT MILESTONES */}
             <div
               id="section-finance"
@@ -1428,50 +1357,6 @@ export function CreateClientForm() {
                       {...register("discountReason")}
                       className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900"
                     />
-                  </div>
-                </div>
-
-                {/* Schedule Structure Presets */}
-                <div className="space-y-2.5">
-                  <label className="text-xs font-bold text-slate-700 block">
-                    Installment Schedule Structure Preset
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
-                    {SCHEDULE_PRESETS.map((preset) => {
-                      const isSelected = watchedScheduleType === preset.id;
-                      return (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() => handleScheduleTypeChange(preset.id as any)}
-                          className={cn(
-                            "p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5",
-                            isSelected
-                              ? "bg-amber-50/80 border-amber-400 text-amber-950 shadow-2xs ring-1 ring-amber-400/40"
-                              : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50",
-                          )}>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-extrabold block">
-                              {preset.title}
-                            </span>
-                            <span
-                              className={cn(
-                                "text-[9px] font-bold px-2 py-0.5 rounded-full uppercase",
-                                isSelected ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-600",
-                              )}>
-                              {preset.badge}
-                            </span>
-                          </div>
-                          <span
-                            className={cn(
-                              "text-[10px] leading-tight block",
-                              isSelected ? "text-amber-800" : "text-slate-500",
-                            )}>
-                              {preset.desc}
-                            </span>
-                        </button>
-                      );
-                    })}
                   </div>
                 </div>
 
@@ -1592,6 +1477,140 @@ export function CreateClientForm() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* SECTION 4: CASE DIRECTIVES & COLLABORATIVE NOTES */}
+            <div
+              id="section-notes"
+              className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                    4
+                  </div>
+                  <div>
+                    <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                      <span>Case Directives &amp; Multi-Tier Notes</span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">
+                        Rich Text
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Attach scoped directives with role-isolated visibility (Client Portal, Staff Internal, Super Admin Confidential)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scoped Notes Tab Switcher */}
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl bg-slate-100 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setNotesScope("client")}
+                    className={cn(
+                      "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                      notesScope === "client"
+                        ? "bg-white text-blue-900 shadow-xs border border-blue-200/60"
+                        : "text-slate-600 hover:text-slate-900",
+                    )}>
+                    <Globe className="h-3.5 w-3.5 text-blue-600" />
+                    <span>Client-Visible Note</span>
+                    {watchedClientNotes.trim() && (
+                      <span className="h-2 w-2 rounded-full bg-blue-600" />
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNotesScope("staff")}
+                    className={cn(
+                      "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                      notesScope === "staff"
+                        ? "bg-white text-amber-900 shadow-xs border border-amber-200/60"
+                        : "text-slate-600 hover:text-slate-900",
+                    )}>
+                    <Shield className="h-3.5 w-3.5 text-amber-600" />
+                    <span>Staff-Only Directive</span>
+                    {watchedInternalNotes.trim() && (
+                      <span className="h-2 w-2 rounded-full bg-amber-600" />
+                    )}
+                  </button>
+
+                  {isSuperAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setNotesScope("superAdmin")}
+                      className={cn(
+                        "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                        notesScope === "superAdmin"
+                          ? "bg-white text-purple-900 shadow-xs border border-purple-200/60"
+                          : "text-slate-600 hover:text-slate-900",
+                      )}>
+                      <Lock className="h-3.5 w-3.5 text-purple-600" />
+                      <span>Super Admin Confidential</span>
+                      {watchedSuperAdminNotes.trim() && (
+                        <span className="h-2 w-2 rounded-full bg-purple-600" />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Note Editor Area by Scope */}
+                {notesScope === "client" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-blue-700 font-semibold">
+                        <Globe className="h-3.5 w-3.5" />
+                        <span>Visible to the applicant on their Client Portal dashboard</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">WYSIWYG Formatted</span>
+                    </div>
+                    <RichTextEditor
+                      value={watch("clientVisibleNotes") || ""}
+                      onChange={(val) => setValue("clientVisibleNotes", val, { shouldDirty: true })}
+                      placeholder="Enter instructions, welcome notes, or onboarding directives visible to the client..."
+                      minHeight="140px"
+                    />
+                  </div>
+                )}
+
+                {notesScope === "staff" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-amber-800 font-semibold">
+                        <Shield className="h-3.5 w-3.5" />
+                        <span>Visible to all caseworkers, consultants, and management (Hidden from client)</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">WYSIWYG Formatted</span>
+                    </div>
+                    <RichTextEditor
+                      value={watch("internalNotes") || ""}
+                      onChange={(val) => setValue("internalNotes", val, { shouldDirty: true })}
+                      placeholder="Enter internal casework directives, processing notes, or communication history..."
+                      minHeight="140px"
+                    />
+                  </div>
+                )}
+
+                {notesScope === "superAdmin" && isSuperAdmin && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-purple-800 font-semibold">
+                        <Lock className="h-3.5 w-3.5" />
+                        <span>Confidential Executive Note (Strictly hidden from clients, consultants, and managers)</span>
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-mono">WYSIWYG Formatted</span>
+                    </div>
+                    <RichTextEditor
+                      value={watch("superAdminNotes") || ""}
+                      onChange={(val) => setValue("superAdminNotes", val, { shouldDirty: true })}
+                      placeholder="Enter confidential executive commentary, compliance risk flags, or sensitive financial notes..."
+                      minHeight="140px"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1729,6 +1748,33 @@ export function CreateClientForm() {
                       {currencySymbol}{Math.abs(financialDiscrepancy).toLocaleString()} off
                     </span>
                   )}
+                </div>
+              </div>
+
+              {/* Case Directives Status */}
+              <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Directives Attached
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {watchedClientNotes?.trim() ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold border border-blue-200">
+                      <Globe className="h-2.5 w-2.5" /> Client Note
+                    </span>
+                  ) : null}
+                  {watchedInternalNotes?.trim() ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
+                      <Shield className="h-2.5 w-2.5" /> Staff Note
+                    </span>
+                  ) : null}
+                  {isSuperAdmin && watchedSuperAdminNotes?.trim() ? (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 text-[10px] font-bold border border-purple-200">
+                      <Lock className="h-2.5 w-2.5" /> Super Admin
+                    </span>
+                  ) : null}
+                  {!watchedClientNotes?.trim() && !watchedInternalNotes?.trim() && (!isSuperAdmin || !watchedSuperAdminNotes?.trim()) ? (
+                    <span className="text-[11px] text-slate-400 italic">No notes attached</span>
+                  ) : null}
                 </div>
               </div>
 

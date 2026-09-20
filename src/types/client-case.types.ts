@@ -55,6 +55,7 @@ export interface ClientCase {
   financialStatus: FinancialStatus;
   clientVisibleNotes?: string | null;
   internalNotes?: string | null;
+  superAdminNotes?: string | null;
   assignedConsultantId?: string | null;
   user?: ClientProfile;
   service?: CaseServiceSnapshot;
@@ -156,6 +157,8 @@ export interface CreateClientCaseInput {
   agreementDate?: string;
   serviceStartDate?: string;
   clientVisibleNotes?: string;
+  internalNotes?: string;
+  superAdminNotes?: string;
 }
 
 export interface UpdateClientCaseInput {
@@ -167,6 +170,7 @@ export interface UpdateClientCaseInput {
   caseStatus?: CaseStatus;
   clientVisibleNotes?: string;
   internalNotes?: string;
+  superAdminNotes?: string;
   assignedConsultantId?: string | null;
 }
 
