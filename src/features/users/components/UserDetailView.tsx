@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { Loader } from "@/components/common/Loader";
+import { SkeletonDetailView } from "@/components/common/Skeleton";
 import {
   ArrowLeft,
   ChevronRight,
@@ -164,30 +165,7 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
 
   // Loading State Skeleton
   if (isUserLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-[#EAE6DF]/60 animate-pulse" />
-          <div className="space-y-2">
-            <div className="h-6 w-48 bg-[#EAE6DF]/60 rounded animate-pulse" />
-            <div className="h-3 w-32 bg-[#EAE6DF]/40 rounded animate-pulse" />
-          </div>
-        </div>
-        <div className="p-8 rounded-3xl border border-[#EAE6DF] bg-white space-y-4">
-          <div className="flex items-center gap-5">
-            <div className="h-20 w-20 rounded-full bg-[#EAE6DF]/60 animate-pulse" />
-            <div className="space-y-2">
-              <div className="h-7 w-64 bg-[#EAE6DF]/60 rounded animate-pulse" />
-              <div className="h-4 w-40 bg-[#EAE6DF]/40 rounded animate-pulse" />
-            </div>
-          </div>
-        </div>
-        <div className="p-12 flex flex-col items-center justify-center gap-3">
-          <Loader />
-          <span className="text-xs font-bold text-[#64748B]">Loading user profile dossier...</span>
-        </div>
-      </div>
-    );
+    return <SkeletonDetailView />;
   }
 
   // Not Found / Error State

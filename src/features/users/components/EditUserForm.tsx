@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { Loader } from "@/components/common/Loader";
+import { SkeletonForm } from "@/components/common/Skeleton";
 import { EmptyState } from "@/components/common/EmptyState";
 import {
   AlertCircle,
@@ -283,15 +284,7 @@ export function EditUserForm({ userId }: EditUserFormProps) {
   const isPageLoading = isUserLoading || (isFetching && !user);
 
   if (isPageLoading) {
-    return (
-      <div className="py-24">
-        <Loader
-          size="lg"
-          text="Loading user dossier..."
-          subtext="Resolving profile credentials, PBAC role assignment, and access privileges."
-        />
-      </div>
-    );
+    return <SkeletonForm fieldsCount={6} />;
   }
 
   if (!user) {

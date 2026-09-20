@@ -10,9 +10,11 @@ import {
   Layers,
   ShieldCheck,
 } from "lucide-react";
+import { SkeletonMetricCards } from "@/components/common/Skeleton";
 
 interface ServiceMetricCardsProps {
   stats?: ServiceSummaryStats;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -23,8 +25,12 @@ export function ServiceMetricCards({
     avgProfessionalFee: 0,
     totalPassThroughTracked: 0,
   },
+  isLoading = false,
   className,
 }: ServiceMetricCardsProps) {
+  if (isLoading) {
+    return <SkeletonMetricCards className={className} />;
+  }
   const cards = [
     {
       id: "ALL",

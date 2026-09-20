@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { Loader } from "@/components/common/Loader";
+import { SkeletonForm } from "@/components/common/Skeleton";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ROUTES } from "@/constants/routes";
 import {
@@ -243,15 +244,7 @@ export function EditServiceForm({ serviceId }: EditServiceFormProps) {
   const isPageLoading = isServiceLoading || (isFetching && !service);
 
   if (isPageLoading) {
-    return (
-      <div className="py-24">
-        <Loader
-          size="lg"
-          text="Loading service details..."
-          subtext="Retrieving package configuration, fee structure, and payment defaults."
-        />
-      </div>
-    );
+    return <SkeletonForm fieldsCount={8} />;
   }
 
   if (!service) {

@@ -11,6 +11,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import type { Payment } from "@/types/client-case.types";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
+import { Skeleton, SkeletonMetricCards } from "@/components/common/Skeleton";
 import { cn } from "@/lib/utils";
 import {
   CreditCard,
@@ -30,6 +31,7 @@ import {
   ChevronRight,
   Loader2,
   Calendar,
+  X,
 } from "lucide-react";
 
 const formatMoney = (amount: number | string, currency = "USD") => {
@@ -120,8 +122,11 @@ export default function PaymentsPage() {
       </div>
 
       {/* 4 Executive KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Revenue Collected */}
+      {isLoading ? (
+        <SkeletonMetricCards count={4} />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Revenue Collected */}
         <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-amber-700 text-white border border-amber-400/40 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-amber-100">
@@ -209,6 +214,7 @@ export default function PaymentsPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Filter & Search Toolbar */}
       <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs space-y-4">
@@ -304,9 +310,25 @@ export default function PaymentsPage() {
         {/* Global Transaction Table */}
         <div className="overflow-x-auto">
           {isLoading ? (
-            <div className="py-16 text-center space-y-3">
-              <Loader2 className="h-6 w-6 animate-spin mx-auto text-amber-500" />
-              <p className="text-xs text-slate-500">Loading global transaction ledger...</p>
+            <div className="p-4 space-y-4">
+              <div className="divide-y divide-slate-100">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={`pay-skel-${i}`} className="py-3.5 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 w-48">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="space-y-1.5 flex-1">
+                        <Skeleton className="h-3.5 w-28 rounded" />
+                        <Skeleton className="h-2.5 w-20 rounded" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-3.5 w-32 rounded hidden sm:block" />
+                    <Skeleton className="h-4 w-24 rounded" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-8 w-16 rounded-xl" />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : payments.length === 0 ? (
             <div className="py-16 text-center space-y-3">

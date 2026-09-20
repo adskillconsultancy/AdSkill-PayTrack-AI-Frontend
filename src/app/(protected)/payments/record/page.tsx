@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
+import { Skeleton } from "@/components/common/Skeleton";
 import { useGetMyCasesQuery, useGetClientCaseQuery } from "@/services/api/clients/clientCasesApi";
 import { useGetCasePaymentPlansQuery } from "@/services/api/payment-plans/paymentPlansApi";
 import { useCreatePaymentMutation } from "@/services/api/payments/paymentsApi";
@@ -328,9 +329,15 @@ export default function RecordPaymentPage() {
 
             {/* Live Case Card */}
             {isLoadingCase ? (
-              <div className="py-8 text-center">
-                <Loader2 className="h-6 w-6 animate-spin mx-auto text-amber-500 mb-2" />
-                <p className="text-xs text-slate-500">Loading case particulars...</p>
+              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton className="h-4 w-36 rounded" />
+                    <Skeleton className="h-3 w-48 rounded" />
+                  </div>
+                </div>
+                <Skeleton className="h-8 w-full rounded-xl" />
               </div>
             ) : currentCase ? (
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
@@ -389,9 +396,10 @@ export default function RecordPaymentPage() {
             </div>
 
             {isLoadingPlans ? (
-              <div className="py-6 text-center">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-amber-500 mb-2" />
-                <p className="text-xs text-slate-500">Loading payment milestones...</p>
+              <div className="space-y-2">
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
+                <Skeleton className="h-14 w-full rounded-xl" />
               </div>
             ) : installments.length > 0 ? (
               <div className="space-y-2">

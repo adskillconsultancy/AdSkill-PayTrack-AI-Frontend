@@ -76,8 +76,48 @@ export function ClientListView({ pageTitle = "Application List", categoryLabel =
 
   return <div className="space-y-6">
     <div className="flex items-center gap-3.5"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF]"><FileText className="h-5 w-5" /></div><div><h1 className="text-xl sm:text-2xl font-black">{pageTitle}</h1><div className="flex items-center gap-2 text-xs text-[#64748B]"><span>{parentBreadcrumb}</span><ChevronRight className="h-3 w-3" /><span className="font-bold text-[#0a0a0a]">{pageTitle}</span></div></div></div>
-    <ClientMetricCards stats={stats} />
+    <ClientMetricCards stats={stats} isLoading={isLoading} />
     <ClientSearchBar searchQuery={searchQuery} onSearchChange={(value) => { setSearchQuery(value); setCurrentPage(1); }} statusFilter={statusFilter} onStatusFilterChange={(value) => { setStatusFilter(value); setCurrentPage(1); }} destinationFilter={destinationFilter} onDestinationFilterChange={(value) => { setDestinationFilter(value); setCurrentPage(1); }} availableDestinations={destinations} onNewClientClick={() => router.push("/clients/create")} />
-    {isLoading ? <div className="rounded-3xl border border-[#EAE6DF] bg-white p-10 text-center text-sm text-[#64748B]">Loading cases...</div> : isError ? <div className="rounded-3xl border border-[#FECACA] bg-white p-10 text-center"><p className="text-sm text-[#B91C1C]">Could not load cases.</p><Button type="button" variant="outline" className="mt-4 gap-2" onClick={() => refetch()}><RefreshCw className="h-4 w-4" />Retry</Button></div> : filteredCases.length === 0 ? <div className="rounded-3xl border border-[#EAE6DF] bg-white p-10 text-center text-sm text-[#64748B]">No cases match current filters.</div> : <DataTable<ClientCase> title={categoryLabel} data={filteredCases} columns={columns} keyExtractor={(item) => item.id} totalCount={filteredCases.length} currentPage={currentPage} pageSize={pageSize} totalPages={Math.max(1, Math.ceil(filteredCases.length / pageSize))} itemLabel="cases" sortBy={selectedSort} sortOptions={["Newest First", "Oldest First", "Client Name (A-Z)", "Client Name (Z-A)"]} onSortChange={setSelectedSort} onPageChange={setCurrentPage} onRowClick={(item) => router.push(`/clients/${item.id}`)} />}
+    {isLoading ? (
+      <DataTable<ClientCase>
+        title={categoryLabel}
+        data={[]}
+        columns={columns}
+        isLoading={true}
+        keyExtractor={(item) => item.id}
+        totalCount={0}
+        currentPage={1}
+        pageSize={pageSize}
+        totalPages={1}
+      />
+    ) : isError ? (
+      <div className="rounded-3xl border border-[#FECACA] bg-white p-10 text-center">
+        <p className="text-sm text-[#B91C1C]">Could not load cases.</p>
+        <Button type="button" variant="outline" className="mt-4 gap-2" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4" />Retry
+        </Button>
+      </div>
+    ) : filteredCases.length === 0 ? (
+      <div className="rounded-3xl border border-[#EAE6DF] bg-white p-10 text-center text-sm text-[#64748B]">
+        No cases match current filters.
+      </div>
+    ) : (
+      <DataTable<ClientCase>
+        title={categoryLabel}
+        data={filteredCases}
+        columns={columns}
+        keyExtractor={(item) => item.id}
+        totalCount={filteredCases.length}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalPages={Math.max(1, Math.ceil(filteredCases.length / pageSize))}
+        itemLabel="cases"
+        sortBy={selectedSort}
+        sortOptions={["Newest First", "Oldest First", "Client Name (A-Z)", "Client Name (Z-A)"]}
+        onSortChange={setSelectedSort}
+        onPageChange={setCurrentPage}
+        onRowClick={(item) => router.push(`/clients/${item.id}`)}
+      />
+    )}
   </div>;
 }

@@ -4,9 +4,11 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { UserSummaryStats } from "../types";
 import { Users, UserCheck, Shield, Clock } from "lucide-react";
+import { SkeletonMetricCards } from "@/components/common/Skeleton";
 
 interface UserMetricCardsProps {
   stats?: UserSummaryStats;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -17,8 +19,12 @@ export function UserMetricCards({
     staffCount: 48,
     pendingInvitations: 12,
   },
+  isLoading = false,
   className,
 }: UserMetricCardsProps) {
+  if (isLoading) {
+    return <SkeletonMetricCards className={className} />;
+  }
   const cards = [
     {
       id: "ALL",

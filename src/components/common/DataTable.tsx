@@ -12,6 +12,7 @@ import {
   TableCell,
 } from "@/components/common/Table";
 import { EmptyState } from "@/components/common/EmptyState";
+import { Skeleton } from "@/components/common/Skeleton";
 import { ChevronDown, ChevronLeft, ChevronRight, Inbox } from "lucide-react";
 
 export interface ColumnDef<T> {
@@ -221,12 +222,44 @@ export function DataTable<T>({
 
           <TableBody className="divide-y divide-[#F0ECE6] bg-white">
             {isLoading ? (
-              // Loading Skeleton Rows
-              Array.from({ length: 4 }).map((_, i) => (
-                <TableRow key={`skeleton-${i}`} className="animate-pulse">
-                  {columns.map((col) => (
-                    <TableCell key={col.key} className="px-6 py-4.5">
-                      <div className="h-5 bg-[#FAF8F5] rounded-md w-3/4" />
+              // Realistic Shimmering Skeleton Rows
+              Array.from({ length: pageSize && pageSize > 0 ? Math.min(pageSize, 6) : 5 }).map((_, i) => (
+                <TableRow key={`skeleton-${i}`} className="border-b border-[#F0ECE6] dark:border-zinc-800">
+                  {columns.map((col, cIdx) => (
+                    <TableCell
+                      key={col.key}
+                      className={cn(
+                        "px-6 py-4",
+                        col.align === "right"
+                          ? "text-right"
+                          : col.align === "center"
+                          ? "text-center"
+                          : "text-left"
+                      )}
+                    >
+                      {cIdx === 0 ? (
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-8 w-8 rounded-xl shrink-0" />
+                          <div className="space-y-1.5 flex-1">
+                            <Skeleton className="h-3.5 w-28 rounded" />
+                            <Skeleton className="h-2.5 w-20 rounded" />
+                          </div>
+                        </div>
+                      ) : cIdx === columns.length - 1 ? (
+                        <div className="flex justify-end gap-2">
+                          <Skeleton className="h-7 w-7 rounded-full" />
+                          <Skeleton className="h-7 w-7 rounded-full" />
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <Skeleton
+                            className={cn(
+                              "h-3.5 rounded",
+                              cIdx % 2 === 0 ? "w-3/4" : "w-1/2"
+                            )}
+                          />
+                        </div>
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>

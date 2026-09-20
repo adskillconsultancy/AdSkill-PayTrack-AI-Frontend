@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Loader } from "@/components/common/Loader";
+import { SkeletonDetailView } from "@/components/common/Skeleton";
 import { EmptyState } from "@/components/common/EmptyState";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
@@ -218,15 +219,7 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
   };
 
   if (isLoading) {
-    return (
-      <div className="py-24">
-        <Loader
-          size="lg"
-          text="Loading service offering..."
-          subtext="Resolving fee separation architecture and milestone terms."
-        />
-      </div>
-    );
+    return <SkeletonDetailView />;
   }
 
   if (!service) {

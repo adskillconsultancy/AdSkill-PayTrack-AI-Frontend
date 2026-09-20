@@ -12,6 +12,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/common/Table";
+import { Skeleton } from "@/components/common/Skeleton";
 import {
   Eye,
   MoreVertical,
@@ -131,6 +132,7 @@ export interface ApplicationsTableProps {
   totalPages?: number;
   sortBy?: string;
   className?: string;
+  isLoading?: boolean;
   onSortChange?: (sort: string) => void;
   onPageChange?: (page: number) => void;
   onView?: (item: ApplicationItem) => void;
@@ -145,6 +147,7 @@ export function ApplicationsTable({
   totalPages = 124,
   sortBy = "Newest First",
   className,
+  isLoading = false,
   onSortChange,
   onPageChange,
   onView,
@@ -257,11 +260,53 @@ export function ApplicationsTable({
           </TableHeader>
 
           <TableBody className="divide-y divide-[#F0ECE6] bg-white">
-            {data.map((item) => (
-              <TableRow
-                key={item.id}
-                className="hover:bg-[#FAF8F5]/70 transition-colors border-b border-[#F0ECE6]"
-              >
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={`app-skel-${i}`} className="border-b border-[#F0ECE6]">
+                  <TableCell className="px-6 py-4.5">
+                    <div className="flex items-center gap-3.5">
+                      <Skeleton className="h-11 w-11 rounded-full shrink-0" />
+                      <div className="space-y-1.5 flex-1">
+                        <Skeleton className="h-3.5 w-32 rounded" />
+                        <Skeleton className="h-2.5 w-24 rounded" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4.5">
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-3.5 w-24 rounded" />
+                      <Skeleton className="h-2.5 w-16 rounded" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4.5">
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-3.5 w-28 rounded" />
+                      <Skeleton className="h-2.5 w-20 rounded" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4.5">
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-3.5 w-24 rounded" />
+                      <Skeleton className="h-2.5 w-16 rounded" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-6 py-4.5">
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                  </TableCell>
+                  <TableCell className="px-6 py-4.5 text-right">
+                    <div className="flex justify-end gap-2">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              data.map((item) => (
+                <TableRow
+                  key={item.id}
+                  className="hover:bg-[#FAF8F5]/70 transition-colors border-b border-[#F0ECE6]"
+                >
                 {/* 1. Client & ID */}
                 <TableCell className="px-6 py-4.5">
                   <div className="flex items-center gap-3.5">
@@ -361,7 +406,7 @@ export function ApplicationsTable({
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )))}
           </TableBody>
         </Table>
       </div>

@@ -447,7 +447,7 @@ export function UserListView() {
       </div>
 
       {/* 2. 4 METRIC SUMMARY KPI CARDS */}
-      <UserMetricCards stats={stats} />
+      <UserMetricCards stats={stats} isLoading={isLoading} />
 
       {/* 3. SEARCH BAR & ACTION TOOLBAR */}
       <UserSearchBar
@@ -469,16 +469,11 @@ export function UserListView() {
       />
 
       {/* 4. DATA TABLE CONTAINER */}
-      {isLoading ? (
-        <div className="p-12 bg-white rounded-2xl border border-[#EAE6DF] flex flex-col items-center justify-center gap-3">
-          <Loader />
-          <span className="text-xs font-bold text-[#64748B]">Loading users from database...</span>
-        </div>
-      ) : (
-        <DataTable<UserItem>
-          title="ALL USERS & CREDENTIALS"
-          data={users}
-          columns={columns}
+      <DataTable<UserItem>
+        title="ALL USERS & CREDENTIALS"
+        data={users}
+        columns={columns}
+        isLoading={isLoading}
           keyExtractor={(item) => item.id}
           totalCount={usersResponse?.meta?.total ?? users.length}
           currentPage={currentPage}
@@ -496,7 +491,6 @@ export function UserListView() {
           onPageChange={(page) => setCurrentPage(page)}
           onRowClick={(item) => router.push(`/users/${item.clientId || item.id}`)}
         />
-      )}
     </div>
   );
 }

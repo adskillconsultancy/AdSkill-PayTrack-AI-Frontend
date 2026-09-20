@@ -31,6 +31,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
+import { SkeletonDetailView } from "@/components/common/Skeleton";
 import { useGetPaymentQuery, useVerifyPaymentMutation } from "@/services/api/payments/paymentsApi";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
@@ -99,13 +100,7 @@ export default function PaymentDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen py-24 text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto text-amber-500 mb-3" />
-        <p className="text-sm font-bold text-slate-700">Loading payment audit file...</p>
-        <p className="text-xs text-slate-400 mt-1">Retrieving R2 proof documents, case link, and verifier ledger</p>
-      </div>
-    );
+    return <SkeletonDetailView />;
   }
 
   if (isError || !payment) {

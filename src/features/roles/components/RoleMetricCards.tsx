@@ -1,13 +1,22 @@
 import * as React from "react";
 import { Layers, Lock, ShieldAlert, KeyRound } from "lucide-react";
+import { SkeletonMetricCards } from "@/components/common/Skeleton";
 import type { RoleItem } from "../types";
 
 interface RoleMetricCardsProps {
-  roles: RoleItem[];
-  allPermissionsCount: number;
+  roles?: RoleItem[];
+  allPermissionsCount?: number;
+  isLoading?: boolean;
 }
 
-export function RoleMetricCards({ roles, allPermissionsCount }: RoleMetricCardsProps) {
+export function RoleMetricCards({
+  roles = [],
+  allPermissionsCount = 0,
+  isLoading = false,
+}: RoleMetricCardsProps) {
+  if (isLoading) {
+    return <SkeletonMetricCards count={4} />;
+  }
   const totalRoles = roles.length;
   const systemRoles = roles.filter((r) => r.isSystemRole).length;
   const customRoles = roles.filter((r) => !r.isSystemRole).length;

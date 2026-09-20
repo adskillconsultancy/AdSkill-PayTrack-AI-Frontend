@@ -3,10 +3,12 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Check, Clock, AlertCircle, Activity } from "lucide-react";
+import { SkeletonMetricCards } from "@/components/common/Skeleton";
 import type { ClientSummaryStats } from "../types";
 
 interface ClientMetricCardsProps {
   stats?: ClientSummaryStats;
+  isLoading?: boolean;
   className?: string;
 }
 
@@ -17,8 +19,12 @@ export function ClientMetricCards({
     actionRequired: 0,
     delayed: 0,
   },
+  isLoading = false,
   className,
 }: ClientMetricCardsProps) {
+  if (isLoading) {
+    return <SkeletonMetricCards className={className} />;
+  }
   const cards = [
     {
       id: "ACTIVE",

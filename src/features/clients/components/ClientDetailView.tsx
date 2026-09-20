@@ -44,6 +44,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
+import { SkeletonDetailView } from "@/components/common/Skeleton";
 import { RichTextEditor } from "@/components/common/RichTextEditor";
 import { CaseNotesTimeline } from "./CaseNotesTimeline";
 import { PaymentDetailModal } from "@/features/payments/components/PaymentDetailModal";
@@ -191,13 +192,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   }, [plansResponse]);
 
   if (isLoading) {
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-xs">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto text-amber-500 mb-3" />
-        <p className="text-sm font-bold text-slate-700">Loading client workspace...</p>
-        <p className="text-xs text-slate-400 mt-1">Retrieving legal profile, invoices, and payment ledger</p>
-      </div>
-    );
+    return <SkeletonDetailView />;
   }
 
   if (isError || !clientCase) {

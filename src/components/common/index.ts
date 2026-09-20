@@ -28,3 +28,20 @@ export type {
 export { DataTable } from "./DataTable";
 export type { DataTableProps, ColumnDef } from "./DataTable";
 
+export {
+  Skeleton,
+  SkeletonHeader,
+  SkeletonMetricCards,
+  SkeletonTable,
+  SkeletonDetailView,
+  SkeletonForm,
+  SkeletonCard,
+} from "./Skeleton";
+export type {
+  SkeletonProps,
+  SkeletonHeaderProps,
+  SkeletonMetricCardsProps,
+  SkeletonTableProps,
+  SkeletonFormProps,
+} from "./Skeleton";
+

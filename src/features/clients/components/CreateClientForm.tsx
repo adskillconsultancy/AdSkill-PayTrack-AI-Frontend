@@ -2,6 +2,7 @@
 
 import { Button as CommonButton } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
+import { Skeleton } from "@/components/common/Skeleton";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { useGetServicesQuery } from "@/services/api/services/servicesApi";
@@ -803,9 +804,8 @@ export function CreateClientForm() {
                   </label>
 
                   {isServicesLoading ? (
-                    <div className="text-xs text-slate-500 py-3 flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin text-slate-800" />
-                      Loading active service programs...
+                    <div className="py-1">
+                      <Skeleton className="h-12 w-full rounded-xl" />
                     </div>
                   ) : (
                     <select
@@ -1024,9 +1024,11 @@ export function CreateClientForm() {
 
                       {/* User Items */}
                       {isUsersLoading ? (
-                        <div className="p-6 text-center text-xs text-slate-500">
-                          <Loader2 className="h-4 w-4 animate-spin inline mr-2 text-slate-700" />
-                          Fetching registered users...
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 p-1">
+                          <Skeleton className="h-16 rounded-xl" />
+                          <Skeleton className="h-16 rounded-xl" />
+                          <Skeleton className="h-16 rounded-xl" />
+                          <Skeleton className="h-16 rounded-xl" />
                         </div>
                       ) : filteredExistingUsers.length === 0 ? (
                         <div className="p-6 text-center text-xs text-slate-500 bg-white rounded-xl border border-dashed border-slate-200">
