@@ -116,14 +116,75 @@ export interface Payment {
   amount: number | string;
   currency: string;
   paymentDate: string;
+  recordedAt?: string;
   paymentMethod: string;
   externalReference?: string | null;
   idempotencyKey?: string | null;
   status: PaymentStatus;
+  verifiedById?: string | null;
   operationalNotes?: string | null;
   verifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  installment?: {
+    id: string;
+    sequenceNumber: number;
+    title?: string | null;
+    amount: number | string;
+    dueDate: string;
+  } | null;
+  case?: {
+    id: string;
+    caseCode: string;
+    userId: string;
+    caseCategory?: string | null;
+    destinationCountry?: string | null;
+    user?: {
+      id: string;
+      name: string;
+      preferredName?: string | null;
+      email: string;
+      phone?: string | null;
+      clientId?: string | null;
+    } | null;
+    service?: {
+      id: string;
+      name: string;
+      code: string;
+    } | null;
+  } | null;
+  verifiedBy?: {
+    id: string;
+    name: string;
+    preferredName?: string | null;
+    email: string;
+    role?: {
+      name: string;
+    } | null;
+  } | null;
+  proofDocuments?: Array<{
+    id: string;
+    originalName: string;
+    storedName: string;
+    objectKey: string;
+    mimeType: string;
+    size: number;
+    signedDownloadUrl?: string;
+    createdAt: string;
+  }>;
+}
+
+export interface PaymentLedgerStats {
+  totalVolume: number;
+  todayVolume: number;
+  pendingCount: number;
+  verifiedCount: number;
+  totalTransactions: number;
+}
+
+export interface PaymentLedgerResponse {
+  payments: Payment[];
+  stats: PaymentLedgerStats;
 }
 
 export interface Invoice {
@@ -196,4 +257,5 @@ export interface CreatePaymentInput {
   externalReference?: string;
   idempotencyKey?: string;
   operationalNotes?: string;
+  proofDocumentIds?: string[];
 }

@@ -10,7 +10,6 @@ import {
   Bell,
   Briefcase,
   CalendarRange,
-  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -130,59 +129,10 @@ const navSections: NavSection[] = [
     portalType: "MANAGEMENT",
     items: [
       {
-        title: "Payment Plans",
-        href: `${ROUTES.PAYMENTS}?tab=plans`,
-        icon: CalendarRange,
-        requiredPermission: "plan:read",
-        subItems: [
-          {
-            title: "Milestone Schedules",
-            href: `${ROUTES.PAYMENTS}?tab=plans`,
-          },
-          {
-            title: "Create Payment Plan",
-            href: `${ROUTES.PAYMENTS}?action=new-plan`,
-            requiredPermission: "plan:create",
-          },
-        ],
-      },
-      {
-        title: "Transactions Ledger",
+        title: "Payments",
         href: ROUTES.PAYMENTS,
         icon: Receipt,
         requiredPermission: "payment:read",
-        subItems: [
-          { title: "All Payments", href: ROUTES.PAYMENTS },
-          {
-            title: "Record Manual Payment",
-            href: `${ROUTES.PAYMENTS}?action=record`,
-            requiredPermission: "payment:record",
-          },
-        ],
-      },
-      {
-        title: "Pending Verifications",
-        href: `${ROUTES.PAYMENTS}?tab=verify`,
-        icon: CheckCircle2,
-        requiredPermission: "payment:verify",
-      },
-      {
-        title: "Invoices & Receipts",
-        href: `${ROUTES.PAYMENTS}?tab=invoices`,
-        icon: FileText,
-        requiredAnyPermissions: ["invoice:read", "receipt:read"],
-        subItems: [
-          {
-            title: "Invoices",
-            href: `${ROUTES.PAYMENTS}?tab=invoices`,
-            requiredPermission: "invoice:read",
-          },
-          {
-            title: "Payment Receipts",
-            href: `${ROUTES.PAYMENTS}?tab=receipts`,
-            requiredPermission: "receipt:read",
-          },
-        ],
       },
     ],
   },
@@ -450,7 +400,7 @@ export function Sidebar() {
       }
 
       if (pathname === hrefPath) {
-        return currentPathWithQuery === hrefPath;
+        return true;
       }
 
       return (

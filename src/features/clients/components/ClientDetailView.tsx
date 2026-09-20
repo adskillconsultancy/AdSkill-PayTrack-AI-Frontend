@@ -46,6 +46,7 @@ import {
 import { Button } from "@/components/common/Button";
 import { RichTextEditor } from "@/components/common/RichTextEditor";
 import { CaseNotesTimeline } from "./CaseNotesTimeline";
+import { PaymentDetailModal } from "@/features/payments/components/PaymentDetailModal";
 import { Input } from "@/components/common/Input";
 import { useGetClientCaseQuery, useUpdateClientCaseMutation } from "@/services/api/clients/clientCasesApi";
 import {
@@ -64,7 +65,7 @@ import { useGetCaseInvoicesQuery, useGenerateInvoiceMutation } from "@/services/
 import { useGetCaseReceiptsQuery } from "@/services/api/receipts/receiptsApi";
 import { useUpdateUserMutation } from "@/services/api/users/usersApi";
 import { usePermissions } from "@/hooks/usePermissions";
-import type { CaseStatus, DocumentType } from "@/types/client-case.types";
+import type { CaseStatus, DocumentType, Payment } from "@/types/client-case.types";
 import { cn } from "@/lib/utils";
 
 const labels: Record<CaseStatus, string> = {
@@ -181,6 +182,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const [paymentAmount, setPaymentAmount] = React.useState("");
   const [paymentCurrency, setPaymentCurrency] = React.useState("USD");
   const [paymentMethod, setPaymentMethod] = React.useState("BANK_TRANSFER");
+  const [selectedPaymentSlip, setSelectedPaymentSlip] = React.useState<Payment | null>(null);
   const [notice, setNotice] = React.useState("");
   const [editing, setEditing] = React.useState<"profile" | "case" | null>(null);
 
@@ -224,6 +226,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const canEditProfile = hasPermission("user:update") && Boolean(profile?.id);
   const canEditCase = hasPermission("case:update") && !isClientAccount;
   const canVerify = hasPermission("payment:verify");
+  const canRecordPayment = hasPermission("payment:record");
   const canManageDocuments = hasPermission("document:manage") || hasPermission("document:create");
   const canGenerateInvoice = hasPermission("invoice:create");
 
@@ -535,56 +538,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                   <Info label="Last Activity" value={date(clientCase.updatedAt)} />
                 </div>
 
-                {/* 3-Tier Case Directives & Scoped Notes */}
-                <div className="mt-4 space-y-3">
-                  {clientCase.clientVisibleNotes && (
-                    <div className="rounded-2xl bg-blue-50/60 border border-blue-100 p-4 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-extrabold uppercase tracking-wider">
-                          <Globe className="h-3 w-3" />
-                          Client Portal Visible Notes
-                        </span>
-                        <span className="text-[11px] text-blue-600 font-medium">Visible to client &amp; staff</span>
-                      </div>
-                      <div
-                        className="text-xs text-slate-800 leading-relaxed prose prose-xs max-w-none"
-                        dangerouslySetInnerHTML={{ __html: clientCase.clientVisibleNotes }}
-                      />
-                    </div>
-                  )}
 
-                  {!isClientAccount && clientCase.internalNotes && (
-                    <div className="rounded-2xl bg-amber-50/70 border border-amber-200/80 p-4 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase tracking-wider">
-                          <Shield className="h-3 w-3 text-amber-700" />
-                          Internal Staff Notes
-                        </span>
-                        <span className="text-[11px] text-amber-700 font-medium">Restricted to caseworkers &amp; administration</span>
-                      </div>
-                      <div
-                        className="text-xs text-slate-800 leading-relaxed prose prose-xs max-w-none"
-                        dangerouslySetInnerHTML={{ __html: clientCase.internalNotes }}
-                      />
-                    </div>
-                  )}
-
-                  {isSuperAdmin && clientCase.superAdminNotes && (
-                    <div className="rounded-2xl bg-purple-50/70 border border-purple-200/80 p-4 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 text-[10px] font-extrabold uppercase tracking-wider">
-                          <Lock className="h-3 w-3 text-purple-700" />
-                          Super Admin Confidential Notes
-                        </span>
-                        <span className="text-[11px] text-purple-700 font-medium">Exclusive executive directive (Hidden from staff &amp; clients)</span>
-                      </div>
-                      <div
-                        className="text-xs text-slate-800 leading-relaxed prose prose-xs max-w-none"
-                        dangerouslySetInnerHTML={{ __html: clientCase.superAdminNotes }}
-                      />
-                    </div>
-                  )}
-                </div>
 
                 {!isClientAccount && (
                   <div className="mt-4 flex flex-wrap items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
@@ -966,34 +920,38 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
               </div>
             </div>
 
-            {/* Client Quick Payment Form */}
-            {isClientAccount && (
-              <form onSubmit={submitPayment} className="mt-5 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                <span className="text-xs font-bold text-slate-800 block">Make Case Payment</span>
-                <Input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  placeholder="Enter amount"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  className="h-10 rounded-xl bg-white border-slate-200 text-xs font-bold"
-                />
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600">
-                  <option value="BANK_TRANSFER">Bank Wire / Transfer</option>
-                  <option value="CARD">Credit / Debit Card</option>
-                  <option value="CASH">Direct Cash</option>
-                  <option value="MOBILE_MONEY">Mobile Money</option>
-                </select>
-                <Button
-                  className="w-full h-10 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-2xs cursor-pointer"
-                  disabled={paymentState.isLoading}>
-                  {paymentState.isLoading ? "Submitting..." : "Submit Payment for Verification"}
-                </Button>
-              </form>
+            {/* Offline Case Payment Action Banner */}
+            {(isClientAccount || canRecordPayment) && (
+              <div className="mt-5 p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-black">
+                      <CreditCard className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-black text-slate-900 block">
+                        Record Offline Case Payment
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        Wire slip, cheque, cash, or POS proof upload
+                      </span>
+                    </div>
+                  </div>
+                  {canRecordPayment && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                      Instant Credit
+                    </span>
+                  )}
+                </div>
+
+                <Link
+                  href={`/payments/record?caseId=${clientId}`}
+                  className="flex items-center justify-center gap-2 w-full h-10 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs shadow-xs transition-all cursor-pointer"
+                >
+                  <Plus className="h-4 w-4" />
+                  Record Settlement on Dedicated Page &rarr;
+                </Link>
+              </div>
             )}
 
             {/* Payments List */}
@@ -1002,7 +960,10 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                 Recorded Transactions
               </span>
               {payments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between py-2.5 text-xs">
+                <div
+                  key={payment.id}
+                  onClick={() => setSelectedPaymentSlip(payment)}
+                  className="flex items-center justify-between py-2.5 text-xs hover:bg-slate-50 p-2 rounded-xl transition-colors cursor-pointer">
                   <div>
                     <span className="font-extrabold text-slate-900 block">{money(payment.amount, payment.currency)}</span>
                     <span className="text-[11px] text-slate-500">{payment.paymentMethod}</span>
@@ -1141,6 +1102,12 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
           </Panel>
         </aside>
       </div>
+
+      {/* Payment Detail Slip Modal */}
+      <PaymentDetailModal
+        payment={selectedPaymentSlip}
+        onClose={() => setSelectedPaymentSlip(null)}
+      />
     </div>
   );
 }
@@ -1293,7 +1260,6 @@ function CaseForm({
   busy,
   onCancel,
   onSave,
-  isSuperAdmin = false,
 }: {
   item: import("@/types/client-case.types").ClientCase;
   busy: boolean;
@@ -1307,12 +1273,7 @@ function CaseForm({
     caseSubcategory: item.caseSubcategory || "",
     agreementDate: inputDate(item.agreementDate),
     serviceStartDate: inputDate(item.serviceStartDate),
-    clientVisibleNotes: item.clientVisibleNotes || "",
-    internalNotes: item.internalNotes || "",
-    superAdminNotes: item.superAdminNotes || "",
   });
-
-  const [activeNotesTab, setActiveNotesTab] = React.useState<"client" | "staff" | "superAdmin">("client");
 
   const set = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -1325,7 +1286,6 @@ function CaseForm({
           ...form,
           agreementDate: form.agreementDate || undefined,
           serviceStartDate: form.serviceStartDate || undefined,
-          superAdminNotes: isSuperAdmin ? (form.superAdminNotes || undefined) : undefined,
         });
       }}>
       <EditInput label="Destination Country" value={form.destinationCountry} onChange={(value) => set("destinationCountry", value)} />
@@ -1333,94 +1293,6 @@ function CaseForm({
       <EditInput label="Subcategory / Stream" value={form.caseSubcategory} onChange={(value) => set("caseSubcategory", value)} />
       <EditInput label="Agreement Date" type="date" value={form.agreementDate} onChange={(value) => set("agreementDate", value)} />
       <EditInput label="Service Start Date" type="date" value={form.serviceStartDate} onChange={(value) => set("serviceStartDate", value)} />
-
-      {/* Scoped Case Directives & Rich Notes */}
-      <div className="sm:col-span-2 space-y-3 pt-3 border-t border-slate-200">
-        <div className="flex items-center justify-between">
-          <label className="text-xs font-bold text-slate-800 block">
-            Case Directives &amp; Multi-Tier Notes
-          </label>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setActiveNotesTab("client")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-                activeNotesTab === "client"
-                  ? "bg-blue-600 text-white shadow-2xs"
-                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100",
-              )}>
-              Client Portal
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveNotesTab("staff")}
-              className={cn(
-                "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-                activeNotesTab === "staff"
-                  ? "bg-amber-600 text-white shadow-2xs"
-                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100",
-              )}>
-              Staff Only
-            </button>
-            {isSuperAdmin && (
-              <button
-                type="button"
-                onClick={() => setActiveNotesTab("superAdmin")}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-                  activeNotesTab === "superAdmin"
-                    ? "bg-purple-600 text-white shadow-2xs"
-                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100",
-                )}>
-                Super Admin
-              </button>
-            )}
-          </div>
-        </div>
-
-        {activeNotesTab === "client" && (
-          <div className="space-y-1.5">
-            <span className="text-[11px] text-blue-700 font-semibold block">
-              Visible on client portal dashboard
-            </span>
-            <RichTextEditor
-              value={form.clientVisibleNotes}
-              onChange={(value) => set("clientVisibleNotes", value)}
-              placeholder="Notes or onboarding guidance visible to client..."
-              minHeight="120px"
-            />
-          </div>
-        )}
-
-        {activeNotesTab === "staff" && (
-          <div className="space-y-1.5">
-            <span className="text-[11px] text-amber-800 font-semibold block">
-              Internal staff confidential (Consultants &amp; Managers)
-            </span>
-            <RichTextEditor
-              value={form.internalNotes}
-              onChange={(value) => set("internalNotes", value)}
-              placeholder="Internal processing notes, caseworker instructions..."
-              minHeight="120px"
-            />
-          </div>
-        )}
-
-        {activeNotesTab === "superAdmin" && isSuperAdmin && (
-          <div className="space-y-1.5">
-            <span className="text-[11px] text-purple-800 font-semibold block">
-              Confidential executive note (Super Admin only - hidden from staff &amp; clients)
-            </span>
-            <RichTextEditor
-              value={form.superAdminNotes}
-              onChange={(value) => set("superAdminNotes", value)}
-              placeholder="Sensitive executive directives, risk notes..."
-              minHeight="120px"
-            />
-          </div>
-        )}
-      </div>
 
       <div className="flex gap-2 sm:col-span-2 pt-2 border-t border-slate-200">
         <Button
