@@ -12,6 +12,8 @@ import {
   useUpdateClientCaseMutation,
 } from "@/services/api/clients/clientCasesApi";
 import { useCreatePaymentPlanMutation } from "@/services/api/payment-plans/paymentPlansApi";
+import { useCreatePaymentMutation } from "@/services/api/payments/paymentsApi";
+import { useUploadCaseDocumentsMutation } from "@/services/api/documents/documentsApi";
 import {
   createClientSchema,
   type CreateClientFormValues,
@@ -27,6 +29,8 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
+  Clock3,
+  Copy,
   CreditCard,
   ExternalLink,
   FileText,
@@ -131,6 +135,12 @@ interface ExistingUserOption {
   status?: string;
 }
 
+const parseSafeIsoDate = (d?: string) => {
+  if (!d) return new Date().toISOString();
+  const parsed = new Date(d);
+  return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+};
+
 export function CreateClientForm() {
   const router = useRouter();
   const { data: servicesResponse, isLoading: isServicesLoading } = useGetServicesQuery({
@@ -147,12 +157,33 @@ export function CreateClientForm() {
   const [updateClientCase] = useUpdateClientCaseMutation();
   const [createPaymentPlan] = useCreatePaymentPlanMutation();
   const [createUser] = useCreateUserMutation();
+  const [createPayment] = useCreatePaymentMutation();
+  const [uploadDocuments] = useUploadCaseDocumentsMutation();
+
+  // Upfront Deposit Collection State
+  const [recordDepositNow, setRecordDepositNow] = React.useState<boolean>(false);
+  const [depositPaymentMethod, setDepositPaymentMethod] = React.useState<string>("BANK_TRANSFER");
+  const [depositReference, setDepositReference] = React.useState<string>("");
+  const [depositNotes, setDepositNotes] = React.useState<string>("");
+  const [depositProofFile, setDepositProofFile] = React.useState<File | null>(null);
+
+  const handleDepositProofChange = (file: File | null) => {
+    setDepositProofFile(file);
+  };
 
   const [caseIdentifier, setCaseIdentifier] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [createdClientId, setCreatedClientId] = React.useState<string | null>(null);
   const [errorNotice, setErrorNotice] = React.useState<string>("");
+
+  // Client Credentials & Handover State
+  const [customPassword, setCustomPassword] = React.useState<string>("PassWord@2026!");
+  const [createdClientEmail, setCreatedClientEmail] = React.useState<string>("");
+  const [createdClientName, setCreatedClientName] = React.useState<string>("");
+  const [createdClientPhone, setCreatedClientPhone] = React.useState<string>("");
+  const [createdClientBizId, setCreatedClientBizId] = React.useState<string>("");
+  const [hasCopiedCredentials, setHasCopiedCredentials] = React.useState<boolean>(false);
   const { isSuperAdmin } = usePermissions();
   const [activeTab, setActiveTab] = React.useState<"service" | "identity" | "finance" | "notes">("service");
   const [notesScope, setNotesScope] = React.useState<"client" | "staff" | "superAdmin">("client");
@@ -456,13 +487,41 @@ export function CreateClientForm() {
     replace(updated);
   };
 
-  // WhatsApp formatted link preview
+  // WhatsApp & Handover formatted messages
   const cleanPhone = (watchedCountryCode + watchedWhatsapp).replace(
     /[^\d+]/g,
     "",
   );
+  const handoverLoginUrl = "https://ad-skill-pay-track-ai-frontend.vercel.app/login";
+
+  const handoverMessageText = `Hello ${createdClientName || watchedName || "Client"},
+
+Welcome to AdSkill Consultancy! Your client portal account has been created.
+
+Access your case dossier, payment plan, invoices, and receipts online:
+
+🌐 Portal Login: ${handoverLoginUrl}
+📧 Login Email: ${createdClientEmail || watchedEmail}
+🔑 Temporary Password: ${customPassword}
+📁 Client ID: ${createdClientBizId || "Pending"}
+📑 Case Code: ${caseIdentifier || "Pending"}
+
+Please log in and update your password upon your first visit. If you have any questions, our team is here to assist you.`;
+
+  const cleanHandoverPhone = (createdClientPhone || cleanPhone).replace(/[^\d+]/g, "");
+  const handoverWhatsAppUrl = `https://wa.me/${cleanHandoverPhone.replace("+", "")}?text=${encodeURIComponent(handoverMessageText)}`;
+  const handoverMailtoUrl = `mailto:${encodeURIComponent(createdClientEmail || watchedEmail)}?subject=${encodeURIComponent("Your AdSkill Client Portal Account Credentials")}&body=${encodeURIComponent(handoverMessageText)}`;
+
+  const handleCopyHandoverMessage = () => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(handoverMessageText);
+      setHasCopiedCredentials(true);
+      setTimeout(() => setHasCopiedCredentials(false), 3000);
+    }
+  };
+
   const whatsappPreviewUrl = `https://wa.me/${cleanPhone.replace("+", "")}?text=${encodeURIComponent(
-    `Hello ${watchedName || "Valued Client"}, welcome to AdSkill Consultancy. Your case onboarding has been initiated.`,
+    `Hello ${watchedName || "Valued Client"}, welcome to AdSkill Consultancy. Your case onboarding has been initiated. Log in at ${handoverLoginUrl}`,
   )}`;
 
   // Submit Handler
@@ -477,6 +536,7 @@ export function CreateClientForm() {
 
     try {
       let targetUserId = "";
+      const emailClean = data.email.toLowerCase().trim();
 
       if (intakeMode === "existing") {
         if (!selectedExistingUser?.userId) {
@@ -488,7 +548,7 @@ export function CreateClientForm() {
         targetUserId = selectedExistingUser.userId;
       } else {
         // NEW APPLICANT: Create user account first in backend with auto-generated clientId
-        if (!data.name?.trim() || !data.email?.trim()) {
+        if (!data.name?.trim() || !emailClean) {
           setErrorNotice("Please provide the applicant's legal full name and email address.");
           setActiveTab("identity");
           setIsSubmitting(false);
@@ -498,32 +558,52 @@ export function CreateClientForm() {
         const dialCode = data.countryCode || "+1";
         const cleanPhone = data.phone?.trim() ? `${dialCode} ${data.phone.trim()}` : undefined;
         const cleanWhatsapp = data.whatsappNumber?.trim() ? `${dialCode} ${data.whatsappNumber.trim()}` : cleanPhone;
+        const passToSet = customPassword.trim() || `PassWord@${new Date().getFullYear()}!`;
 
-        const newUserRes = await createUser({
-          name: data.name.trim(),
-          preferredName: data.preferredName?.trim() || undefined,
-          email: data.email.toLowerCase().trim(),
-          password: `AdSkill@${new Date().getFullYear()}!`,
-          phone: cleanPhone,
-          whatsapp: cleanWhatsapp,
-          country: data.countryOfOrigin?.trim() || data.destinationCountry || undefined,
-          city: data.city?.trim() || undefined,
-          roleName: "CLIENT",
-        }).unwrap();
+        // Check if user with this email already exists in the registered users list
+        const existingMatch = existingUserOptions.find(
+          (u) => u.email?.toLowerCase().trim() === emailClean
+        );
 
-        if (!newUserRes?.data?.id) {
-          throw new Error("Failed to create client user account.");
+        if (existingMatch?.userId) {
+          targetUserId = existingMatch.userId;
+          setCreatedClientBizId(existingMatch.existingCaseRef || "N/A");
+          setCreatedClientEmail(emailClean);
+          setCreatedClientName(existingMatch.name || data.name.trim());
+          setCreatedClientPhone(existingMatch.phone || "");
+        } else {
+          const newUserRes = await createUser({
+            name: data.name.trim(),
+            preferredName: data.preferredName?.trim() || undefined,
+            email: emailClean,
+            password: passToSet,
+            phone: cleanPhone,
+            whatsapp: cleanWhatsapp,
+            country: data.countryOfOrigin?.trim() || data.destinationCountry || undefined,
+            city: data.city?.trim() || undefined,
+            roleName: "CLIENT",
+          }).unwrap();
+
+          if (!newUserRes?.data?.id) {
+            throw new Error("Failed to resolve client user account.");
+          }
+          targetUserId = newUserRes.data.id;
+          setCreatedClientBizId(newUserRes.data.clientId || "N/A");
+          setCreatedClientEmail(emailClean);
+          setCreatedClientName(data.name.trim());
+          setCreatedClientPhone(cleanWhatsapp || cleanPhone || "");
         }
-        targetUserId = newUserRes.data.id;
       }
 
-      // 1. Create client case in backend attached to the resolved target client
+      // 1. Create client case in backend attached to the resolved target client (atomic creation)
       const created = await createClientCase({
         userId: targetUserId,
         serviceId: data.serviceId,
-        destinationCountry: data.destinationCountry,
-        caseCategory: data.visaCategory,
-        caseSubcategory: data.subCategory || undefined,
+        destinationCountry: data.destinationCountry?.trim() || undefined,
+        caseCategory: data.visaCategory?.trim() || undefined,
+        caseSubcategory: data.subCategory?.trim() || undefined,
+        assignedConsultantId: data.assignedConsultantId?.trim() ? data.assignedConsultantId.trim() : undefined,
+        caseStatus: data.status || "INTAKE",
         clientVisibleNotes: data.clientVisibleNotes?.trim() || undefined,
         internalNotes: data.internalNotes?.trim() || undefined,
         superAdminNotes: isSuperAdmin ? (data.superAdminNotes?.trim() || undefined) : undefined,
@@ -533,87 +613,123 @@ export function CreateClientForm() {
       setCaseIdentifier(createdCase.caseCode);
       setCreatedClientId(createdCase.id);
 
-      // 2. Patch case with consultant / status if specified
-      if (data.assignedConsultantId || data.status !== "INTAKE" || data.internalNotes || data.superAdminNotes || data.clientVisibleNotes) {
-        try {
-          await updateClientCase({
-            id: createdCase.id,
-            body: {
-              assignedConsultantId: data.assignedConsultantId || undefined,
-              caseStatus: data.status,
-              internalNotes: data.internalNotes || undefined,
-              superAdminNotes: isSuperAdmin ? (data.superAdminNotes || undefined) : undefined,
-              clientVisibleNotes: data.clientVisibleNotes || undefined,
-            },
-          }).unwrap();
-        } catch (updateErr) {
-          console.warn("Could not set consultant assignment:", updateErr);
-        }
-      }
+      // Safe date formatting helper for ISO milestone dates
+      const parseSafeIsoDate = (d?: string) => {
+        if (!d) return new Date().toISOString();
+        const parsed = new Date(d);
+        return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+      };
 
-      // 3. Create Payment Plan with exact installment amounts
+      // 2. Create Payment Plan with exact installment amounts
       if (isMathValid && data.contractedFee > 0) {
-        const installmentsToSend: Array<{
-          sequenceNumber: number;
-          title: string;
-          amount: number;
-          dueDate: string;
-        }> = [];
+        try {
+          const installmentsToSend: Array<{
+            sequenceNumber: number;
+            title: string;
+            amount: number;
+            dueDate: string;
+          }> = [];
 
-        // If deposit is configured, it is sequence 1 (Initial Retainer / Deposit)
-        if (data.depositAmount > 0) {
-          installmentsToSend.push({
-            sequenceNumber: 1,
-            title: "Initial Retainer / Upfront Deposit",
-            amount: Number(data.depositAmount),
-            dueDate: new Date().toISOString(),
-          });
-        }
-
-        // Subsequent milestones follow sequence numbers
-        data.milestones.forEach((m) => {
-          if (Number(m.amount) > 0) {
+          // If deposit is configured, it is sequence 1 (Initial Retainer / Deposit)
+          if (data.depositAmount > 0) {
             installmentsToSend.push({
-              sequenceNumber: installmentsToSend.length + 1,
-              title: m.name,
-              amount: Number(m.amount),
-              dueDate: new Date(m.dueDate).toISOString(),
+              sequenceNumber: 1,
+              title: "Initial Retainer / Upfront Deposit",
+              amount: Number(data.depositAmount),
+              dueDate: new Date().toISOString(),
             });
           }
-        });
 
-        // If single schedule with no separate milestones
-        if (installmentsToSend.length === 0) {
-          installmentsToSend.push({
-            sequenceNumber: 1,
-            title: "Full Contracted Retainer",
-            amount: Number(data.contractedFee),
-            dueDate: new Date().toISOString(),
+          // Subsequent milestones follow sequence numbers
+          data.milestones.forEach((m) => {
+            if (Number(m.amount) > 0) {
+              installmentsToSend.push({
+                sequenceNumber: installmentsToSend.length + 1,
+                title: m.name,
+                amount: Number(m.amount),
+                dueDate: parseSafeIsoDate(m.dueDate),
+              });
+            }
           });
-        }
 
-        await createPaymentPlan({
-          caseId: createdCase.id,
-          body: {
-            currency: data.currency,
-            discountAmount: data.discountAmount || 0,
-            discountReason: data.discountReason || undefined,
-            depositAmount: data.depositAmount || 0,
-            scheduleType: data.scheduleType,
-            installments: installmentsToSend,
-          },
-        }).unwrap();
+          // If single schedule with no separate milestones
+          if (installmentsToSend.length === 0) {
+            installmentsToSend.push({
+              sequenceNumber: 1,
+              title: "Full Contracted Retainer",
+              amount: Number(data.contractedFee),
+              dueDate: new Date().toISOString(),
+            });
+          }
+
+          const planRes = await createPaymentPlan({
+            caseId: createdCase.id,
+            body: {
+              currency: data.currency,
+              discountAmount: data.discountAmount || 0,
+              discountReason: data.discountReason || undefined,
+              depositAmount: data.depositAmount || 0,
+              scheduleType: data.scheduleType,
+              installments: installmentsToSend,
+            },
+          }).unwrap();
+
+          // 3. Record Upfront Deposit into Payment Ledger if collected at onboarding
+          if (recordDepositNow && data.depositAmount > 0) {
+            try {
+              let uploadedDocIds: string[] = [];
+              if (depositProofFile) {
+                const uploadRes = await uploadDocuments({
+                  caseId: createdCase.id,
+                  files: [depositProofFile],
+                  documentType: "PAYMENT_PROOF",
+                }).unwrap();
+                if (uploadRes.data?.length) {
+                  uploadedDocIds = uploadRes.data.map((d: any) => d.id);
+                }
+              }
+
+              const depositInstallment = planRes?.data?.installments?.find(
+                (i: any) => i.sequenceNumber === 1
+              );
+
+              await createPayment({
+                caseId: createdCase.id,
+                installmentId: depositInstallment?.id || undefined,
+                amount: Number(data.depositAmount),
+                currency: data.currency,
+                paymentDate: new Date().toISOString(),
+                paymentMethod: depositPaymentMethod,
+                externalReference: depositReference.trim() || undefined,
+                operationalNotes: depositNotes.trim() || "Initial Retainer / Upfront Deposit recorded at client onboarding",
+                proofDocumentIds: uploadedDocIds.length > 0 ? uploadedDocIds : undefined,
+                status: "PENDING",
+              }).unwrap();
+            } catch (payErr) {
+              console.warn("Could not auto-record upfront deposit payment:", payErr);
+            }
+          }
+        } catch (planErr: any) {
+          console.warn("Could not auto-create payment plan during onboarding:", planErr);
+        }
       }
 
       setIsSuccess(true);
-      router.push(`/clients/${createdCase.id}`);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } catch (error: any) {
-      console.error("Failed to onboard client case:", error);
+      const validationDetail = error?.data?.errorSources?.map((e: any) => `${e.path}: ${e.message}`).join(", ");
       const msg =
+        validationDetail ||
         error?.data?.message ||
         error?.message ||
         "An unexpected error occurred while creating the client case. Please verify the fields and try again.";
+      console.warn("Client case onboarding error:", msg, error);
       setErrorNotice(msg);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -779,29 +895,136 @@ export function CreateClientForm() {
         </div>
       )}
 
-      {/* SUCCESS NOTICE BANNER */}
+      {/* SUCCESS & ACCOUNT HANDOVER CREDENTIALS */}
       {isSuccess && (
-        <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
-              <CheckCircle2 className="h-6 w-6" />
+        <div className="space-y-4 animate-in fade-in duration-300">
+          <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-emerald-950">
+                  Case Successfully Created &amp; Scheduled!
+                </h4>
+                <p className="text-xs text-emerald-800 mt-0.5">
+                  Case Code: <span className="font-mono font-bold">{caseIdentifier}</span>.
+                  {recordDepositNow
+                    ? " Initial Retainer / Upfront Deposit has been posted to the Payments Ledger (Pending Verification)."
+                    : " Client account is ready for handover."}
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-sm font-bold text-emerald-950">
-                Case Successfully Created &amp; Scheduled!
-              </h4>
-              <p className="text-xs text-emerald-800 mt-0.5">
-                Case Code: <span className="font-mono font-bold">{caseIdentifier}</span>. Redirecting to workspace...
-              </p>
+            <div className="flex items-center gap-2">
+              {!recordDepositNow && watchedDeposit > 0 && createdClientId && (
+                <Link
+                  href={`/payments/record?caseId=${createdClientId}`}
+                  className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-900 bg-amber-100 hover:bg-amber-200 px-3.5 py-2 rounded-xl border border-amber-300 transition-colors">
+                  <CreditCard className="h-3.5 w-3.5 text-amber-700" />
+                  Record Deposit ({currencySymbol}{watchedDeposit.toLocaleString()}) &rarr;
+                </Link>
+              )}
+              {createdClientId && (
+                <Link
+                  href={`/clients/${createdClientId}`}
+                  className="inline-flex items-center gap-2 text-xs font-bold text-white bg-slate-900 px-4 py-2 rounded-xl shadow-xs hover:bg-slate-800 transition-colors">
+                  Open Case Dossier &rarr;
+                </Link>
+              )}
             </div>
           </div>
-          {createdClientId && (
-            <Link
-              href={`/clients/${createdClientId}`}
-              className="inline-flex items-center gap-2 text-xs font-bold text-emerald-950 bg-white px-4 py-2 rounded-xl shadow-xs border border-emerald-200 hover:bg-emerald-100 transition-colors">
-              Open Case Dossier &rarr;
-            </Link>
-          )}
+
+          {/* CLIENT ACCOUNT HANDOVER CARD */}
+          <div className="p-6 rounded-3xl bg-white border-2 border-indigo-200 shadow-md space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-black">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">
+                    Client Portal Account Handover Credentials
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Provide these credentials to the client for their self-service portal access
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopyHandoverMessage}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl hover:bg-indigo-100 transition-all cursor-pointer">
+                  {hasCopiedCredentials ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-600 stroke-[3]" />
+                      Copied to Clipboard!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5 text-indigo-600" />
+                      Copy Welcome Message
+                    </>
+                  )}
+                </button>
+
+                {cleanHandoverPhone && (
+                  <a
+                    href={handoverWhatsAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 rounded-xl transition-all shadow-xs">
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Send via WhatsApp
+                  </a>
+                )}
+
+                {(createdClientEmail || watchedEmail) && (
+                  <a
+                    href={handoverMailtoUrl}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl transition-all border border-slate-200">
+                    <Mail className="h-3.5 w-3.5" />
+                    Send Email
+                  </a>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Portal Login URL</span>
+                <a
+                  href={handoverLoginUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-extrabold text-blue-600 hover:underline mt-1 block truncate">
+                  ad-skill-pay-track...vercel.app/login &rarr;
+                </a>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Login Email</span>
+                <span className="text-xs font-extrabold text-slate-900 mt-1 block truncate">
+                  {createdClientEmail || watchedEmail || "—"}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Temporary Password</span>
+                <span className="text-xs font-mono font-black text-amber-700 mt-1 block select-all">
+                  {customPassword}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Client ID &amp; Case</span>
+                <span className="text-xs font-mono font-extrabold text-slate-900 mt-1 block">
+                  {createdClientBizId || "Pending"} • {caseIdentifier}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1220,6 +1443,32 @@ export function CreateClientForm() {
                       className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                     />
                   </div>
+
+                  {intakeMode === "new" && (
+                    <div className="space-y-1.5 sm:col-span-2 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                          <Lock className="h-3.5 w-3.5 text-indigo-600" />
+                          Initial Portal Password for Client Handover
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setCustomPassword(`PassWord@${Math.floor(1000 + Math.random() * 9000)}!`)}
+                          className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                          Generate Random
+                        </button>
+                      </div>
+                      <Input
+                        type="text"
+                        value={customPassword}
+                        onChange={(e) => setCustomPassword(e.target.value)}
+                        className="h-11 rounded-xl bg-white border-indigo-200 text-xs font-mono font-bold text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                      />
+                      <p className="text-[10px] text-slate-500">
+                        Default: <code className="font-bold text-slate-700">PassWord@2026!</code>. The client will use this to sign in at <span className="font-semibold text-blue-600">https://ad-skill-pay-track-ai-frontend.vercel.app/login</span>.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* WhatsApp Direct Sub-card */}
@@ -1518,10 +1767,118 @@ export function CreateClientForm() {
                     </div>
                     <div className="flex justify-between text-[11px] text-slate-600">
                       <span>Total Contracted: <b className="text-slate-900">{currencySymbol}{computedContractedFee.toLocaleString()}</b></span>
-                      <span>Allocated: <b className="text-slate-900">{currencySymbol}{totalAllocated.toLocaleString()} ({allocationPercent}%)</b></span>
+                      <span>Allocated: <b className="text-slate-900">{totalAllocated.toLocaleString()} ({allocationPercent}%)</b></span>
                     </div>
                   </div>
                 </div>
+
+                {/* UPFRONT DEPOSIT COLLECTION AT INTAKE */}
+                {watchedDeposit > 0 && (
+                  <div className="p-5 rounded-2xl bg-amber-50/60 border border-amber-200/90 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200/60">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black shadow-2xs shrink-0">
+                          <Receipt className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-black uppercase tracking-wider text-amber-950 flex items-center gap-2">
+                            Initial Retainer / Upfront Deposit ({currencySymbol}{watchedDeposit.toLocaleString()})
+                          </h4>
+                          <p className="text-[11px] text-amber-800/80">
+                            Record deposit transaction directly into the Payments Ledger upon case submission
+                          </p>
+                        </div>
+                      </div>
+
+                      <label className="relative inline-flex items-center cursor-pointer select-none shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={recordDepositNow}
+                          onChange={(e) => setRecordDepositNow(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500" />
+                        <span className="ml-2.5 text-xs font-bold text-slate-800">
+                          {recordDepositNow ? "Collect Now" : "Collect Later"}
+                        </span>
+                      </label>
+                    </div>
+
+                    {recordDepositNow && (
+                      <div className="space-y-4 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="p-3 rounded-xl bg-amber-100/70 border border-amber-300/80 text-[11px] font-semibold text-amber-900 flex items-center gap-2">
+                          <Clock3 className="h-4 w-4 shrink-0 text-amber-700" />
+                          <span>
+                            An official payment entry for <b>{currencySymbol}{watchedDeposit.toLocaleString()}</b> will be posted to the <b>Payments Ledger</b> with status <b>PENDING VERIFICATION</b> for the Manager to verify.
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700">
+                              Deposit Payment Method *
+                            </label>
+                            <select
+                              value={depositPaymentMethod}
+                              onChange={(e) => setDepositPaymentMethod(e.target.value)}
+                              className="w-full h-11 px-3 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                            >
+                              <option value="BANK_TRANSFER">Bank Wire / Transfer</option>
+                              <option value="CASH">Cash in Office</option>
+                              <option value="CARD">Credit / Debit Card</option>
+                              <option value="ZELLE">Zelle / Instant Transfer</option>
+                              <option value="CHECK">Paper Check / Cheque</option>
+                              <option value="OTHER">Other Offline Transfer</option>
+                            </select>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700">
+                              Bank Reference / Slip ID (Optional)
+                            </label>
+                            <Input
+                              value={depositReference}
+                              onChange={(e) => setDepositReference(e.target.value)}
+                              placeholder="e.g. WT-984321 / Cash Receipt #04"
+                              className="h-11 rounded-xl bg-white border-slate-300 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-amber-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700">
+                              Operational Notes / Memo
+                            </label>
+                            <Input
+                              value={depositNotes}
+                              onChange={(e) => setDepositNotes(e.target.value)}
+                              placeholder="Deposit received during onboarding consultation"
+                              className="h-11 rounded-xl bg-white border-slate-300 text-xs text-slate-800"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700">
+                              Attach Payment Slip / Proof (Optional)
+                            </label>
+                            <input
+                              type="file"
+                              accept="image/*,application/pdf"
+                              onChange={(e) => handleDepositProofChange(e.target.files?.[0] || null)}
+                              className="block w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+                            />
+                            {depositProofFile && (
+                              <span className="text-[10px] text-emerald-700 font-bold block mt-1">
+                                Attached: {depositProofFile.name} ({(depositProofFile.size / 1024).toFixed(1)} KB)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

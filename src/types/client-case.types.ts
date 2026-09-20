@@ -216,6 +216,8 @@ export interface CreateClientCaseInput {
   destinationCountry?: string;
   caseCategory?: string;
   caseSubcategory?: string;
+  assignedConsultantId?: string;
+  caseStatus?: CaseStatus;
   agreementDate?: string;
   serviceStartDate?: string;
   clientVisibleNotes?: string;
@@ -259,4 +261,5 @@ export interface CreatePaymentInput {
   idempotencyKey?: string;
   operationalNotes?: string;
   proofDocumentIds?: string[];
+  status?: "PENDING" | "VERIFIED";
 }
