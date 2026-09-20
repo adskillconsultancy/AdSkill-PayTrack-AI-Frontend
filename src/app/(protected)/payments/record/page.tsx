@@ -37,7 +37,7 @@ import { Input } from "@/components/common/Input";
 import { Skeleton } from "@/components/common/Skeleton";
 import { useGetMyCasesQuery, useGetClientCaseQuery } from "@/services/api/clients/clientCasesApi";
 import { useGetCasePaymentPlansQuery } from "@/services/api/payment-plans/paymentPlansApi";
-import { useCreatePaymentMutation } from "@/services/api/payments/paymentsApi";
+import { useCreatePaymentMutation, useGetCasePaymentsQuery } from "@/services/api/payments/paymentsApi";
 import { useUploadCaseDocumentsMutation } from "@/services/api/documents/documentsApi";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
@@ -79,16 +79,71 @@ export default function RecordPaymentPage() {
   }, [selectedCaseId, allCases]);
 
   // Selected Case details
-  const { data: caseResponse, isLoading: isLoadingCase } = useGetClientCaseQuery(selectedCaseId, {
+  const {
+    data: caseResponse,
+    isLoading: isLoadingCase,
+    isFetching: isFetchingCase,
+  } = useGetClientCaseQuery(selectedCaseId, {
     skip: !selectedCaseId,
   });
-  const currentCase = caseResponse?.data;
 
   // Case Payment Plans
-  const { data: plansResponse, isLoading: isLoadingPlans } = useGetCasePaymentPlansQuery(selectedCaseId, {
+  const {
+    data: plansResponse,
+    isLoading: isLoadingPlans,
+    isFetching: isFetchingPlans,
+  } = useGetCasePaymentPlansQuery(selectedCaseId, {
     skip: !selectedCaseId,
   });
-  const activePlan = plansResponse?.data?.find((p) => p.isActive) || plansResponse?.data?.[0];
+
+  const isCaseLoading =
+    Boolean(selectedCaseId) &&
+    (isLoadingCase || isFetchingCase || caseResponse?.data?.id !== selectedCaseId);
+
+  const currentCase = isCaseLoading ? null : caseResponse?.data;
+
+  const isPlansLoading =
+    Boolean(selectedCaseId) &&
+    (isLoadingPlans ||
+      isFetchingPlans ||
+      isCaseLoading ||
+      (plansResponse?.data &&
+        plansResponse.data.length > 0 &&
+        plansResponse.data[0].caseId !== selectedCaseId));
+
+  const activePlan = isPlansLoading
+    ? null
+    : plansResponse?.data?.find((p) => p.isActive) || plansResponse?.data?.[0];
+
+  // Case Payments for Ledger & Financial Overview
+  const {
+    data: paymentsResponse,
+    isLoading: isLoadingPayments,
+    isFetching: isFetchingPayments,
+  } = useGetCasePaymentsQuery(selectedCaseId, {
+    skip: !selectedCaseId,
+  });
+
+  const isFinancialLoading =
+    isCaseLoading ||
+    isPlansLoading ||
+    isLoadingPayments ||
+    isFetchingPayments;
+
+  const casePayments = paymentsResponse?.data || [];
+  const verifiedPaymentsSum = casePayments
+    .filter((p) => p.status === "VERIFIED")
+    .reduce((sum, p) => sum + Number(p.amount), 0);
+
+  const paidInstallmentsSum = (activePlan?.installments || [])
+    .filter((i) => i.status === "PAID")
+    .reduce((sum, i) => sum + Number(i.amount), 0);
+
+  const paid = Math.max(verifiedPaymentsSum, paidInstallmentsSum);
+  const contractedAmount = Number(activePlan?.contractedFee || currentCase?.service?.baseFee || 0);
+  const outstanding = Math.max(0, contractedAmount - paid);
+  const paidPercent = contractedAmount > 0 ? Math.min(100, Math.round((paid / contractedAmount) * 100)) : 0;
+  const planCurrency = activePlan?.currency || currentCase?.service?.currency || "USD";
 
   // Form Fields
   const [selectedInstallmentId, setSelectedInstallmentId] = React.useState<string>(initialInstallmentId);
@@ -129,6 +184,12 @@ export default function RecordPaymentPage() {
       setAmount("");
     }
   };
+
+  // Reset selected installment when selectedCaseId changes
+  React.useEffect(() => {
+    setSelectedInstallmentId("");
+    setAmount("");
+  }, [selectedCaseId]);
 
   // If initialInstallmentId provided, auto-select it once plan loads
   React.useEffect(() => {
@@ -238,7 +299,7 @@ export default function RecordPaymentPage() {
     );
   }, [allCases, caseSearch]);
 
-  const installments = activePlan?.installments || [];
+  const installments = isPlansLoading ? [] : (activePlan?.installments || []);
 
   return (
     <div className="min-h-screen pb-24">
@@ -328,16 +389,34 @@ export default function RecordPaymentPage() {
             )}
 
             {/* Live Case Card */}
-            {isLoadingCase ? (
+            {isCaseLoading ? (
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
-                  <div className="space-y-1.5 flex-1">
-                    <Skeleton className="h-4 w-36 rounded" />
-                    <Skeleton className="h-3 w-48 rounded" />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
+                    <div className="space-y-1.5 flex-1">
+                      <Skeleton className="h-4 w-36 rounded" />
+                      <Skeleton className="h-3 w-48 rounded" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-5 w-24 rounded-lg shrink-0" />
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/60 grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Skeleton className="h-2.5 w-20 rounded" />
+                    <Skeleton className="h-4 w-32 rounded" />
+                  </div>
+                  <div className="space-y-1">
+                    <Skeleton className="h-2.5 w-24 rounded" />
+                    <Skeleton className="h-4 w-28 rounded" />
                   </div>
                 </div>
-                <Skeleton className="h-8 w-full rounded-xl" />
+
+                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                  <Skeleton className="h-3.5 w-32 rounded" />
+                  <Skeleton className="h-4 w-20 rounded" />
+                </div>
               </div>
             ) : currentCase ? (
               <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-3">
@@ -385,6 +464,75 @@ export default function RecordPaymentPage() {
             )}
           </div>
 
+          {/* FINANCIAL OVERVIEW PANEL */}
+          {isFinancialLoading ? (
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <Skeleton className="h-4 w-36 rounded" />
+                <Skeleton className="h-4 w-12 rounded" />
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <Skeleton className="h-16 rounded-2xl" />
+                <Skeleton className="h-16 rounded-2xl" />
+                <Skeleton className="h-16 rounded-2xl" />
+              </div>
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+                <div className="flex justify-between">
+                  <Skeleton className="h-3 w-28 rounded" />
+                  <Skeleton className="h-3 w-20 rounded" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+              </div>
+            </div>
+          ) : currentCase ? (
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-amber-500" />
+                  Financial Overview
+                </h3>
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  {planCurrency}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-3 rounded-2xl bg-slate-50/70 border border-slate-100">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Contracted</span>
+                  <span className="text-sm font-black text-slate-900 mt-1 block">
+                    {money(contractedAmount, planCurrency)}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                  <span className="text-[10px] uppercase font-bold text-emerald-600 block">Settled</span>
+                  <span className="text-sm font-black text-emerald-700 mt-1 block">
+                    {money(paid, planCurrency)}
+                  </span>
+                </div>
+                <div className="p-3 rounded-2xl bg-amber-50/50 border border-amber-100">
+                  <span className="text-[10px] uppercase font-bold text-amber-600 block">Balance Due</span>
+                  <span className="text-sm font-black text-amber-800 mt-1 block">
+                    {money(outstanding, planCurrency)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Visual Settlement Progress Bar */}
+              <div className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-2">
+                <div className="flex justify-between text-[11px] font-bold text-slate-600">
+                  <span>Payment Progress</span>
+                  <span className="text-slate-900 font-black">{paidPercent}% Settled</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                    style={{ width: `${paidPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {/* INSTALLMENT MILESTONE SELECTOR */}
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="flex items-center justify-between mb-4">
@@ -395,11 +543,23 @@ export default function RecordPaymentPage() {
               <span className="text-[11px] font-bold text-slate-400">Step 2 of 3</span>
             </div>
 
-            {isLoadingPlans ? (
+            {isPlansLoading ? (
               <div className="space-y-2">
-                <Skeleton className="h-14 w-full rounded-xl" />
-                <Skeleton className="h-14 w-full rounded-xl" />
-                <Skeleton className="h-14 w-full rounded-xl" />
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={`milestone-skel-${i}`}
+                    className="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-5 w-5 rounded-full shrink-0" />
+                      <div className="space-y-1.5">
+                        <Skeleton className="h-3.5 w-44 sm:w-56 rounded" />
+                        <Skeleton className="h-2.5 w-24 rounded" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-4 w-16 rounded" />
+                  </div>
+                ))}
               </div>
             ) : installments.length > 0 ? (
               <div className="space-y-2">

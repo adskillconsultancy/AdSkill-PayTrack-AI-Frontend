@@ -132,7 +132,19 @@ const navSections: NavSection[] = [
         title: "Payments",
         href: ROUTES.PAYMENTS,
         icon: Receipt,
-        requiredPermission: "payment:read",
+        requiredAnyPermissions: ["payment:read", "payment:record", "payment:create"],
+        subItems: [
+          {
+            title: "Payments Ledger",
+            href: ROUTES.PAYMENTS,
+            requiredPermission: "payment:read",
+          },
+          {
+            title: "Record Payment",
+            href: ROUTES.PAYMENT_RECORD,
+            requiredAnyPermissions: ["payment:record", "payment:create"],
+          },
+        ],
       },
     ],
   },
@@ -385,6 +397,8 @@ export function Sidebar() {
         return pathname === ROUTES.SERVICE_CREATE;
       if (parentHref === ROUTES.USERS) return pathname === ROUTES.USER_CREATE;
       if (parentHref === ROUTES.ROLES) return pathname === ROUTES.ROLES_CREATE;
+      if (parentHref === ROUTES.PAYMENTS)
+        return pathname === ROUTES.PAYMENT_RECORD;
       return false;
     },
     [pathname],
