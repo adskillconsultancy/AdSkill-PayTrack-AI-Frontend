@@ -1,3 +1,11 @@
+import type {
+  CaseStatus,
+  ClientCase,
+} from "@/types/client-case.types";
+
+export type { CaseStatus, ClientCase };
+
+/** Legacy view-model types retained for inactive presentation components. */
 export type ClientStatus =
   | "Processing"
   | "Missing Docs"

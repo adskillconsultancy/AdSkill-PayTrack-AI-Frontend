@@ -13,7 +13,7 @@ import {
   Check,
   RotateCcw,
 } from "lucide-react";
-import { ClientStatus } from "../types";
+import type { CaseStatus } from "@/types/client-case.types";
 
 interface ClientSearchBarProps {
   searchQuery: string;
@@ -62,13 +62,13 @@ export function ClientSearchBar({
     setIsFilterOpen(false);
   };
 
-  const statusOptions: { label: string; value: ClientStatus | "ALL" }[] = [
+  const statusOptions: { label: string; value: CaseStatus | "ALL" }[] = [
     { label: "All Statuses", value: "ALL" },
-    { label: "Processing", value: "Processing" },
-    { label: "Approved", value: "Approved" },
-    { label: "Missing Docs", value: "Missing Docs" },
-    { label: "Under Review", value: "Under Review" },
-    { label: "Delayed", value: "Delayed" },
+    { label: "Intake", value: "INTAKE" },
+    { label: "Active", value: "ACTIVE" },
+    { label: "On hold", value: "ON_HOLD" },
+    { label: "Completed", value: "COMPLETED" },
+    { label: "Cancelled", value: "CANCELLED" },
   ];
 
   return (

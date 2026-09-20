@@ -7,6 +7,7 @@ import { Button, Input } from "@/components/common";
 import { Sidebar } from "@/components/layouts/Sidebar";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar.store";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Bell,
   ChevronDown,
@@ -24,6 +25,7 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const { isOpen, setMobileOpen } = useSidebarStore();
+  const { user } = useAuth();
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [headerSearch, setHeaderSearch] = React.useState("");
 
@@ -102,12 +104,9 @@ export default function ProtectedLayout({
             </div>
 
             {/* Country Flag Pill Button */}
-            <button
-              type="button"
-              title="Region / Language: United States"
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-sm hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
-              <span>🇺🇸</span>
-            </button>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-sm shadow-2xs" title={user?.country || "Account region"}>
+              <span>{user?.country === "Canada" ? "🇨🇦" : user?.country === "United Kingdom" ? "🇬🇧" : "🌐"}</span>
+            </div>
 
             {/* Settings Button */}
             <button
@@ -138,18 +137,14 @@ export default function ProtectedLayout({
             {/* User Profile Badge */}
             <div className="flex items-center gap-2.5 pl-1 sm:pl-2 cursor-pointer group">
               <div className="relative h-9 w-9 rounded-full overflow-hidden border border-[#EAE6DF] bg-[#0a0a0a] text-[#F3A712] flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"
-                  alt="Patel"
-                  className="h-full w-full object-cover"
-                />
+                {user?.avatar ? <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" /> : (user?.name?.slice(0, 1).toUpperCase() || "U")}
               </div>
               <div className="hidden sm:block text-left">
                 <div className="text-xs font-bold text-[#0a0a0a] leading-none group-hover:text-[#F3A712] transition-colors">
-                  Patel
+                  {user?.preferredName || user?.name || "Account"}
                 </div>
                 <div className="text-[10px] font-medium text-[#64748B] mt-0.5">
-                  Senior Consultant
+                  {user?.role?.name || "User"}
                 </div>
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-[#64748B] group-hover:text-[#0a0a0a] transition-colors" />
@@ -163,7 +158,7 @@ export default function ProtectedLayout({
             "flex-1 bg-white pt-0 px-0 pb-3 sm:pb-4 transition-all duration-300",
             !isOpen && "lg:ml-[60px]",
           )}>
-          <main className="min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-4.5rem)] bg-[#FAF8F5] rounded-[64px] p-5 sm:p-6 space-y-5 shadow-xs">
+          <main className="min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-4.5rem)] bg-[hsl(0,0%,100%)] rounded-[64px] p-5 sm:p-6 space-y-5 shadow-xs">
             {children}
           </main>
         </div>

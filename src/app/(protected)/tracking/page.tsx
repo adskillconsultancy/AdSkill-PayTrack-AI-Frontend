@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { ApplicationsTable } from "@/components/common";
+import { ClientListView } from "@/features/clients";
 
 export const metadata: Metadata = {
   title: "Applications Tracking — AdSkill PayTrack AI",
-  description: "Monitor visa application status, milestones, and client documents.",
+  description: "Monitor live case status, milestones, and client documents.",
 };
 
 export default function TrackingPage() {
-  return <ApplicationsTable />;
+  return (
+    <ClientListView
+      pageTitle="Applications Tracking"
+      categoryLabel="ALL CASES"
+      parentBreadcrumb="Operations"
+    />
+  );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/common";
+import { useAuth } from "@/hooks/useAuth";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -14,6 +15,12 @@ import {
 } from "lucide-react";
 
 export function DashboardOverview() {
+  const { user } = useAuth();
+  const displayName = user?.preferredName || user?.name || "there";
+  const today = new Intl.DateTimeFormat("en-US", {
+    dateStyle: "long",
+  }).format(new Date());
+
   return (
     <div className="space-y-5">
       {/* ── 1. TOP BREADCRUMB & HEADER SECTION ── */}
@@ -37,10 +44,10 @@ export function DashboardOverview() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
-            Welcome back, Patel!
+            Welcome back, {displayName}!
           </h2>
           <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-medium">
-            Your agency overview for Today, January 15, 2026
+            Your agency overview for {today}
           </p>
         </div>
 

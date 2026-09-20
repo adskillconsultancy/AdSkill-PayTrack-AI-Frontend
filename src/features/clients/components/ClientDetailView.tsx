@@ -1,411 +1,105 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { ArrowLeft, CheckCircle2, CreditCard, Download, FileText, Mail, MapPin, Pencil, Phone, RefreshCw, Trash2, Upload, UserRound, Wallet, X } from "lucide-react";
 import { Button } from "@/components/common/Button";
-import { ClientItem, ClientStatus } from "../types";
-import { MOCK_CLIENTS, getMockClients } from "../mockData";
-import {
-  ArrowLeft,
-  ChevronRight,
-  MessageCircle,
-  Mail,
-  Phone,
-  Calendar,
-  CreditCard,
-  History,
-  ExternalLink,
-  MapPin,
-  ShieldCheck,
-  User,
-  CheckCircle2,
-} from "lucide-react";
-import { ROUTES } from "@/constants/routes";
+import { Input } from "@/components/common/Input";
+import { useGetClientCaseQuery, useUpdateClientCaseMutation } from "@/services/api/clients/clientCasesApi";
+import { useGetCaseDocumentsQuery, useUploadCaseDocumentsMutation, useLazyGetDocumentDownloadQuery, useDeleteDocumentMutation } from "@/services/api/documents/documentsApi";
+import { useGetCasePaymentPlansQuery } from "@/services/api/payment-plans/paymentPlansApi";
+import { useGetCasePaymentsQuery, useCreatePaymentMutation, useVerifyPaymentMutation } from "@/services/api/payments/paymentsApi";
+import { useGetCaseInvoicesQuery, useGenerateInvoiceMutation } from "@/services/api/invoices/invoicesApi";
+import { useGetCaseReceiptsQuery } from "@/services/api/receipts/receiptsApi";
+import { useUpdateUserMutation } from "@/services/api/users/usersApi";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { CaseStatus, DocumentType } from "@/types/client-case.types";
 
-interface ClientDetailViewProps {
-  clientId: string;
+const labels: Record<CaseStatus, string> = { INTAKE: "Intake", ACTIVE: "Active", ON_HOLD: "On hold", COMPLETED: "Completed", CANCELLED: "Cancelled" };
+const money = (value: number | string, currency = "USD") => new Intl.NumberFormat("en-US", { style: "currency", currency }).format(Number(value) || 0);
+const date = (value?: string | null) => value ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(value)) : "Not set";
+const errorText = (error: unknown) => (error && typeof error === "object" && "data" in error ? String((error as { data?: { message?: string } }).data?.message || "Request failed") : "Request failed");
+const inputDate = (value?: string | null) => value ? new Date(value).toISOString().slice(0, 10) : "";
+
+export function ClientDetailView({ clientId }: { clientId: string }) {
+  const { hasPermission, isClientAccount } = usePermissions();
+  const { data: caseResponse, isLoading, isError, refetch } = useGetClientCaseQuery(clientId);
+  const clientCase = caseResponse?.data;
+  const { data: documentsResponse } = useGetCaseDocumentsQuery(clientId, { skip: !clientCase });
+  const { data: plansResponse } = useGetCasePaymentPlansQuery(clientId, { skip: !clientCase });
+  const { data: paymentsResponse } = useGetCasePaymentsQuery(clientId, { skip: !clientCase });
+  const { data: invoicesResponse } = useGetCaseInvoicesQuery(clientId, { skip: !clientCase });
+  const { data: receiptsResponse } = useGetCaseReceiptsQuery(clientId, { skip: !clientCase });
+  const [updateCase, updateState] = useUpdateClientCaseMutation();
+  const [updateUser, userUpdateState] = useUpdateUserMutation();
+  const [uploadDocuments, uploadState] = useUploadCaseDocumentsMutation();
+  const [deleteDocument] = useDeleteDocumentMutation();
+  const [downloadDocument] = useLazyGetDocumentDownloadQuery();
+  const [createPayment, paymentState] = useCreatePaymentMutation();
+  const [verifyPayment] = useVerifyPaymentMutation();
+  const [generateInvoice, invoiceState] = useGenerateInvoiceMutation();
+  const [files, setFiles] = React.useState<File[]>([]);
+  const [documentType, setDocumentType] = React.useState<DocumentType>("SUPPORTING");
+  const [paymentAmount, setPaymentAmount] = React.useState("");
+  const [paymentCurrency, setPaymentCurrency] = React.useState("USD");
+  const [paymentMethod, setPaymentMethod] = React.useState("BANK_TRANSFER");
+  const [notice, setNotice] = React.useState("");
+  const [editing, setEditing] = React.useState<"profile" | "case" | null>(null);
+
+  React.useEffect(() => { if (plansResponse?.data?.[0]?.currency) setPaymentCurrency(plansResponse.data[0].currency); }, [plansResponse]);
+  if (isLoading) return <div className="rounded-3xl border bg-white p-10 text-center text-sm text-slate-500">Loading client workspace...</div>;
+  if (isError || !clientCase) return <div className="rounded-3xl border bg-white p-10 text-center"><p className="text-sm text-red-600">Could not load client case.</p><Button className="mt-4 gap-2" variant="outline" onClick={() => refetch()}><RefreshCw className="h-4 w-4" />Retry</Button></div>;
+
+  const profile = clientCase.user;
+  const service = clientCase.service;
+  const plan = plansResponse?.data?.find((item) => item.isActive) || plansResponse?.data?.[0];
+  const payments = paymentsResponse?.data || [];
+  const paid = payments.filter((item) => item.status === "VERIFIED").reduce((sum, item) => sum + Number(item.amount), 0);
+  const outstanding = Math.max(0, Number(plan?.contractedFee || 0) - paid);
+  const canEditProfile = hasPermission("user:update") && Boolean(profile?.id);
+  const canEditCase = hasPermission("case:update") && !isClientAccount;
+  const canVerify = hasPermission("payment:verify");
+  const canManageDocuments = hasPermission("document:manage") || hasPermission("document:create");
+  const canGenerateInvoice = hasPermission("invoice:create");
+  const initials = (profile?.preferredName || profile?.name || "C").split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+
+  const submitPayment = async (event: React.FormEvent) => { event.preventDefault(); if (!paymentAmount || Number(paymentAmount) <= 0) return; try { await createPayment({ caseId: clientId, amount: Number(paymentAmount), currency: paymentCurrency, paymentMethod, idempotencyKey: crypto.randomUUID() }).unwrap(); setPaymentAmount(""); setNotice("Payment submitted for verification."); } catch (error) { setNotice(errorText(error)); } };
+  const upload = async () => { if (!files.length) return; try { await uploadDocuments({ caseId: clientId, files, documentType }).unwrap(); setFiles([]); setNotice("Documents uploaded."); } catch (error) { setNotice(errorText(error)); } };
+  const download = async (id: string) => { try { const response = await downloadDocument(id).unwrap(); if (response.data?.signedDownloadUrl) window.open(response.data.signedDownloadUrl, "_blank", "noopener,noreferrer"); } catch (error) { setNotice(errorText(error)); } };
+  const changeStatus = async (caseStatus: CaseStatus) => { try { await updateCase({ id: clientId, body: { caseStatus } }).unwrap(); setNotice("Case status updated."); } catch (error) { setNotice(errorText(error)); } };
+
+  return <div className="space-y-6">
+    <header className="rounded-[2rem] bg-[#111827] p-5 text-white shadow-sm sm:p-7">
+      <div className="flex flex-wrap items-start justify-between gap-5"><div className="flex items-start gap-4"><Button asChild variant="ghost" size="icon" className="mt-1 text-white hover:bg-white/10"><Link href="/clients"><ArrowLeft className="h-5 w-5" /></Link></Button><div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#F3A712] text-lg font-black text-[#111827]">{initials}</div><div><p className="mb-1 text-xs font-bold uppercase tracking-[.18em] text-[#F3A712]">Client workspace</p><h1 className="text-2xl font-black sm:text-3xl">{profile?.preferredName || profile?.name || "Client case"}</h1><p className="mt-1 text-sm text-slate-300">{profile?.clientId || clientCase.caseCode} · {clientCase.serviceNameSnapshot}</p><div className="mt-3 flex flex-wrap gap-2"><Badge dark>{labels[clientCase.caseStatus]}</Badge><Badge dark>{clientCase.financialStatus.replaceAll("_", " ")}</Badge><Badge dark>{profile?.status || "ACTIVE"}</Badge></div></div></div><div className="flex flex-wrap gap-2">{profile?.email && <IconLink href={`mailto:${profile.email}`} label="Email" icon={<Mail className="h-4 w-4" />} />}{profile?.phone && <IconLink href={`tel:${profile.phone}`} label="Call" icon={<Phone className="h-4 w-4" />} />}{profile?.whatsapp && <IconLink href={`https://wa.me/${profile.whatsapp.replace(/\D/g, "")}`} label="WhatsApp" icon={<span className="text-sm">W</span>} />}</div></div>
+    </header>
+    {notice && <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{notice}</div>}
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Contracted fee" value={money(plan?.contractedFee || service?.baseFee || 0, plan?.currency || service?.currency)} icon={<Wallet />} /><Metric label="Verified paid" value={money(paid, plan?.currency || service?.currency)} icon={<CheckCircle2 />} /><Metric label="Outstanding" value={money(outstanding, plan?.currency || service?.currency)} icon={<CreditCard />} /><Metric label="Documents" value={String(documentsResponse?.data?.length || 0)} icon={<FileText />} /></div>
+    <div className="grid gap-6 xl:grid-cols-[1.35fr_.65fr]"><main className="space-y-6">
+      <Panel title="Client profile" icon={<UserRound />} action={canEditProfile && <Button size="sm" variant="outline" className="gap-1" onClick={() => setEditing("profile")}><Pencil className="h-3.5 w-3.5" />Edit</Button>}>
+        {editing === "profile" && canEditProfile ? <ProfileForm profile={profile!} busy={userUpdateState.isLoading} onCancel={() => setEditing(null)} onSave={async (data) => { try { await updateUser({ id: profile!.id, data }).unwrap(); setEditing(null); setNotice("Client profile updated."); } catch (error) { setNotice(errorText(error)); } }} /> : <div className="grid gap-3 sm:grid-cols-2"><Info label="Legal name" value={profile?.name || "Not set"} /><Info label="Email" value={profile?.email || "Not set"} /><Info label="Phone" value={profile?.phone || "Not set"} /><Info label="WhatsApp" value={profile?.whatsapp || "Not set"} /><Info label="Address" value={[profile?.address, profile?.city, profile?.state, profile?.postalCode].filter(Boolean).join(", ") || "Not set"} /><Info label="Country" value={profile?.country || "Not set"} /></div>}
+      </Panel>
+      <Panel title="Service details"><div className="grid gap-3 sm:grid-cols-2"><Info label="Service" value={`${clientCase.serviceNameSnapshot} (${clientCase.serviceCodeSnapshot})`} /><Info label="Category" value={`${clientCase.serviceCategorySnapshot}${clientCase.caseSubcategory ? ` · ${clientCase.caseSubcategory}` : ""}`} /><Info label="Description" value={service?.description || "No description provided"} /><Info label="Estimated duration" value={service?.estimatedDuration || "Not specified"} /><Info label="Professional fee" value={money(service?.baseFee || 0, service?.currency)} /><Info label="Estimated additional fees" value={money(Number(service?.estimatedGovFee || 0) + Number(service?.estimatedAttorneyFee || 0) + Number(service?.estimatedThirdPartyFee || 0), service?.currency)} /></div></Panel>
+      <Panel title="Case timeline" action={canEditCase && <Button size="sm" variant="outline" className="gap-1" onClick={() => setEditing("case")}><Pencil className="h-3.5 w-3.5" />Edit case</Button>}>
+        {editing === "case" && canEditCase ? <CaseForm item={clientCase} busy={updateState.isLoading} onCancel={() => setEditing(null)} onSave={async (body) => { try { await updateCase({ id: clientId, body }).unwrap(); setEditing(null); setNotice("Case details updated."); } catch (error) { setNotice(errorText(error)); } }} /> : <><div className="grid gap-3 sm:grid-cols-2"><Info label="Destination" value={clientCase.destinationCountry || "Not set"} /><Info label="Agreement date" value={date(clientCase.agreementDate)} /><Info label="Service start" value={date(clientCase.serviceStartDate)} /><Info label="Created" value={date(clientCase.createdAt)} /><Info label="Last updated" value={date(clientCase.updatedAt)} /><Info label="Consultant" value={clientCase.assignedConsultant?.name || "Not assigned"} /></div>{clientCase.clientVisibleNotes && <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm">{clientCase.clientVisibleNotes}</p>}{!isClientAccount && <div className="mt-4 flex items-center gap-3"><label className="text-xs font-bold">Status</label><select value={clientCase.caseStatus} disabled={updateState.isLoading || !hasPermission("case:update")} onChange={(e) => changeStatus(e.target.value as CaseStatus)} className="rounded-lg border px-3 py-2 text-sm">{Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>}</>}
+      </Panel>
+      <Panel title="Documents" icon={<FileText />}><div className="flex flex-wrap gap-2">{canManageDocuments && <><input type="file" multiple accept="application/pdf,image/jpeg,image/png" onChange={(e) => setFiles(Array.from(e.target.files || []))} /><select value={documentType} onChange={(e) => setDocumentType(e.target.value as DocumentType)} className="rounded-lg border px-2 text-sm">{["AGREEMENT", "PAYMENT_PROOF", "IDENTITY", "SUPPORTING", "OTHER"].map((value) => <option key={value}>{value}</option>)}</select><Button size="sm" disabled={!files.length || uploadState.isLoading} onClick={upload}><Upload className="mr-1 h-4 w-4" />Upload</Button></>}</div><div className="mt-4 divide-y">{(documentsResponse?.data || []).map((doc) => <div key={doc.id} className="flex items-center justify-between gap-3 py-3 text-sm"><div><p className="font-semibold">{doc.originalName}</p><p className="text-xs text-slate-500">{doc.documentType} · {doc.scanStatus}</p></div><div className="flex gap-2"><Button size="sm" variant="outline" disabled={doc.scanStatus === "REJECTED"} onClick={() => download(doc.id)}><Download className="h-4 w-4" /></Button>{canManageDocuments && <Button size="sm" variant="destructive" onClick={() => deleteDocument({ documentId: doc.id, caseId: clientId })}><Trash2 className="h-4 w-4" /></Button>}</div></div>)}{!documentsResponse?.data?.length && <p className="py-3 text-sm text-slate-500">No documents uploaded.</p>}</div></Panel>
+    </main><aside className="space-y-6"><Panel title="Financial summary" icon={<CreditCard />}><div className="grid grid-cols-3 gap-2 text-center"><Stat label="Contracted" value={money(plan?.contractedFee || 0, plan?.currency)} /><Stat label="Paid" value={money(paid, plan?.currency)} /><Stat label="Due" value={money(outstanding, plan?.currency)} /></div>{isClientAccount && <form onSubmit={submitPayment} className="mt-5 space-y-2"><Input type="number" min="0.01" step="0.01" placeholder="Payment amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} /><select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm"><option>BANK_TRANSFER</option><option>CARD</option><option>CASH</option><option>MOBILE_MONEY</option></select><Button className="w-full" disabled={paymentState.isLoading}>Submit payment</Button></form>}<div className="mt-4 divide-y">{payments.map((payment) => <div key={payment.id} className="flex items-center justify-between py-2 text-sm"><span>{money(payment.amount, payment.currency)}<br /><small className="text-slate-500">{payment.paymentMethod}</small></span><span className="flex items-center gap-2"><b className="text-xs">{payment.status}</b>{canVerify && payment.status === "PENDING" && <Button size="sm" onClick={() => verifyPayment(payment.id)}>Verify</Button>}</span></div>)}</div></Panel>
+      <Panel title="Payment plan"><p className="text-sm">{plan ? `${plan.scheduleType} · ${plan.currency}` : "No active payment plan"}</p>{plan?.installments.map((item) => <div key={item.id} className="mt-3 flex justify-between border-b pb-2 text-xs"><span>{item.title || `Installment ${item.sequenceNumber}`}<br /><span className="text-slate-500">Due {date(item.dueDate)}</span></span><b>{money(item.amount, plan.currency)}</b></div>)}</Panel>
+      <Panel title="Invoices"><Button size="sm" disabled={!canGenerateInvoice || invoiceState.isLoading} onClick={async () => { try { await generateInvoice(clientId).unwrap(); setNotice("Invoice generated."); } catch (error) { setNotice(errorText(error)); } }}>Generate invoice</Button>{(invoicesResponse?.data || []).map((invoice) => <p key={invoice.id} className="mt-3 text-sm">{invoice.invoiceNumber} · {money(invoice.amount, invoice.currency)}</p>)}</Panel>
+      <Panel title="Receipts">{(receiptsResponse?.data || []).map((receipt) => <p key={receipt.id} className="mt-2 text-sm">{receipt.receiptNumber} · {money(receipt.amount, receipt.currency)}</p>)}{!receiptsResponse?.data?.length && <p className="text-sm text-slate-500">Receipts appear after verified payments.</p>}</Panel>
+      <Panel title="Assigned team"><p className="text-sm font-semibold">{clientCase.assignedConsultant?.name || "Not assigned"}</p><p className="mt-1 text-xs text-slate-500">{clientCase.assignedConsultant?.email || "Assign a consultant to this case"}</p></Panel>
+    </aside></div>
+  </div>;
 }
 
-export function ClientDetailView({ clientId }: ClientDetailViewProps) {
-  const router = useRouter();
+function Panel({ title, icon, action, children }: { title: string; icon?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) { return <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div className="mb-4 flex items-center justify-between gap-3"><h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-slate-800">{icon}{title}</h2>{action}</div>{children}</section>; }
+function Info({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 break-words text-sm font-semibold text-slate-800">{value}</p></div>; }
+function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-xl bg-slate-50 p-3"><p className="text-[10px] uppercase text-slate-500">{label}</p><p className="mt-1 text-sm font-black">{value}</p></div>; }
+function Metric({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) { return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="mb-3 flex items-center justify-between text-slate-400">{icon}<span className="text-[10px] font-bold uppercase tracking-wide">{label}</span></div><p className="text-xl font-black text-slate-900">{value}</p></div>; }
+function Badge({ children, dark = false }: { children: React.ReactNode; dark?: boolean }) { return <span className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${dark ? "bg-white/10 text-white" : "bg-slate-100 text-slate-700"}`}>{children}</span>; }
+function IconLink({ href, label, icon }: { href: string; label: string; icon: React.ReactNode }) { return <a href={href} aria-label={label} title={label} className="flex h-9 items-center gap-2 rounded-xl border border-white/15 bg-white/10 px-3 text-xs font-bold hover:bg-white/20">{icon}{label}</a>; }
 
-  const client = React.useMemo(() => {
-    const list = getMockClients();
-    return (
-      list.find((c) => c.id === clientId || c.clientId === clientId) ||
-      list[0] ||
-      MOCK_CLIENTS[0]
-    );
-  }, [clientId]);
-
-  const getStatusBadge = (status: ClientStatus) => {
-    switch (status) {
-      case "Processing":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#E6F4F1] text-[#0D6E6E] ring-1 ring-[#0D6E6E]/15">
-            Processing
-          </span>
-        );
-      case "Missing Docs":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FFF1F2] text-[#E11D48] ring-1 ring-[#E11D48]/15">
-            Missing Docs
-          </span>
-        );
-      case "Approved":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#ECFDF5] text-[#059669] ring-1 ring-[#059669]/15">
-            Approved
-          </span>
-        );
-      case "Under Review":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FEF3C7] text-[#B45309] ring-1 ring-[#B45309]/15">
-            Under Review
-          </span>
-        );
-      case "Delayed":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FEF3C7] text-[#D97706] ring-1 ring-[#D97706]/15">
-            Delayed
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#FAF8F5] text-[#64748B]">
-            {status}
-          </span>
-        );
-    }
-  };
-
-  const whatsappClean = (client.whatsapp || "+14165550192").replace(/[^0-9]/g, "");
-
-  return (
-    <div className="space-y-6">
-      {/* ── 1. TOP BREADCRUMB & BACK NAVIGATION ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button
-            asChild
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 rounded-2xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs"
-          >
-            <Link href={ROUTES.CLIENTS}>
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Back to Client List</span>
-            </Link>
-          </Button>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
-              Client Case Dossier
-            </h1>
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
-              <span>Clients &amp; Services</span>
-              <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <Link
-                href={ROUTES.CLIENTS}
-                className="hover:text-[#0a0a0a] transition-colors"
-              >
-                Client List
-              </Link>
-              <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#0a0a0a] font-bold">{client.name}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => alert(`Payment reminder triggered for ${client.name}`)}
-            className="h-10 px-4 rounded-xl text-xs font-bold gap-2"
-          >
-            <CreditCard className="h-3.5 w-3.5 text-[#F3A712]" />
-            <span>Send Reminder</span>
-          </Button>
-
-          <Button
-            asChild
-            className="h-10 px-4 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] text-xs font-bold gap-2 shadow-xs"
-          >
-            <a
-              href={`https://wa.me/${whatsappClean}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MessageCircle className="h-4 w-4 text-[#25D366]" />
-              <span>WhatsApp Chat</span>
-            </a>
-          </Button>
-        </div>
-      </div>
-
-      {/* ── 2. HERO CLIENT PROFILE BANNER ── */}
-      <div className="p-6 sm:p-8 rounded-3xl sm:rounded-[32px] border border-[#EAE6DF] bg-white shadow-[0_8px_30px_rgb(0,0,0,0.03)]">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            {client.avatarUrl ? (
-              <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-full border-4 border-[#FAF8F5] shadow-md">
-                <Image
-                  src={client.avatarUrl}
-                  alt={client.name}
-                  fill
-                  sizes="96px"
-                  className="object-cover"
-                  unoptimized
-                />
-              </div>
-            ) : (
-              <div className="flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a]/10 text-2xl font-black text-[#0a0a0a]">
-                {client.initials || client.name.charAt(0)}
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-2xl sm:text-3xl font-black text-[#0a0a0a] tracking-tight">
-                  {client.name}
-                </h2>
-                {getStatusBadge(client.status)}
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-[#64748B] font-medium">
-                <span className="font-mono text-[#0a0a0a] font-bold">
-                  ID: {client.clientId}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1 font-bold text-[#0a0a0a]">
-                  <MapPin className="h-3.5 w-3.5 text-[#F3A712]" />
-                  {client.destination.code} — {client.destination.country}
-                </span>
-                <span>•</span>
-                <span>Visa: {client.visaCategory.title}</span>
-              </div>
-              {client.notes && (
-                <p className="text-xs sm:text-sm text-[#475569] max-w-2xl pt-1">
-                  {client.notes}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 3. TWO COLUMN DOSSIER DETAILS GRID ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Case Information & Financial Plan (2 spans) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Case & Visa Dossier Card */}
-          <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-[#059669]" />
-              <span>Immigration &amp; Visa Case Dossier</span>
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Target Destination
-                </span>
-                <div className="text-sm font-bold text-[#0a0a0a] flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider bg-[#0a0a0a] text-white px-2 py-0.5 rounded-md">
-                    {client.destination.code}
-                  </span>
-                  <span>{client.destination.country}</span>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Visa Category
-                </span>
-                <div className="text-sm font-bold text-[#0a0a0a]">
-                  {client.visaCategory.title}
-                </div>
-                <div className="text-xs text-[#94A3B8]">
-                  {client.visaCategory.subCategory}
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Submission Date &amp; Agent
-                </span>
-                <div className="text-sm font-bold text-[#0a0a0a] flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-[#0284C7]" />
-                  <span>{client.submission.date}</span>
-                </div>
-                <div className="text-xs text-[#64748B]">
-                  Assigned Consultant: {client.submission.agentName}
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Passport Identifier
-                </span>
-                <div className="text-sm font-mono font-bold text-[#0a0a0a] flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5 text-[#7E22CE]" />
-                  <span>{client.passportNumber || "Not recorded"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Payment Plan & Milestone Summary */}
-          <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-[#F3A712]" />
-              <span>Contract Fee &amp; Payment Schedule</span>
-            </h3>
-
-            <div className="grid grid-cols-3 gap-3 sm:gap-4 text-center">
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF]">
-                <div className="text-[10px] sm:text-xs font-extrabold uppercase text-[#64748B]">
-                  Contract Fee
-                </div>
-                <div className="text-base sm:text-xl font-black text-[#0a0a0a] mt-1">
-                  ${client.totalFee?.toLocaleString() || "4,500"}
-                </div>
-              </div>
-              <div className="p-4 rounded-2xl bg-[#ECFDF5] border border-[#059669]/20">
-                <div className="text-[10px] sm:text-xs font-extrabold uppercase text-[#059669]">
-                  Collected
-                </div>
-                <div className="text-base sm:text-xl font-black text-[#059669] mt-1">
-                  ${client.paidAmount?.toLocaleString() || "3,000"}
-                </div>
-              </div>
-              <div className="p-4 rounded-2xl bg-[#FFF1F2] border border-[#E11D48]/20">
-                <div className="text-[10px] sm:text-xs font-extrabold uppercase text-[#E11D48]">
-                  Outstanding Due
-                </div>
-                <div className="text-base sm:text-xl font-black text-[#E11D48] mt-1">
-                  ${client.dueAmount?.toLocaleString() || "1,500"}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Activity & Milestone History */}
-          <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
-              <History className="h-4 w-4 text-[#0284C7]" />
-              <span>Case Milestones &amp; Audit Logs</span>
-            </h3>
-
-            {client.activityLogs && client.activityLogs.length > 0 ? (
-              <div className="divide-y divide-[#F0ECE6]">
-                {client.activityLogs.map((log) => (
-                  <div key={log.id} className="py-3 flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-xs font-bold text-[#0a0a0a]">
-                        {log.action}
-                      </div>
-                      <div className="text-[11px] text-[#64748B] mt-0.5">
-                        {log.target}
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-[11px] font-semibold text-[#0a0a0a]">
-                        {log.timestamp}
-                      </div>
-                      <div className="text-[10px] font-medium text-[#94A3B8]">
-                        Agent: {log.agentName}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-[#94A3B8] italic py-3">
-                No recent case milestone logs for this client.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: WhatsApp Direct Card & Contact Details */}
-        <div className="space-y-6">
-          {/* WhatsApp Direct Chat Card */}
-          <div className="p-6 rounded-3xl border border-[#25D366]/30 bg-gradient-to-b from-[#ECFDF5] to-white shadow-xs space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#25D366] text-white shadow-sm">
-                <MessageCircle className="h-6 w-6 fill-current" />
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-[#0a0a0a]">
-                  WhatsApp Direct
-                </h4>
-                <p className="text-xs text-[#059669] font-medium">
-                  Client communication channel
-                </p>
-              </div>
-            </div>
-
-            <p className="text-xs text-[#475569] leading-relaxed">
-              Launch an immediate WhatsApp conversation with this client. Send milestone payment reminders, requested documents checklist, or case approvals.
-            </p>
-
-            <Button
-              asChild
-              className="w-full h-11 rounded-xl bg-[#25D366] text-white hover:bg-[#20bd5a] font-bold text-xs gap-2 shadow-xs cursor-pointer"
-            >
-              <a
-                href={`https://wa.me/${whatsappClean}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <MessageCircle className="h-4 w-4 fill-current" />
-                <span>Open WhatsApp Chat</span>
-                <ExternalLink className="h-3.5 w-3.5 ml-1" />
-              </a>
-            </Button>
-          </div>
-
-          {/* Contact Details Card */}
-          <div className="p-6 rounded-3xl border border-[#EAE6DF] bg-white shadow-xs space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] flex items-center gap-2">
-              <Mail className="h-4 w-4 text-[#F3A712]" />
-              <span>Contact Channels</span>
-            </h3>
-
-            <div className="space-y-3">
-              <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-0.5">
-                <span className="text-[10px] font-extrabold uppercase text-[#64748B]">
-                  Email Address
-                </span>
-                <div className="text-xs font-bold text-[#0a0a0a] break-all">
-                  {client.email || "No email on record"}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-0.5">
-                <span className="text-[10px] font-extrabold uppercase text-[#64748B]">
-                  WhatsApp Mobile
-                </span>
-                <div className="text-xs font-mono font-bold text-[#059669] flex items-center gap-1.5">
-                  <MessageCircle className="h-3 w-3 text-[#25D366]" />
-                  <span>{client.whatsapp || "+1 416 555 0192"}</span>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-0.5">
-                <span className="text-[10px] font-extrabold uppercase text-[#64748B]">
-                  Direct Phone
-                </span>
-                <div className="text-xs font-mono font-bold text-[#0a0a0a]">
-                  {client.phone || "Not recorded"}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+type ProfileFormProps = { profile: NonNullable<import("@/types/client-case.types").ClientCase["user"]>; busy: boolean; onCancel: () => void; onSave: (data: { name: string; preferredName?: string; phone?: string; whatsapp?: string; address?: string; city?: string; state?: string; postalCode?: string; country?: string }) => Promise<void> };
+function ProfileForm({ profile, busy, onCancel, onSave }: ProfileFormProps) { const [form, setForm] = React.useState({ name: profile.name, preferredName: profile.preferredName || "", phone: profile.phone || "", whatsapp: profile.whatsapp || "", address: profile.address || "", city: profile.city || "", state: profile.state || "", postalCode: profile.postalCode || "", country: profile.country || "" }); const set = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value })); return <form className="grid gap-3 sm:grid-cols-2" onSubmit={(event) => { event.preventDefault(); void onSave(form); }}><EditInput label="Name" value={form.name} onChange={(value) => set("name", value)} /><EditInput label="Preferred name" value={form.preferredName} onChange={(value) => set("preferredName", value)} /><EditInput label="Phone" value={form.phone} onChange={(value) => set("phone", value)} /><EditInput label="WhatsApp" value={form.whatsapp} onChange={(value) => set("whatsapp", value)} /><EditInput label="Address" value={form.address} onChange={(value) => set("address", value)} /><EditInput label="City" value={form.city} onChange={(value) => set("city", value)} /><EditInput label="State" value={form.state} onChange={(value) => set("state", value)} /><EditInput label="Postal code" value={form.postalCode} onChange={(value) => set("postalCode", value)} /><EditInput label="Country" value={form.country} onChange={(value) => set("country", value)} /><div className="flex gap-2 sm:col-span-2"><Button type="submit" disabled={busy}>Save profile</Button><Button type="button" variant="outline" onClick={onCancel}><X className="mr-1 h-4 w-4" />Cancel</Button></div></form>; }
+function CaseForm({ item, busy, onCancel, onSave }: { item: import("@/types/client-case.types").ClientCase; busy: boolean; onCancel: () => void; onSave: (body: import("@/types/client-case.types").UpdateClientCaseInput) => Promise<void> }) { const [form, setForm] = React.useState({ destinationCountry: item.destinationCountry || "", caseCategory: item.caseCategory || "", caseSubcategory: item.caseSubcategory || "", agreementDate: inputDate(item.agreementDate), serviceStartDate: inputDate(item.serviceStartDate), clientVisibleNotes: item.clientVisibleNotes || "", internalNotes: item.internalNotes || "" }); const set = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value })); return <form className="grid gap-3 sm:grid-cols-2" onSubmit={(event) => { event.preventDefault(); void onSave({ ...form, agreementDate: form.agreementDate || undefined, serviceStartDate: form.serviceStartDate || undefined }); }}><EditInput label="Destination" value={form.destinationCountry} onChange={(value) => set("destinationCountry", value)} /><EditInput label="Category" value={form.caseCategory} onChange={(value) => set("caseCategory", value)} /><EditInput label="Subcategory" value={form.caseSubcategory} onChange={(value) => set("caseSubcategory", value)} /><EditInput label="Agreement date" type="date" value={form.agreementDate} onChange={(value) => set("agreementDate", value)} /><EditInput label="Service start" type="date" value={form.serviceStartDate} onChange={(value) => set("serviceStartDate", value)} /><EditInput label="Visible notes" value={form.clientVisibleNotes} onChange={(value) => set("clientVisibleNotes", value)} /><EditInput label="Internal notes" value={form.internalNotes} onChange={(value) => set("internalNotes", value)} /><div className="flex gap-2 sm:col-span-2"><Button type="submit" disabled={busy}>Save case</Button><Button type="button" variant="outline" onClick={onCancel}><X className="mr-1 h-4 w-4" />Cancel</Button></div></form>; }
+function EditInput({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (value: string) => void; type?: string }) { return <label className="text-xs font-bold text-slate-600">{label}<Input className="mt-1" type={type} value={value} onChange={(event) => onChange(event.target.value)} /></label>; }

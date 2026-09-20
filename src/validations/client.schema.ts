@@ -1,4 +1,4 @@
-// ─── Client Case Onboarding Validation Schemas (Zod) ──────────────────────────
+// Client Case Onboarding Validation Schemas (Zod)
 import { z } from "zod";
 
 export const clientMilestoneSchema = z.object({
@@ -36,19 +36,20 @@ export const createClientSchema = z
       .regex(/^[\d\s\-()+]+$/, "Please enter a valid phone number"),
     sendWelcomeWhatsApp: z.boolean(),
 
-    // 3. Immigration Case & Destination
+    // 3. Service & Immigration Case
+    serviceId: z.string().min(1, "Please select an active service from the catalog"),
     destinationCountry: z.string().min(1, "Destination country is required"),
     destinationCode: z.string().min(2, "Country code is required"),
-    visaCategory: z.string().min(1, "Visa category is required"),
-    subCategory: z.string(),
-    assignedConsultant: z.string().min(1, "Assigned consultant is required"),
+    visaCategory: z.string().min(1, "Visa category / service name is required"),
+    subCategory: z.string().optional(),
+    assignedConsultant: z.string().optional(),
+    assignedConsultantId: z.string().optional(),
     status: z.enum([
-      "Processing",
-      "Under Review",
-      "Missing Docs",
-      "Approved",
-      "Delayed",
-      "Rejected",
+      "INTAKE",
+      "ACTIVE",
+      "ON_HOLD",
+      "COMPLETED",
+      "CANCELLED",
     ]),
     targetSubmissionDate: z.string().optional(),
 

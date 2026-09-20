@@ -1,11 +1,13 @@
 "use client";
 
-import { Button } from "@/components/common/Button";
+import { Button as CommonButton } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { useGetServicesQuery } from "@/services/api/services/servicesApi";
 import { useGetUsersQuery } from "@/services/api/users/usersApi";
+import { useCreateClientCaseMutation, useUpdateClientCaseMutation } from "@/services/api/clients/clientCasesApi";
+import { useCreatePaymentPlanMutation } from "@/services/api/payment-plans/paymentPlansApi";
 import {
   createClientSchema,
   type CreateClientFormValues,
@@ -14,55 +16,44 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertTriangle,
   ArrowLeft,
+  Check,
   CheckCircle2,
   ChevronRight,
   CreditCard,
   ExternalLink,
   FileText,
-  Info,
   MapPin,
   MessageCircle,
-  Percent,
   Plus,
   Search,
   ShieldCheck,
-  Sparkles,
   Trash2,
   User,
-  UserCheck,
   UserPlus,
   Users,
   X,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useFieldArray, useForm } from "react-hook-form";
-import { addMockClient, getMockClients } from "../mockData";
-import { ClientItem, ClientStatus } from "../types";
-
-const CONSULTANTS = [
-  { name: "Sarah K.", role: "Senior Immigration Specialist", initials: "SK" },
-  { name: "Michael B.", role: "Senior Case Manager", initials: "MB" },
-  { name: "Elena Rostova", role: "Lead Legal Counsel", initials: "ER" },
-  { name: "Alex Patel", role: "Principal Consultant", initials: "AP" },
-];
 
 const COUNTRY_DIAL_CODES = [
-  { code: "+1", label: "+1 (US & Canada)", flag: "🇺🇸" },
-  { code: "+44", label: "+44 (United Kingdom)", flag: "🇬🇧" },
-  { code: "+61", label: "+61 (Australia)", flag: "🇦🇺" },
-  { code: "+49", label: "+49 (Germany)", flag: "🇩🇪" },
-  { code: "+91", label: "+91 (India)", flag: "🇮🇳" },
-  { code: "+971", label: "+971 (UAE)", flag: "🇦🇪" },
-  { code: "+880", label: "+880 (Bangladesh)", flag: "🇧🇩" },
-  { code: "+81", label: "+81 (Japan)", flag: "🇯🇵" },
-  { code: "+33", label: "+33 (France)", flag: "🇫🇷" },
-  { code: "+65", label: "+65 (Singapore)", flag: "🇸🇬" },
-  { code: "+966", label: "+966 (Saudi Arabia)", flag: "🇸🇦" },
-  { code: "+353", label: "+353 (Ireland)", flag: "🇮🇪" },
-  { code: "+234", label: "+234 (Nigeria)", flag: "🇳🇬" },
-  { code: "+27", label: "+27 (South Africa)", flag: "🇿🇦" },
+  { code: "+1", label: "+1 (US & Canada)" },
+  { code: "+44", label: "+44 (United Kingdom)" },
+  { code: "+61", label: "+61 (Australia)" },
+  { code: "+49", label: "+49 (Germany)" },
+  { code: "+91", label: "+91 (India)" },
+  { code: "+971", label: "+971 (UAE)" },
+  { code: "+880", label: "+880 (Bangladesh)" },
+  { code: "+81", label: "+81 (Japan)" },
+  { code: "+33", label: "+33 (France)" },
+  { code: "+65", label: "+65 (Singapore)" },
+  { code: "+966", label: "+966 (Saudi Arabia)" },
+  { code: "+353", label: "+353 (Ireland)" },
+  { code: "+234", label: "+234 (Nigeria)" },
+  { code: "+27", label: "+27 (South Africa)" },
 ];
 
 const CURRENCIES = [
@@ -72,11 +63,6 @@ const CURRENCIES = [
   { code: "EUR", symbol: "€", label: "EUR (€)" },
   { code: "AUD", symbol: "A$", label: "AUD (A$)" },
 ];
-
-function generateRandomCaseId(): string {
-  const rand = Math.floor(1000 + Math.random() * 9000);
-  return `#APP-2026-${rand}`;
-}
 
 function parsePhoneAndDialCode(rawPhoneOrWhatsapp?: string): {
   dialCode: string;
@@ -97,64 +83,108 @@ function parsePhoneAndDialCode(rawPhoneOrWhatsapp?: string): {
 
 interface ExistingUserOption {
   id: string;
-  source: "client" | "user";
+  source: "user";
   name: string;
   email: string;
   phone?: string;
   whatsapp?: string;
-  passportNumber?: string;
   countryOfOrigin?: string;
   city?: string;
-  avatarUrl?: string;
   initials?: string;
   badgeLabel: string;
   existingCaseRef?: string;
-  destinationCountry?: string;
-  visaCategory?: string;
   role?: string;
   userId?: string;
   status?: string;
 }
 
 export function CreateClientForm() {
-  const { data: servicesResponse } = useGetServicesQuery({
+  const router = useRouter();
+  const { data: servicesResponse, isLoading: isServicesLoading } = useGetServicesQuery({
     limit: 100,
     isActive: "true",
   });
   const services = servicesResponse?.data || [];
-  const router = useRouter();
 
-  // Generated Client Case Identifier
-  const [caseIdentifier, setCaseIdentifier] = React.useState<string>("");
-
-  React.useEffect(() => {
-    setCaseIdentifier(generateRandomCaseId());
-  }, []);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isSuccess, setIsSuccess] = React.useState(false);
-  const [createdClientId, setCreatedClientId] = React.useState<string | null>(
-    null,
-  );
-
-  // Applicant Intake Mode: "new" = brand new applicant, "existing" = pick from registered users/clients
-  const [intakeMode, setIntakeMode] = React.useState<"new" | "existing">("new");
-  const [selectedExistingUser, setSelectedExistingUser] =
-    React.useState<ExistingUserOption | null>(null);
-  const [existingSearchQuery, setExistingSearchQuery] =
-    React.useState<string>("");
-  const [existingUserCategory, setExistingUserCategory] = React.useState<
-    "all" | "user" | "client"
-  >("all");
-
-  // Live Users API Query to fetch registered portal users dynamically from database
-  const {
-    data: usersApiResponse,
-    isLoading: isUsersLoading,
-    isFetching: isUsersFetching,
-    refetch: refetchUsers,
-  } = useGetUsersQuery({
+  const { data: usersApiResponse, isLoading: isUsersLoading } = useGetUsersQuery({
     limit: 100,
   });
+
+  const [createClientCase] = useCreateClientCaseMutation();
+  const [updateClientCase] = useUpdateClientCaseMutation();
+  const [createPaymentPlan] = useCreatePaymentPlanMutation();
+
+  const [caseIdentifier, setCaseIdentifier] = React.useState<string>("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSuccess, setIsSuccess] = React.useState(false);
+  const [createdClientId, setCreatedClientId] = React.useState<string | null>(null);
+  const [errorNotice, setErrorNotice] = React.useState<string>("");
+
+  // Applicant Intake Mode: "new" = brand new applicant, "existing" = pick from registered users
+  const [intakeMode, setIntakeMode] = React.useState<"new" | "existing">("new");
+  const [selectedExistingUser, setSelectedExistingUser] = React.useState<ExistingUserOption | null>(null);
+  const [existingSearchQuery, setExistingSearchQuery] = React.useState<string>("");
+
+  // Live Staff list for consultant assignment
+  const staffConsultants = React.useMemo(() => {
+    const users = usersApiResponse?.data || [];
+    return users.filter(
+      (u) => u.role?.name && u.role.name !== "CLIENT" && u.status === "ACTIVE",
+    );
+  }, [usersApiResponse]);
+
+  // Unified existing users list with Live usersApi integration
+  const existingUserOptions = React.useMemo<ExistingUserOption[]>(() => {
+    const options: ExistingUserOption[] = [];
+    const backendUsers = usersApiResponse?.data;
+    if (backendUsers && backendUsers.length > 0) {
+      backendUsers.forEach((u) => {
+        const initials = u.name
+          ? u.name
+              .split(" ")
+              .filter(Boolean)
+              .map((w) => w[0])
+              .slice(0, 2)
+              .join("")
+              .toUpperCase()
+          : "U";
+        const roleName = u.role?.name || "CLIENT";
+        options.push({
+          id: `user-${u.id}`,
+          source: "user",
+          name: u.name,
+          email: u.email,
+          phone: u.phone || undefined,
+          whatsapp: u.whatsapp || u.phone || undefined,
+          countryOfOrigin: u.country || undefined,
+          city: u.city || undefined,
+          initials,
+          badgeLabel: `Portal User (${roleName})`,
+          existingCaseRef: u.clientId || `USR-${u.id.slice(0, 8).toUpperCase()}`,
+          role: roleName,
+          userId: u.id,
+          status: u.status,
+        });
+      });
+    }
+    return options;
+  }, [usersApiResponse]);
+
+  // Filtered existing users based on search
+  const filteredExistingUsers = React.useMemo(() => {
+    if (!existingSearchQuery.trim()) {
+      return existingUserOptions.slice(0, 10);
+    }
+    const q = existingSearchQuery.toLowerCase();
+    return existingUserOptions.filter(
+      (u) =>
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        (u.phone && u.phone.toLowerCase().includes(q)) ||
+        (u.whatsapp && u.whatsapp.toLowerCase().includes(q)) ||
+        (u.existingCaseRef && u.existingCaseRef.toLowerCase().includes(q)),
+    );
+  }, [existingUserOptions, existingSearchQuery]);
 
   // Initialize React Hook Form with Zod schema validation
   const {
@@ -177,33 +207,22 @@ export function CreateClientForm() {
       countryCode: "+1",
       whatsappNumber: "",
       sendWelcomeWhatsApp: true,
-      destinationCountry: "Canada",
-      destinationCode: "CA",
-      visaCategory: "Express Entry",
-      subCategory: "Federal Skilled Worker",
-      assignedConsultant: "Sarah K.",
-      status: "Processing",
+      serviceId: "",
+      destinationCountry: "United States",
+      destinationCode: "US",
+      visaCategory: "",
+      subCategory: "",
+      assignedConsultant: "",
+      assignedConsultantId: "",
+      status: "INTAKE",
       currency: "USD",
-      baseFee: 4500,
+      baseFee: 0,
       discountAmount: 0,
       discountReason: "",
-      contractedFee: 4500,
-      depositAmount: 1500,
+      contractedFee: 0,
+      depositAmount: 0,
       scheduleType: "deposit_2_milestones",
-      milestones: [
-        {
-          id: "m1",
-          name: "Milestone 1 — Document Submission",
-          dueDate: "2026-10-15",
-          amount: 1500,
-        },
-        {
-          id: "m2",
-          name: "Milestone 2 — Final Case Adjudication",
-          dueDate: "2026-12-01",
-          amount: 1500,
-        },
-      ],
+      milestones: [],
       remindersEnabled: true,
       sendEmailInvitation: true,
       internalNotes: "",
@@ -214,124 +233,6 @@ export function CreateClientForm() {
     control,
     name: "milestones",
   });
-
-  // Unified existing users/clients list with Live usersApi integration
-  const existingUserOptions = React.useMemo<ExistingUserOption[]>(() => {
-    const options: ExistingUserOption[] = [];
-    const seenEmails = new Set<string>();
-
-    // 1. From live registered portal users API (purely dynamic from backend DB)
-    const backendUsers = usersApiResponse?.data;
-    if (backendUsers && backendUsers.length > 0) {
-      backendUsers.forEach((u) => {
-        if (u.email) seenEmails.add(u.email.toLowerCase());
-        const initials = u.name
-          ? u.name
-              .split(" ")
-              .filter(Boolean)
-              .map((w) => w[0])
-              .slice(0, 2)
-              .join("")
-              .toUpperCase()
-          : "U";
-        const roleName = u.role?.name || "CLIENT";
-        options.push({
-          id: `user-${u.id}`,
-          source: "user",
-          name: u.name,
-          email: u.email,
-          phone: u.phone || undefined,
-          whatsapp: u.whatsapp || u.phone || undefined,
-          countryOfOrigin: u.country || undefined,
-          city: u.city || undefined,
-          initials,
-          badgeLabel: `Portal User (${roleName})`,
-          existingCaseRef:
-            u.clientId || `USR-${u.id.slice(0, 8).toUpperCase()}`,
-          role: roleName,
-          userId: u.id,
-          status: u.status,
-        });
-      });
-    }
-
-    // 2. From existing clients (past client cases)
-    const mockClients = getMockClients();
-    mockClients.forEach((c) => {
-      const emailKey = c.email?.toLowerCase();
-      const isAlreadyAdded = emailKey && seenEmails.has(emailKey);
-      if (!isAlreadyAdded) {
-        if (emailKey) seenEmails.add(emailKey);
-        options.push({
-          id: `client-${c.id}`,
-          source: "client",
-          name: c.name,
-          email: c.email || "",
-          phone: c.phone,
-          whatsapp: c.whatsapp,
-          passportNumber: c.passportNumber,
-          countryOfOrigin: c.countryOfOrigin || c.destination?.country,
-          city: c.city,
-          avatarUrl: c.avatarUrl,
-          initials: c.initials,
-          badgeLabel: "Existing Client",
-          existingCaseRef: c.clientId,
-          destinationCountry: c.destination?.country,
-          visaCategory: c.visaCategory?.title,
-        });
-      } else if (emailKey) {
-        // Complement the portal user profile with historical client case data if missing
-        const existingOpt = options.find(
-          (o) => o.email.toLowerCase() === emailKey,
-        );
-        if (existingOpt) {
-          if (!existingOpt.passportNumber && c.passportNumber)
-            existingOpt.passportNumber = c.passportNumber;
-          if (!existingOpt.destinationCountry && c.destination?.country)
-            existingOpt.destinationCountry = c.destination.country;
-          if (!existingOpt.visaCategory && c.visaCategory?.title)
-            existingOpt.visaCategory = c.visaCategory.title;
-          if (!existingOpt.phone && c.phone) existingOpt.phone = c.phone;
-          if (!existingOpt.whatsapp && c.whatsapp)
-            existingOpt.whatsapp = c.whatsapp;
-          if (
-            !existingOpt.countryOfOrigin &&
-            (c.countryOfOrigin || c.destination?.country)
-          ) {
-            existingOpt.countryOfOrigin =
-              c.countryOfOrigin || c.destination?.country;
-          }
-          if (!existingOpt.city && c.city) existingOpt.city = c.city;
-        }
-      }
-    });
-
-    return options;
-  }, [usersApiResponse, isUsersLoading]);
-
-  // Filtered existing users based on search input & category tab
-  const filteredExistingUsers = React.useMemo(() => {
-    let list = existingUserOptions;
-    if (existingUserCategory !== "all") {
-      list = list.filter((u) => u.source === existingUserCategory);
-    }
-    if (!existingSearchQuery.trim()) {
-      return list.slice(0, 9);
-    }
-    const q = existingSearchQuery.toLowerCase();
-    return list.filter(
-      (u) =>
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        (u.phone && u.phone.toLowerCase().includes(q)) ||
-        (u.whatsapp && u.whatsapp.toLowerCase().includes(q)) ||
-        (u.existingCaseRef && u.existingCaseRef.toLowerCase().includes(q)) ||
-        (u.passportNumber && u.passportNumber.toLowerCase().includes(q)) ||
-        (u.countryOfOrigin && u.countryOfOrigin.toLowerCase().includes(q)) ||
-        (u.city && u.city.toLowerCase().includes(q)) ||
-        (u.role && u.role.toLowerCase().includes(q)),
-    );
-  }, [existingUserOptions, existingSearchQuery, existingUserCategory]);
 
   const handleSelectExistingUser = (user: ExistingUserOption) => {
     setSelectedExistingUser(user);
@@ -350,9 +251,6 @@ export function CreateClientForm() {
     }
     if (parsed.number) {
       setValue("whatsappNumber", parsed.number, { shouldValidate: true });
-    }
-    if (user.passportNumber) {
-      setValue("passportNumber", user.passportNumber);
     }
     if (user.countryOfOrigin) {
       setValue("countryOfOrigin", user.countryOfOrigin);
@@ -394,9 +292,8 @@ export function CreateClientForm() {
   const watchedCountryCode = watch("countryCode");
   const watchedWhatsapp = watch("whatsappNumber");
   const watchedCountry = watch("destinationCountry");
+  const watchedServiceId = watch("serviceId");
   const watchedVisaCategory = watch("visaCategory");
-  const watchedConsultant = watch("assignedConsultant");
-  const watchedStatus = watch("status");
   const watchedCurrency = watch("currency");
   const watchedBaseFee = watch("baseFee") || 0;
   const watchedDiscount = watch("discountAmount") || 0;
@@ -404,7 +301,6 @@ export function CreateClientForm() {
   const watchedMilestones = watch("milestones") || [];
   const watchedScheduleType = watch("scheduleType");
 
-  // Currency symbol lookup
   const currencySymbol =
     CURRENCIES.find((c) => c.code === watchedCurrency)?.symbol || "$";
 
@@ -431,6 +327,18 @@ export function CreateClientForm() {
     setValue("scheduleType", type);
     const fee = computedContractedFee;
 
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const m1Date = nextMonth.toISOString().slice(0, 10);
+
+    const monthTwo = new Date();
+    monthTwo.setMonth(monthTwo.getMonth() + 2);
+    const m2Date = monthTwo.toISOString().slice(0, 10);
+
+    const monthThree = new Date();
+    monthThree.setMonth(monthThree.getMonth() + 3);
+    const m3Date = monthThree.toISOString().slice(0, 10);
+
     if (type === "single") {
       setValue("depositAmount", fee);
       replace([]);
@@ -441,14 +349,14 @@ export function CreateClientForm() {
       replace([
         {
           id: "m1",
-          name: "Milestone 1 — Document Submission",
-          dueDate: "2026-10-15",
+          name: "Milestone 1 - Document Submission",
+          dueDate: m1Date,
           amount: halfRemaining,
         },
         {
           id: "m2",
-          name: "Milestone 2 — Final Case Adjudication",
-          dueDate: "2026-12-01",
+          name: "Milestone 2 - Final Case Adjudication",
+          dueDate: m2Date,
           amount: fee - deposit - halfRemaining,
         },
       ]);
@@ -459,20 +367,20 @@ export function CreateClientForm() {
       replace([
         {
           id: "m1",
-          name: "Installment #1 — Month 1 Retainer",
-          dueDate: "2026-10-15",
+          name: "Installment #1 - Month 1 Retainer",
+          dueDate: m1Date,
           amount: perMonth,
         },
         {
           id: "m2",
-          name: "Installment #2 — Month 2 Retainer",
-          dueDate: "2026-11-15",
+          name: "Installment #2 - Month 2 Retainer",
+          dueDate: m2Date,
           amount: perMonth,
         },
         {
           id: "m3",
-          name: "Installment #3 — Month 3 Retainer",
-          dueDate: "2026-12-15",
+          name: "Installment #3 - Month 3 Retainer",
+          dueDate: m3Date,
           amount: fee - deposit - perMonth * 2,
         },
       ]);
@@ -480,38 +388,51 @@ export function CreateClientForm() {
   };
 
   // Handle selection from live service catalog
-  const handleCatalogSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = services.find((s) => s.id === e.target.value);
+  const handleServiceSelect = (serviceId: string) => {
+    const selected = services.find((s) => s.id === serviceId);
     if (selected) {
-      setValue("visaCategory", selected.name);
+      setValue("serviceId", selected.id, { shouldValidate: true });
+      setValue("visaCategory", selected.name, { shouldValidate: true });
       setValue("subCategory", selected.category);
-      setValue("destinationCountry", "United States");
-      setValue("destinationCode", "US");
-      setValue("baseFee", selected.baseFee);
+      setValue("currency", selected.currency || "USD");
+
+      const fee = Number(selected.baseFee || 0);
+      setValue("baseFee", fee);
       setValue("discountAmount", 0);
       setValue("discountReason", "");
-      setValue("contractedFee", selected.baseFee);
+      setValue("contractedFee", fee);
 
-      const deposit =
-        selected.defaultDeposit || Math.round(selected.baseFee * 0.4);
-      const remaining = selected.baseFee - deposit;
-      const installments = selected.defaultInstallments || 2;
-      const instAmt = Math.round(remaining / installments);
+      const deposit = selected.defaultDeposit
+        ? Number(selected.defaultDeposit)
+        : Math.round(fee * 0.4);
       setValue("depositAmount", deposit);
 
+      const remaining = fee - deposit;
+      const installmentsCount = selected.defaultInstallments || 2;
+      const instAmt = installmentsCount > 0 ? Math.round(remaining / installmentsCount) : 0;
+
       const newMilestones = [];
-      for (let i = 1; i <= installments; i++) {
+      for (let i = 1; i <= installmentsCount; i++) {
+        const dueDate = new Date();
+        dueDate.setMonth(dueDate.getMonth() + i);
         newMilestones.push({
           id: `m${i}`,
           name: `Milestone ${i} - Phase Deliverable`,
-          dueDate: "2026-10-15",
+          dueDate: dueDate.toISOString().slice(0, 10),
           amount:
-            i === installments
-              ? remaining - instAmt * (installments - 1)
+            i === installmentsCount
+              ? remaining - instAmt * (installmentsCount - 1)
               : instAmt,
         });
       }
       replace(newMilestones);
+    } else {
+      setValue("serviceId", "");
+      setValue("visaCategory", "");
+      setValue("baseFee", 0);
+      setValue("contractedFee", 0);
+      setValue("depositAmount", 0);
+      replace([]);
     }
   };
 
@@ -522,18 +443,32 @@ export function CreateClientForm() {
     else if (c === "United Kingdom") setValue("destinationCode", "GB");
     else if (c === "Australia") setValue("destinationCode", "AU");
     else if (c === "Germany") setValue("destinationCode", "DE");
-    else if (c === "United States") setValue("destinationCode", "US");
+    else setValue("destinationCode", "US");
+  };
+
+  // Handle Consultant Change
+  const handleConsultantChange = (consultantId: string) => {
+    const staff = staffConsultants.find((s) => s.id === consultantId);
+    if (staff) {
+      setValue("assignedConsultantId", staff.id);
+      setValue("assignedConsultant", staff.name);
+    } else {
+      setValue("assignedConsultantId", "");
+      setValue("assignedConsultant", "");
+    }
   };
 
   // Add custom milestone
   const handleAddMilestone = () => {
     const nextIdx = fields.length + 1;
+    const defaultDate = new Date();
+    defaultDate.setMonth(defaultDate.getMonth() + nextIdx);
     replace([
       ...watchedMilestones,
       {
         id: `m_${Date.now()}`,
-        name: `Milestone ${nextIdx} — Custom Phase`,
-        dueDate: "2026-11-01",
+        name: `Milestone ${nextIdx} - Custom Phase`,
+        dueDate: defaultDate.toISOString().slice(0, 10),
         amount: Math.max(0, financialDiscrepancy),
       },
     ]);
@@ -552,113 +487,121 @@ export function CreateClientForm() {
     "",
   );
   const whatsappPreviewUrl = `https://wa.me/${cleanPhone.replace("+", "")}?text=${encodeURIComponent(
-    `Hello ${watchedName || "Valued Client"}, welcome to AdSkill Consultancy! Your case ${caseIdentifier || "#APP-2026-••••"} has been opened.`,
+    `Hello ${watchedName || "Valued Client"}, welcome to AdSkill Consultancy. Your new case is being opened.`,
   )}`;
 
-  // Form submit handler
-  const onSubmit = (data: CreateClientFormValues) => {
+  // Submit Handler
+  const onSubmit = async (data: CreateClientFormValues) => {
+    if (!data.serviceId) {
+      setErrorNotice("Please select an active service from the catalog before proceeding.");
+      return;
+    }
+    setErrorNotice("");
     setIsSubmitting(true);
+    try {
+      // 1. Create client case in backend
+      const created = await createClientCase({
+        serviceId: data.serviceId,
+        destinationCountry: data.destinationCountry,
+        caseCategory: data.visaCategory,
+        caseSubcategory: data.subCategory || undefined,
+        clientVisibleNotes: data.internalNotes?.trim() || undefined,
+      }).unwrap();
 
-    const clientInitials = data.name
-      .split(" ")
-      .filter(Boolean)
-      .map((w) => w[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+      const createdCase = created.data;
+      setCaseIdentifier(createdCase.caseCode);
+      setCreatedClientId(createdCase.id);
 
-    const newId = Date.now().toString();
+      // 2. Patch case with consultant / status if specified
+      if (data.assignedConsultantId || data.status !== "INTAKE" || data.internalNotes) {
+        try {
+          await updateClientCase({
+            id: createdCase.id,
+            body: {
+              assignedConsultantId: data.assignedConsultantId || undefined,
+              caseStatus: data.status,
+              internalNotes: data.internalNotes || undefined,
+            },
+          }).unwrap();
+        } catch (updateErr) {
+          console.warn("Could not set consultant assignment:", updateErr);
+        }
+      }
 
-    const newClient: ClientItem = {
-      id: newId,
-      clientId: caseIdentifier || generateRandomCaseId(),
-      name: data.name.trim(),
-      preferredName: data.preferredName?.trim() || undefined,
-      email: data.email.trim(),
-      phone: data.phone?.trim() || undefined,
-      whatsapp: `${data.countryCode} ${data.whatsappNumber.trim()}`,
-      avatarUrl:
-        selectedExistingUser?.avatarUrl ||
-        `https://images.unsplash.com/photo-${1500000000000 + (parseInt(newId.slice(-4)) || 1000)}?w=150&auto=format&fit=crop&q=80`,
-      initials: selectedExistingUser?.initials || clientInitials || "CL",
-      destination: {
-        code: data.destinationCode,
-        country: data.destinationCountry,
-      },
-      visaCategory: {
-        title: data.visaCategory,
-        subCategory: data.subCategory,
-      },
-      submission: {
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-        agentName: data.assignedConsultant,
-      },
-      status: data.status as ClientStatus,
-      passportNumber: data.passportNumber?.trim() || undefined,
-      city: data.city?.trim() || undefined,
-      countryOfOrigin: data.countryOfOrigin?.trim() || undefined,
-      currency: data.currency,
-      totalFee: data.contractedFee,
-      depositAmount: data.depositAmount,
-      discountAmount: data.discountAmount,
-      discountReason: data.discountReason,
-      paidAmount: 0,
-      dueAmount: data.contractedFee,
-      remindersEnabled: data.remindersEnabled,
-      milestones: data.milestones.map((m) => ({
-        id: m.id,
-        name: m.name,
-        dueDate: m.dueDate,
-        amount: Number(m.amount) || 0,
-      })),
-      notes: data.internalNotes?.trim() || undefined,
-      activityLogs: [
-        {
-          id: `log-${Date.now()}-1`,
-          action: selectedExistingUser
-            ? `New Case Opened for ${selectedExistingUser.source === "user" ? "Registered Portal User" : "Existing Client"} (${selectedExistingUser.name} · ${selectedExistingUser.existingCaseRef})`
-            : "Client Case Dossier Initialized",
-          target: `${data.visaCategory} (${data.destinationCountry})`,
-          timestamp: "Just now",
-          agentName: data.assignedConsultant,
-        },
-        ...(data.sendWelcomeWhatsApp
-          ? [
-              {
-                id: `log-${Date.now()}-2`,
-                action: "WhatsApp Welcome Notice Queued",
-                target: `${data.countryCode} ${data.whatsappNumber}`,
-                timestamp: "Just now",
-                agentName: "System",
-              },
-            ]
-          : []),
-      ],
-    };
+      // 3. Create Payment Plan with exact installment amounts
+      if (isMathValid && data.contractedFee > 0) {
+        const installmentsToSend: Array<{
+          sequenceNumber: number;
+          title: string;
+          amount: number;
+          dueDate: string;
+        }> = [];
 
-    // Store in global mock and local storage
-    addMockClient(newClient);
-    setCreatedClientId(newId);
+        // If deposit is configured, it is sequence 1 (Initial Retainer / Deposit)
+        if (data.depositAmount > 0) {
+          installmentsToSend.push({
+            sequenceNumber: 1,
+            title: "Initial Retainer / Deposit",
+            amount: Number(data.depositAmount),
+            dueDate: new Date().toISOString(),
+          });
+        }
 
-    setTimeout(() => {
-      setIsSubmitting(false);
+        // Subsequent milestones follow sequence numbers
+        data.milestones.forEach((m) => {
+          if (Number(m.amount) > 0) {
+            installmentsToSend.push({
+              sequenceNumber: installmentsToSend.length + 1,
+              title: m.name,
+              amount: Number(m.amount),
+              dueDate: new Date(m.dueDate).toISOString(),
+            });
+          }
+        });
+
+        // If single schedule with no separate milestones
+        if (installmentsToSend.length === 0) {
+          installmentsToSend.push({
+            sequenceNumber: 1,
+            title: "Full Contracted Fee",
+            amount: Number(data.contractedFee),
+            dueDate: new Date().toISOString(),
+          });
+        }
+
+        await createPaymentPlan({
+          caseId: createdCase.id,
+          body: {
+            currency: data.currency,
+            discountAmount: data.discountAmount || 0,
+            discountReason: data.discountReason || undefined,
+            depositAmount: data.depositAmount || 0,
+            scheduleType: data.scheduleType,
+            installments: installmentsToSend,
+          },
+        }).unwrap();
+      }
+
       setIsSuccess(true);
-      setTimeout(() => {
-        router.push(ROUTES.CLIENTS);
-      }, 1500);
-    }, 600);
+      router.push(`/clients/${createdCase.id}`);
+    } catch (error: any) {
+      console.error("Failed to onboard client case:", error);
+      const msg =
+        error?.data?.message ||
+        error?.message ||
+        "An unexpected error occurred while creating the client case. Please verify the fields and try again.";
+      setErrorNotice(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6 w-full">
-      {/* ── 1. TOP BREADCRUMB & PAGE TITLE BAR (MATCHING CLIENT LIST FULL PAGE HEADER) ── */}
+      {/* 1. TOP BREADCRUMB & PAGE TITLE BAR */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <Button
+          <CommonButton
             asChild
             variant="outline"
             size="icon"
@@ -667,7 +610,7 @@ export function CreateClientForm() {
               <ArrowLeft className="h-5 w-5 text-[#0a0a0a]" />
               <span className="sr-only">Back to Client Directory</span>
             </Link>
-          </Button>
+          </CommonButton>
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
@@ -675,7 +618,7 @@ export function CreateClientForm() {
               </h1>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF8FF] text-[#0284C7] text-xs font-bold border border-[#BAE6FD]">
                 <ShieldCheck className="h-3.5 w-3.5 text-[#0284C7]" />
-                Intake &amp; Accounting
+                Live Database Connected
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
@@ -700,7 +643,6 @@ export function CreateClientForm() {
 
         {/* Top Right Header Controls */}
         <div className="flex items-center gap-3 self-start sm:self-auto">
-          {/* Case Reference ID Card */}
           <div className="flex items-center gap-2.5 bg-white border border-[#EAE6DF] px-4 py-2 rounded-2xl shadow-2xs">
             <div className="text-right">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#94A3B8] block leading-none">
@@ -709,38 +651,38 @@ export function CreateClientForm() {
               <span
                 suppressHydrationWarning
                 className="font-mono font-black text-sm text-[#0a0a0a] mt-0.5 block">
-                {caseIdentifier || "#APP-2026-••••"}
+                {caseIdentifier || "Generated after save"}
               </span>
             </div>
           </div>
-
-          {/* Quick Back to Directory Button */}
-          <Button
-            asChild
-            variant="outline"
-            className="h-11 px-4 rounded-2xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs text-xs font-bold gap-2 cursor-pointer">
-            <Link href={ROUTES.CLIENTS}>
-              <FileText className="h-4 w-4 text-[#64748B]" />
-              <span className="hidden sm:inline">View Client List</span>
-            </Link>
-          </Button>
         </div>
       </div>
 
-      {/* Success Notification Banner */}
+      {/* ERROR BANNER */}
+      {errorNotice && (
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 animate-in fade-in duration-200">
+          <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-rose-900">
+              Database / Submission Error
+            </h4>
+            <p className="text-xs text-rose-700">{errorNotice}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 2. SUCCESS NOTICE */}
       {isSuccess && (
-        <div className="p-5 rounded-3xl bg-[#ECFDF5] border border-[#059669]/30 text-[#059669] flex items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-3.5">
-            <div className="h-11 w-11 rounded-2xl bg-[#059669] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <CheckCircle2 className="h-6 w-6" />
-            </div>
+        <div className="p-5 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-between gap-4 animate-in fade-in duration-300">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-6 w-6 text-[#059669] shrink-0" />
             <div>
-              <div className="text-base font-black text-[#065F46]">
+              <h4 className="text-sm font-bold text-[#065F46]">
                 Client Case Successfully Onboarded!
-              </div>
-              <p className="text-xs text-[#047857] mt-0.5">
-                Case dossier {caseIdentifier} initialized with milestone
-                schedule. Redirecting to Application List...
+              </h4>
+              <p className="text-xs text-[#047857]">
+                Assigned Case Reference:{" "}
+                <span className="font-mono font-bold">{caseIdentifier}</span>. Redirecting to dossier...
               </p>
             </div>
           </div>
@@ -754,7 +696,7 @@ export function CreateClientForm() {
         </div>
       )}
 
-      {/* ── 3. MAIN FULL-WIDTH CONTAINER (MATCHING CLIENT LIST TABLE CONTAINER) ── */}
+      {/* 3. MAIN FORM CONTAINER */}
       <div className="rounded-3xl sm:rounded-[32px] border border-[#EAE6DF] bg-white p-6 sm:p-8 lg:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-8">
         {/* Table Top Header Info Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#F0ECE6]">
@@ -772,34 +714,9 @@ export function CreateClientForm() {
                 : ""}
             </span>
           </div>
-
-          {/* Quick Template Selector */}
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="text-xs font-extrabold text-[#64748B] hidden md:inline">
-              Fast Catalog Fill:
-            </span>
-            <div className="relative">
-              <select
-                onChange={handleCatalogSelect}
-                defaultValue=""
-                className="h-10 pl-3 pr-8 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] shadow-2xs cursor-pointer">
-                <option value="" disabled>
-                  Load Service Catalog Preset...
-                </option>
-                {services.map((s: any) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.code} - $
-                    {Number(s.baseFee || 0).toLocaleString()}{" "}
-                    {s.currency || "USD"})
-                  </option>
-                ))}
-              </select>
-              <Sparkles className="h-3.5 w-3.5 text-[#F3A712] absolute right-2.5 top-3.5 pointer-events-none" />
-            </div>
-          </div>
         </div>
 
-        {/* ── THE FORM ── */}
+        {/* THE FORM */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           {/* SECTION 1: APPLICANT PERSONAL IDENTITY */}
           <div className="space-y-4">
@@ -813,8 +730,7 @@ export function CreateClientForm() {
                     1. Applicant Identity &amp; Credentials
                   </h3>
                   <p className="text-xs text-[#64748B]">
-                    Legal full identity, passport credentials, and contact
-                    details
+                    Legal full identity, passport credentials, and contact details
                   </p>
                 </div>
               </div>
@@ -861,221 +777,111 @@ export function CreateClientForm() {
                           </span>
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#059669] text-[10px] font-bold border border-[#A7F3D0]">
                             <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />
-                            Live API Connected
+                            Live Database Users ({existingUserOptions.length})
                           </span>
                         </div>
                         <p className="text-xs text-[#64748B] mt-0.5">
-                          Search among registered portal clients and users to
-                          open a new case for them without re-entering their
-                          data.
+                          Search among registered clients to open a new case without re-entering data.
                         </p>
-                      </div>
-                      <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <span className="text-[11px] font-bold text-[#64748B] bg-white border border-[#EAE6DF] px-2.5 py-1 rounded-xl shadow-2xs">
-                          {existingUserOptions.length} Profiles Available
-                        </span>
                       </div>
                     </div>
 
                     {/* Filter Category Tabs & Search input */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                      <div className="relative flex-1">
-                        <Search className="h-4 w-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
-                        <Input
-                          value={existingSearchQuery}
-                          onChange={(e) =>
-                            setExistingSearchQuery(e.target.value)
-                          }
-                          placeholder="Search by name, email, phone, passport, city, or reference ID..."
-                          className="h-11 pl-10 pr-9 rounded-xl bg-white border-[#EAE6DF] text-xs font-medium text-[#0a0a0a]"
-                        />
-                        {existingSearchQuery && (
-                          <button
-                            type="button"
-                            onClick={() => setExistingSearchQuery("")}
-                            className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#0a0a0a]">
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Source category filter pills */}
-                      <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#EAE6DF] shrink-0">
+                    <div className="relative">
+                      <Search className="h-4 w-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
+                      <Input
+                        value={existingSearchQuery}
+                        onChange={(e) => setExistingSearchQuery(e.target.value)}
+                        placeholder="Search by name, email, phone, or reference ID..."
+                        className="h-11 pl-10 pr-9 rounded-xl bg-white border-[#EAE6DF] text-xs font-medium text-[#0a0a0a]"
+                      />
+                      {existingSearchQuery && (
                         <button
                           type="button"
-                          onClick={() => setExistingUserCategory("all")}
-                          className={cn(
-                            "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-                            existingUserCategory === "all"
-                              ? "bg-[#0a0a0a] text-white"
-                              : "text-[#64748B] hover:text-[#0a0a0a]",
-                          )}>
-                          All ({existingUserOptions.length})
+                          onClick={() => setExistingSearchQuery("")}
+                          className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#0a0a0a]">
+                          <X className="h-4 w-4" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setExistingUserCategory("user")}
-                          className={cn(
-                            "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-                            existingUserCategory === "user"
-                              ? "bg-[#0a0a0a] text-white"
-                              : "text-[#64748B] hover:text-[#0a0a0a]",
-                          )}>
-                          Portal Users (
-                          {
-                            existingUserOptions.filter(
-                              (u) => u.source === "user",
-                            ).length
-                          }
-                          )
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setExistingUserCategory("client")}
-                          className={cn(
-                            "px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer",
-                            existingUserCategory === "client"
-                              ? "bg-[#0a0a0a] text-white"
-                              : "text-[#64748B] hover:text-[#0a0a0a]",
-                          )}>
-                          Past Clients (
-                          {
-                            existingUserOptions.filter(
-                              (u) => u.source === "client",
-                            ).length
-                          }
-                          )
-                        </button>
-                      </div>
+                      )}
                     </div>
 
-                    {/* Results list or Loading Skeleton */}
+                    {/* Users list */}
                     {isUsersLoading ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 py-4">
-                        {[1, 2, 3, 4, 5, 6].map((idx) => (
+                      <div className="p-6 text-center text-xs text-[#64748B]">
+                        Loading registered users from database...
+                      </div>
+                    ) : filteredExistingUsers.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-[#64748B] bg-white rounded-xl border border-dashed border-[#EAE6DF]">
+                        No registered users found matching your search.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
+                        {filteredExistingUsers.map((user) => (
                           <div
-                            key={idx}
-                            className="p-3 rounded-xl bg-white border border-[#EAE6DF] animate-pulse flex items-start gap-3">
-                            <div className="h-9 w-9 rounded-xl bg-slate-200 shrink-0" />
-                            <div className="flex-1 space-y-2">
-                              <div className="h-3.5 bg-slate-200 rounded-md w-3/4" />
-                              <div className="h-3 bg-slate-100 rounded-md w-1/2" />
+                            key={user.id}
+                            onClick={() => handleSelectExistingUser(user)}
+                            className="p-3.5 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#0a0a0a] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group">
+                            <div className="h-9 w-9 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] flex items-center justify-center font-bold text-xs text-[#0a0a0a] shrink-0 group-hover:bg-[#0a0a0a] group-hover:text-white transition-colors">
+                              {user.initials}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="text-xs font-bold text-[#0a0a0a] truncate block">
+                                  {user.name}
+                                </span>
+                                <span className="text-[10px] font-mono font-bold text-[#64748B] shrink-0">
+                                  {user.role}
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-[#64748B] truncate block">
+                                {user.email}
+                              </span>
+                              {user.phone && (
+                                <span className="text-[10px] text-[#94A3B8] block">
+                                  {user.phone}
+                                </span>
+                              )}
                             </div>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
-                        {filteredExistingUsers.length > 0 ? (
-                          filteredExistingUsers.map((user) => (
-                            <div
-                              key={user.id}
-                              onClick={() => handleSelectExistingUser(user)}
-                              className="p-3 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#0a0a0a] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group relative overflow-hidden">
-                              <div className="h-9 w-9 rounded-xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] font-extrabold text-xs flex items-center justify-center shrink-0 group-hover:bg-[#0a0a0a] group-hover:text-white transition-colors">
-                                {user.initials ||
-                                  user.name.slice(0, 2).toUpperCase()}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="text-xs font-bold text-[#0a0a0a] truncate block">
-                                    {user.name}
-                                  </span>
-                                  <span
-                                    className={cn(
-                                      "text-[9px] font-extrabold px-1.5 py-0.5 rounded-md shrink-0 uppercase tracking-tight",
-                                      user.source === "user"
-                                        ? "bg-[#EBF8FF] text-[#0284C7] border border-[#BAE6FD]"
-                                        : "bg-[#FAF8F5] text-[#64748B] border border-[#EAE6DF]",
-                                    )}>
-                                    {user.source === "user"
-                                      ? user.role || "User"
-                                      : "Client"}
-                                  </span>
-                                </div>
-                                <span className="text-[11px] text-[#64748B] truncate block">
-                                  {user.email || user.phone || "No email"}
-                                </span>
-                                <div className="flex items-center gap-1.5 mt-1">
-                                  <span className="text-[10px] font-mono text-[#0a0a0a] bg-[#FAF8F5] px-1.5 py-0.2 rounded border border-[#EAE6DF]/60">
-                                    {user.existingCaseRef || "ID Pending"}
-                                  </span>
-                                  {user.countryOfOrigin && (
-                                    <span className="text-[10px] text-[#94A3B8] font-medium truncate">
-                                      · {user.countryOfOrigin}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="col-span-full py-6 text-center text-xs text-[#94A3B8] bg-white rounded-xl border border-dashed border-[#EAE6DF]">
-                            No records found matching &ldquo;
-                            {existingSearchQuery}&rdquo;.
-                          </div>
-                        )}
-                      </div>
                     )}
                   </div>
                 ) : (
-                  /* Active Linked User Banner */
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-white border border-[#A7F3D0] shadow-2xs">
-                    <div className="flex items-center gap-3.5">
-                      <div className="h-11 w-11 rounded-2xl bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] font-black text-sm flex items-center justify-center shrink-0 shadow-2xs">
-                        <UserCheck className="h-5 w-5" />
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-white border border-[#0a0a0a] shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-[#0a0a0a] text-white flex items-center justify-center font-bold text-sm">
+                        {selectedExistingUser.initials}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-black text-[#0a0a0a]">
+                          <h4 className="text-xs font-bold text-[#0a0a0a]">
                             {selectedExistingUser.name}
+                          </h4>
+                          <span className="px-2 py-0.5 rounded-md bg-[#FAF8F5] border border-[#EAE6DF] text-[10px] font-bold text-[#64748B]">
+                            {selectedExistingUser.role}
                           </span>
-                          <span className="text-[10px] font-extrabold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded-md">
-                            {selectedExistingUser.source === "user"
-                              ? "Registered Portal User Linked"
-                              : "Existing Client Linked"}
-                          </span>
-                          {selectedExistingUser.existingCaseRef && (
-                            <span className="text-[10px] font-mono font-bold text-[#64748B] bg-[#FAF8F5] border border-[#EAE6DF] px-2 py-0.5 rounded-md">
-                              Ref: {selectedExistingUser.existingCaseRef}
-                            </span>
-                          )}
                         </div>
-                        <p className="text-xs text-[#64748B] mt-0.5">
+                        <p className="text-xs text-[#64748B]">
                           {selectedExistingUser.email}
-                          {selectedExistingUser.phone &&
-                            ` • ${selectedExistingUser.phone}`}
-                          {selectedExistingUser.whatsapp &&
-                            ` • WA: ${selectedExistingUser.whatsapp}`}
-                          {selectedExistingUser.countryOfOrigin &&
-                            ` • Origin: ${selectedExistingUser.countryOfOrigin}`}
+                          {selectedExistingUser.phone && ` • ${selectedExistingUser.phone}`}
                         </p>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleClearExistingUser}
-                        className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer">
-                        Change Selection
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => handleSwitchIntakeMode("new")}
-                        className="h-9 px-3 rounded-xl border-[#EAE6DF] text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 cursor-pointer">
-                        Detach / New Applicant
-                      </Button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClearExistingUser}
+                      className="text-xs font-bold text-rose-600 hover:text-rose-700 px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors">
+                      Change Selection
+                    </button>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-1.5 lg:col-span-2">
+            {/* Applicant Details Input Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
                   <span>Full Legal Name *</span>
                   {errors.name && (
@@ -1086,38 +892,25 @@ export function CreateClientForm() {
                 </label>
                 <Input
                   {...register("name")}
-                  placeholder="e.g. Maya Elizabeth Lin"
+                  placeholder="e.g. Eleanor Vance"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Preferred Name / Alias
+                  Preferred Name
                 </label>
                 <Input
                   {...register("preferredName")}
-                  placeholder="e.g. Maya"
+                  placeholder="e.g. Ellie"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Passport Identifier
-                </label>
-                <Input
-                  {...register("passportNumber")}
-                  placeholder="e.g. M9821034"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#0a0a0a]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-1.5 lg:col-span-2">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                  <span>Primary Email Address *</span>
+                  <span>Email Address *</span>
                   {errors.email && (
                     <span className="text-rose-500 font-bold normal-case text-[11px]">
                       {errors.email.message}
@@ -1127,29 +920,40 @@ export function CreateClientForm() {
                 <Input
                   type="email"
                   {...register("email")}
-                  placeholder="maya.lin@example.com"
+                  placeholder="e.g. eleanor.vance@example.com"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Direct Telephone
+                  Primary Phone
                 </label>
                 <Input
                   {...register("phone")}
-                  placeholder="+1 (416) 555-0188"
+                  placeholder="e.g. +1 (555) 234-5678"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  City / Residence
+                  Passport / Gov ID Number
                 </label>
                 <Input
-                  {...register("city")}
-                  placeholder="e.g. Toronto"
+                  {...register("passportNumber")}
+                  placeholder="e.g. A9281940"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
+                  Country of Origin
+                </label>
+                <Input
+                  {...register("countryOfOrigin")}
+                  placeholder="e.g. United Kingdom"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
@@ -1164,32 +968,31 @@ export function CreateClientForm() {
               </div>
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  2. WhatsApp Channel &amp; Country Code Selector
+                  2. WhatsApp Communication Channel
                 </h3>
                 <p className="text-xs text-[#64748B]">
-                  Direct mobile line for automated payment reminders, milestone
-                  invoices, and document alerts
+                  Direct client messaging channel &amp; automated notification dispatch
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
-              <div className="sm:col-span-5 space-y-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Country Dial Code *
+                  Country Dial Code
                 </label>
                 <select
                   {...register("countryCode")}
-                  className="w-full h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  {COUNTRY_DIAL_CODES.map((item) => (
-                    <option key={item.code} value={item.code}>
-                      {item.flag} {item.label}
+                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
+                  {COUNTRY_DIAL_CODES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {c.label}
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="sm:col-span-7 space-y-1.5">
+              <div className="sm:col-span-2 space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
                   <span>WhatsApp Mobile Number *</span>
                   {errors.whatsappNumber && (
@@ -1198,56 +1001,28 @@ export function CreateClientForm() {
                     </span>
                   )}
                 </label>
-                <Input
-                  {...register("whatsappNumber")}
-                  placeholder="4165550188"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#059669]"
-                />
-                <div className="flex items-center justify-between text-[11px] text-[#64748B]">
-                  <span>
-                    Formatted:{" "}
-                    <strong className="text-[#0a0a0a]">
-                      {watchedCountryCode} {watchedWhatsapp || "XXXXXXXXXX"}
-                    </strong>
-                  </span>
-                  {watchedWhatsapp.length >= 6 && (
+                <div className="flex gap-2">
+                  <Input
+                    {...register("whatsappNumber")}
+                    placeholder="e.g. 5551234567"
+                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] flex-1"
+                  />
+                  {watchedWhatsapp && (
                     <a
                       href={whatsappPreviewUrl}
                       target="_blank"
-                      rel="noreferrer"
-                      className="text-[#059669] hover:underline font-bold flex items-center gap-1">
-                      <ExternalLink className="h-3 w-3" />
-                      Test wa.me link
+                      rel="noopener noreferrer"
+                      className="h-11 px-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-[#128C7E] hover:bg-[#25D366]/20 flex items-center gap-1.5 text-xs font-bold shrink-0 transition-colors">
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      Test Link
                     </a>
                   )}
                 </div>
               </div>
             </div>
-
-            {/* Live Message Dispatch Bubble */}
-            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                  <MessageCircle className="h-4.5 w-4.5 fill-current" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-[#0a0a0a] block">
-                    Welcome &amp; Case Opening Automated Template
-                  </span>
-                  <p className="text-xs text-[#065F46] font-medium font-mono mt-0.5">
-                    "👋 Hello {watchedName || "[Client Name]"}, welcome to
-                    AdSkill! Your case has been registered under{" "}
-                    {caseIdentifier || "#APP-2026-••••"}."
-                  </p>
-                </div>
-              </div>
-              <span className="text-[11px] font-extrabold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-3 py-1 rounded-xl shrink-0">
-                Ready to Dispatch
-              </span>
-            </div>
           </div>
 
-          {/* SECTION 3: IMMIGRATION CASE DETAILS */}
+          {/* SECTION 3: SERVICE CATALOG & CASE JURISDICTION */}
           <div className="space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-[#F0ECE6]">
               <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#EBF8FF] text-[#0284C7] border border-[#BAE6FD] shadow-2xs">
@@ -1255,13 +1030,42 @@ export function CreateClientForm() {
               </div>
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  3. Case Jurisdiction &amp; Visa Destination
+                  3. Service Selection &amp; Case Jurisdiction
                 </h3>
                 <p className="text-xs text-[#64748B]">
-                  Destination legal jurisdiction, visa stream, and assigned
-                  staff member
+                  Select an active offering from the service catalog to populate legal category and standard pricing
                 </p>
               </div>
+            </div>
+
+            {/* SERVICE SELECTION DROPDOWN */}
+            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-2">
+              <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a] flex items-center justify-between">
+                <span>Select Offering from Active Service Catalog *</span>
+                {errors.serviceId && (
+                  <span className="text-rose-500 font-bold normal-case text-[11px]">
+                    {errors.serviceId.message}
+                  </span>
+                )}
+              </label>
+              {isServicesLoading ? (
+                <div className="text-xs text-[#64748B] py-2 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-[#0a0a0a]" />
+                  Loading active services from database...
+                </div>
+              ) : (
+                <select
+                  value={watchedServiceId}
+                  onChange={(e) => handleServiceSelect(e.target.value)}
+                  className="w-full h-12 px-3 rounded-xl bg-white border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] shadow-2xs cursor-pointer">
+                  <option value="">-- Choose a Service Offering from Database --</option>
+                  {services.map((s: any) => (
+                    <option key={s.id} value={s.id}>
+                      {`${s.name} (${s.code}) • Base Fee: $${Number(s.baseFee || 0).toLocaleString()} ${s.currency || "USD"}`}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1273,17 +1077,17 @@ export function CreateClientForm() {
                   value={watchedCountry}
                   onChange={(e) => handleCountryChange(e.target.value)}
                   className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  <option value="Canada">🇨🇦 Canada (CA)</option>
-                  <option value="United States">🇺🇸 United States (US)</option>
-                  <option value="United Kingdom">🇬🇧 United Kingdom (GB)</option>
-                  <option value="Australia">🇦🇺 Australia (AU)</option>
-                  <option value="Germany">🇩🇪 Germany (DE)</option>
+                  <option value="United States">United States (US)</option>
+                  <option value="Canada">Canada (CA)</option>
+                  <option value="United Kingdom">United Kingdom (GB)</option>
+                  <option value="Australia">Australia (AU)</option>
+                  <option value="Germany">Germany (DE)</option>
                 </select>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                  <span>Visa Category *</span>
+                  <span>Visa Category / Service Name *</span>
                   {errors.visaCategory && (
                     <span className="text-rose-500 font-bold normal-case text-[11px]">
                       {errors.visaCategory.message}
@@ -1292,7 +1096,7 @@ export function CreateClientForm() {
                 </label>
                 <Input
                   {...register("visaCategory")}
-                  placeholder="e.g. Express Entry, EB-2 NIW"
+                  placeholder="Auto-filled from service..."
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
@@ -1303,7 +1107,7 @@ export function CreateClientForm() {
                 </label>
                 <Input
                   {...register("subCategory")}
-                  placeholder="e.g. Federal Skilled Worker"
+                  placeholder="e.g. IMMIGRATION"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
@@ -1315,17 +1119,11 @@ export function CreateClientForm() {
                 <select
                   {...register("status")}
                   className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  <option value="Processing">
-                    Processing (Initial Intake)
-                  </option>
-                  <option value="Under Review">
-                    Under Review (Legal Audit)
-                  </option>
-                  <option value="Missing Docs">
-                    Missing Docs (Action Required)
-                  </option>
-                  <option value="Approved">Approved (Adjudicated)</option>
-                  <option value="Delayed">Delayed (Embassy Backlog)</option>
+                  <option value="INTAKE">Intake (Initial review)</option>
+                  <option value="ACTIVE">Active (In progress)</option>
+                  <option value="ON_HOLD">On hold (Action required)</option>
+                  <option value="COMPLETED">Completed</option>
+                  <option value="CANCELLED">Cancelled</option>
                 </select>
               </div>
             </div>
@@ -1333,14 +1131,16 @@ export function CreateClientForm() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Assigned Consultant / Case Manager *
+                  Assigned Consultant / Staff Member
                 </label>
                 <select
-                  {...register("assignedConsultant")}
+                  value={watch("assignedConsultantId") || ""}
+                  onChange={(e) => handleConsultantChange(e.target.value)}
                   className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  {CONSULTANTS.map((c) => (
-                    <option key={c.name} value={c.name}>
-                      {c.name} — {c.role}
+                  <option value="">-- Unassigned --</option>
+                  {staffConsultants.map((staff) => (
+                    <option key={staff.id} value={staff.id}>
+                      {`${staff.name} (${staff.role?.name || "Staff"}) - ${staff.email}`}
                     </option>
                   ))}
                 </select>
@@ -1353,33 +1153,29 @@ export function CreateClientForm() {
                 <Input
                   type="date"
                   {...register("targetSubmissionDate")}
-                  defaultValue="2026-10-30"
                   className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
             </div>
           </div>
 
-          {/* SECTION 4: FINANCIAL SETUP & PAYMENT MILESTONE SCHEDULE */}
+          {/* SECTION 4: FINANCIAL SETUP & PAYMENT MILESTONES */}
           <div className="space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-[#F0ECE6]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A] shadow-2xs">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A] shadow-2xs">
                 <CreditCard className="h-4.5 w-4.5" />
               </div>
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  4. Professional Fees &amp; Milestone Payment Plan (Section 6
-                  &amp; 8)
+                  4. Professional Fees &amp; Milestone Payment Plan
                 </h3>
                 <p className="text-xs text-[#64748B]">
-                  Contracted professional fees, discounts with required
-                  justification, and installment schedule
+                  Base fee, approved discount deductions, upfront deposit, and milestone payment schedules
                 </p>
               </div>
             </div>
 
-            {/* Fee Parameters Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
                   Currency
@@ -1397,364 +1193,278 @@ export function CreateClientForm() {
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Base Service Fee ({currencySymbol}) *
+                  Base Professional Fee ({currencySymbol}) *
                 </label>
                 <Input
                   type="number"
+                  step="any"
                   {...register("baseFee", { valueAsNumber: true })}
-                  placeholder="4500"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#0a0a0a]"
+                  placeholder="0.00"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Discount Amount ({currencySymbol})
+                  Upfront Retainer / Deposit ({currencySymbol})
                 </label>
                 <Input
                   type="number"
-                  {...register("discountAmount", { valueAsNumber: true })}
-                  placeholder="0"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#B45309]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
-                  Contracted Fee ({currencySymbol})
-                </label>
-                <div className="h-11 px-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] flex items-center font-mono font-black text-sm text-[#0a0a0a]">
-                  {currencySymbol}
-                  {computedContractedFee.toLocaleString()}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#059669]">
-                  Retainer Deposit ({currencySymbol}) *
-                </label>
-                <Input
-                  type="number"
+                  step="any"
                   {...register("depositAmount", { valueAsNumber: true })}
-                  placeholder="1500"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-mono font-bold text-[#059669]"
+                  placeholder="0.00"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
               </div>
             </div>
 
-            {/* Mandatory Discount Rationale (shown when discount > 0) */}
-            {watchedDiscount > 0 && (
-              <div className="p-4 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] space-y-1.5 animate-in fade-in duration-200">
-                <label className="text-xs font-black uppercase tracking-wider text-[#92400E] flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Percent className="h-4 w-4" />
-                    Mandatory Discount Justification *
-                  </span>
+            {/* Discount Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
+                  <span>Discount Amount ({currencySymbol})</span>
+                  {errors.discountAmount && (
+                    <span className="text-rose-500 font-bold normal-case text-[11px]">
+                      {errors.discountAmount.message}
+                    </span>
+                  )}
+                </label>
+                <Input
+                  type="number"
+                  step="any"
+                  {...register("discountAmount", { valueAsNumber: true })}
+                  placeholder="0.00"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
+                  <span>Discount Reason / Justification</span>
                   {errors.discountReason && (
-                    <span className="text-rose-600 font-bold normal-case text-xs">
+                    <span className="text-rose-500 font-bold normal-case text-[11px]">
                       {errors.discountReason.message}
                     </span>
                   )}
                 </label>
                 <Input
                   {...register("discountReason")}
-                  placeholder="e.g. Partner referral promotion or family package concession"
-                  className="h-10 rounded-xl bg-white border-[#FDE68A] text-xs font-semibold text-[#0a0a0a]"
+                  placeholder="Mandatory if discount is applied"
+                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
                 />
-                <p className="text-[11px] text-[#92400E]">
-                  Section 6 Governance: Every fee deduction requires a recorded
-                  rationale in the company audit trail.
-                </p>
               </div>
-            )}
+            </div>
 
-            {/* Installment Milestone Schedule Setup */}
+            {/* Schedule Type Selector */}
+            <div className="space-y-2 pt-2">
+              <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] block">
+                Payment Schedule Structure
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                {[
+                  { id: "single", title: "Single Payment", desc: "100% upfront deposit" },
+                  { id: "deposit_2_milestones", title: "Deposit + 2 Milestones", desc: "40% deposit, 2 equal phases" },
+                  { id: "deposit_3_monthly", title: "Deposit + 3 Monthly", desc: "34% deposit, 3 monthly payments" },
+                  { id: "custom", title: "Custom Milestones", desc: "Manually customized" },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => handleScheduleTypeChange(st.id as any)}
+                    className={cn(
+                      "p-3 rounded-xl border text-left transition-all cursor-pointer",
+                      watchedScheduleType === st.id
+                        ? "bg-[#0a0a0a] text-white border-[#0a0a0a] shadow-xs"
+                        : "bg-[#FAF8F5] text-[#0a0a0a] border-[#EAE6DF] hover:border-[#0a0a0a]",
+                    )}>
+                    <span className="text-xs font-bold block">{st.title}</span>
+                    <span
+                      className={cn(
+                        "text-[10px] mt-0.5 block",
+                        watchedScheduleType === st.id ? "text-white/70" : "text-[#64748B]",
+                      )}>
+                      {st.desc}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Milestones Breakdown */}
             <div className="space-y-3 pt-2">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] block">
-                    Installment Milestone Breakdown
-                  </span>
-                  <p className="text-[11px] text-[#64748B]">
-                    Configure milestone dates and amounts totaling{" "}
-                    <strong className="text-[#0a0a0a]">
-                      {currencySymbol}
-                      {computedContractedFee.toLocaleString()}
-                    </strong>
-                  </p>
-                </div>
-
-                {/* Preset Buttons */}
-                <div className="flex items-center gap-1.5 bg-[#FAF8F5] p-1.5 rounded-2xl border border-[#EAE6DF]">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleScheduleTypeChange("deposit_2_milestones")
-                    }
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      watchedScheduleType === "deposit_2_milestones"
-                        ? "bg-[#0a0a0a] text-white shadow-2xs"
-                        : "text-[#64748B] hover:text-[#0a0a0a]"
-                    }`}>
-                    Deposit + 2 Milestones
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleScheduleTypeChange("deposit_3_monthly")
-                    }
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      watchedScheduleType === "deposit_3_monthly"
-                        ? "bg-[#0a0a0a] text-white shadow-2xs"
-                        : "text-[#64748B] hover:text-[#0a0a0a]"
-                    }`}>
-                    Deposit + 3 Monthly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleScheduleTypeChange("single")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      watchedScheduleType === "single"
-                        ? "bg-[#0a0a0a] text-white shadow-2xs"
-                        : "text-[#64748B] hover:text-[#0a0a0a]"
-                    }`}>
-                    100% Full Payment
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setValue("scheduleType", "custom")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      watchedScheduleType === "custom"
-                        ? "bg-[#0a0a0a] text-white shadow-2xs"
-                        : "text-[#64748B] hover:text-[#0a0a0a]"
-                    }`}>
-                    Custom
-                  </button>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
+                  Subsequent Installment Milestones
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAddMilestone}
+                  className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] hover:bg-[#EAE6DF] transition-colors">
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Milestone
+                </button>
               </div>
 
-              {/* Milestone Items */}
-              {fields.length > 0 && (
-                <div className="space-y-2 border border-[#EAE6DF] rounded-2xl p-3 bg-[#FAF8F5]/60">
+              {fields.length === 0 ? (
+                <div className="p-4 rounded-xl bg-[#FAF8F5] border border-dashed border-[#EAE6DF] text-center text-xs text-[#64748B]">
+                  No separate milestones added (100% upfront deposit).
+                </div>
+              ) : (
+                <div className="space-y-2">
                   {fields.map((field, idx) => (
                     <div
                       key={field.id}
-                      className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-white p-3 rounded-xl border border-[#EAE6DF] shadow-2xs">
-                      <div className="sm:col-span-1 text-center font-mono font-black text-xs text-[#94A3B8]">
-                        #{idx + 1}
+                      className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                      <div className="h-7 w-7 rounded-lg bg-white border border-[#EAE6DF] flex items-center justify-center font-bold text-xs text-[#0a0a0a] shrink-0">
+                        {idx + 1}
                       </div>
-                      <div className="sm:col-span-6">
-                        <input
+                      <div className="flex-1">
+                        <Input
                           {...register(`milestones.${idx}.name` as const)}
                           placeholder="Milestone title"
-                          className="w-full h-10 px-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
+                          className="h-9 rounded-lg bg-white border-[#EAE6DF] text-xs font-semibold"
                         />
                       </div>
-                      <div className="sm:col-span-3">
-                        <input
+                      <div className="w-full sm:w-36">
+                        <Input
                           type="date"
                           {...register(`milestones.${idx}.dueDate` as const)}
-                          className="w-full h-10 px-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
+                          className="h-9 rounded-lg bg-white border-[#EAE6DF] text-xs font-semibold"
                         />
                       </div>
-                      <div className="sm:col-span-2">
-                        <div className="relative">
-                          <span className="absolute left-3 top-2.5 text-xs text-[#94A3B8] font-mono">
-                            {currencySymbol}
-                          </span>
-                          <input
-                            type="number"
-                            {...register(`milestones.${idx}.amount` as const, {
-                              valueAsNumber: true,
-                            })}
-                            placeholder="Amount"
-                            className="w-full h-10 pl-7 pr-3 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-mono font-bold text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
-                          />
-                        </div>
+                      <div className="w-full sm:w-32">
+                        <Input
+                          type="number"
+                          step="any"
+                          {...register(`milestones.${idx}.amount` as const, {
+                            valueAsNumber: true,
+                          })}
+                          placeholder="0.00"
+                          className="h-9 rounded-lg bg-white border-[#EAE6DF] text-xs font-semibold"
+                        />
                       </div>
-                      <div className="sm:col-span-1 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMilestone(idx)}
-                          className="text-[#94A3B8] hover:text-rose-600 transition-colors p-1.5 cursor-pointer">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMilestone(idx)}
+                        className="p-2 rounded-lg text-[#94A3B8] hover:text-rose-600 hover:bg-rose-50 transition-colors self-end sm:self-center">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   ))}
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddMilestone}
-                    className="w-full h-10 rounded-xl border-dashed border-[#CBD5E1] text-xs font-bold text-[#0a0a0a] hover:bg-white gap-2 cursor-pointer">
-                    <Plus className="h-4 w-4" />
-                    Add Another Custom Milestone Installment
-                  </Button>
                 </div>
               )}
+            </div>
 
-              {/* Mathematical Integrity Banner */}
-              <div
-                className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-semibold ${
-                  isMathValid
-                    ? "bg-[#ECFDF5] border-[#059669]/30 text-[#065F46]"
-                    : "bg-[#FFF1F2] border-[#E11D48]/30 text-[#9F1239]"
-                }`}>
-                <div className="flex items-center gap-2.5">
-                  {isMathValid ? (
-                    <CheckCircle2 className="h-5 w-5 text-[#059669] shrink-0" />
-                  ) : (
-                    <AlertTriangle className="h-5 w-5 text-[#E11D48] shrink-0" />
-                  )}
-                  <span>
-                    {isMathValid
-                      ? `Mathematical Integrity Verified: Deposit (${currencySymbol}${watchedDeposit.toLocaleString()}) + Milestones (${currencySymbol}${totalMilestonesSum.toLocaleString()}) = Contracted Fee (${currencySymbol}${computedContractedFee.toLocaleString()})`
-                      : `Mathematical Discrepancy: Total scheduled is ${currencySymbol}${totalAllocated.toLocaleString()}, difference of ${currencySymbol}${Math.abs(financialDiscrepancy).toLocaleString()} from contracted fee (${currencySymbol}${computedContractedFee.toLocaleString()})`}
+            {/* Financial Health & Integrity Bar */}
+            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-4 text-xs">
+                <div>
+                  <span className="text-[#64748B] block text-[10px] font-bold uppercase tracking-wider">
+                    Contracted Fee
+                  </span>
+                  <span className="text-sm font-black text-[#0a0a0a]">
+                    {currencySymbol}{computedContractedFee.toLocaleString()}
                   </span>
                 </div>
-                <span className="font-mono font-black px-2.5 py-1 rounded-lg bg-white/70 self-start sm:self-auto shrink-0">
-                  {isMathValid ? "BALANCED ✓" : "UNBALANCED ⚠"}
-                </span>
+                <div>
+                  <span className="text-[#64748B] block text-[10px] font-bold uppercase tracking-wider">
+                    Deposit
+                  </span>
+                  <span className="text-sm font-black text-[#0a0a0a]">
+                    {currencySymbol}{watchedDeposit.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#64748B] block text-[10px] font-bold uppercase tracking-wider">
+                    Milestones Total
+                  </span>
+                  <span className="text-sm font-black text-[#0a0a0a]">
+                    {currencySymbol}{totalMilestonesSum.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#64748B] block text-[10px] font-bold uppercase tracking-wider">
+                    Total Allocated
+                  </span>
+                  <span className="text-sm font-black text-[#0a0a0a]">
+                    {currencySymbol}{totalAllocated.toLocaleString()}
+                  </span>
+                </div>
               </div>
 
-              {/* Section 5 Disclaimer */}
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs text-[#64748B] flex items-start gap-3">
-                <Info className="h-4.5 w-4.5 text-[#0a0a0a] shrink-0 mt-0.5" />
-                <p className="leading-relaxed">
-                  <strong className="text-[#0a0a0a]">
-                    Section 5 Accounting Separation Rule:
-                  </strong>{" "}
-                  AdSkill professional fees cover dedicated casework,
-                  consulting, and application preparation. Third-party filing
-                  fees (e.g. USCIS, IRCC, UKVI) and certified translations are
-                  strictly separated and are not recognized as company revenue.
-                </p>
+              <div className="flex items-center gap-2">
+                {isMathValid ? (
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#ECFDF5] text-[#059669] text-xs font-bold border border-[#A7F3D0]">
+                    <Check className="h-4 w-4 stroke-[2.5]" />
+                    Perfect Balance ($0 discrepancy)
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    Difference: {currencySymbol}{Math.abs(financialDiscrepancy).toLocaleString()} ({financialDiscrepancy > 0 ? "Under-allocated" : "Over-allocated"})
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* SECTION 5: ONBOARDING DISPATCH & INTERNAL NOTES */}
+          {/* SECTION 5: INTERNAL NOTES */}
           <div className="space-y-4">
             <div className="flex items-center gap-3 pb-3 border-b border-[#F0ECE6]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FAF5FF] text-[#7E22CE] border border-[#E9D5FF] shadow-2xs">
-                <ShieldCheck className="h-4.5 w-4.5" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] shadow-2xs">
+                <FileText className="h-4.5 w-4.5" />
               </div>
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  5. Onboarding Preferences &amp; Case Notes
+                  5. Internal Case Notes
                 </h3>
                 <p className="text-xs text-[#64748B]">
-                  Client communication preferences and confidential internal
-                  intake notes
+                  Staff records, intake background, and special client instructions
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <label className="flex items-start gap-3 p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] cursor-pointer hover:bg-[#F3EFE6] transition-colors">
-                <input
-                  type="checkbox"
-                  {...register("sendWelcomeWhatsApp")}
-                  className="h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a] mt-0.5"
-                />
-                <div className="text-xs">
-                  <span className="font-bold text-[#0a0a0a] block">
-                    WhatsApp Welcome Notice
-                  </span>
-                  <p className="text-[#64748B] text-[11px] mt-0.5">
-                    Dispatches Case ID and portal link to {watchedCountryCode}{" "}
-                    {watchedWhatsapp || "mobile"}
-                  </p>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-3 p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] cursor-pointer hover:bg-[#F3EFE6] transition-colors">
-                <input
-                  type="checkbox"
-                  {...register("sendEmailInvitation")}
-                  className="h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a] mt-0.5"
-                />
-                <div className="text-xs">
-                  <span className="font-bold text-[#0a0a0a] block">
-                    Email Portal Invitation
-                  </span>
-                  <p className="text-[#64748B] text-[11px] mt-0.5">
-                    Sends private client login credential invitation to{" "}
-                    {watchedEmail || "email"}
-                  </p>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-3 p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] cursor-pointer hover:bg-[#F3EFE6] transition-colors">
-                <input
-                  type="checkbox"
-                  {...register("remindersEnabled")}
-                  className="h-4 w-4 rounded text-[#0a0a0a] focus:ring-[#0a0a0a] mt-0.5"
-                />
-                <div className="text-xs">
-                  <span className="font-bold text-[#0a0a0a] block">
-                    Automated Payment Reminders
-                  </span>
-                  <p className="text-[#64748B] text-[11px] mt-0.5">
-                    Reminders 7 days and 3 days before due dates; halts
-                    instantly once paid
-                  </p>
-                </div>
-              </label>
-            </div>
-
-            <div className="space-y-1.5 pt-2">
-              <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                <span>Internal Staff Notes &amp; Legal Strategy</span>
-                <span className="text-[10px] text-[#94A3B8] font-bold">
-                  Confidential — Hidden from Client Portal
-                </span>
+            <div className="space-y-1.5">
+              <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
+                Confidential Case Notes (Staff &amp; Client Viewable)
               </label>
               <textarea
                 {...register("internalNotes")}
                 rows={3}
-                placeholder="e.g. Client preparing academic credential evaluation from WES. Petition drafting assigned to Sarah K."
-                className="w-full p-3.5 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal"
+                placeholder="Add intake observations, documentation status, or specific instructions..."
+                className="w-full p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
               />
             </div>
           </div>
 
-          {/* ── BOTTOM ACTIONS TOOLBAR (MATCHING MODAL & TABLE FOOTER) ── */}
-          <div className="pt-6 border-t border-[#F0ECE6] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B]">
-              <ShieldCheck className="h-4 w-4 text-[#059669]" />
-              <span>
-                Case {caseIdentifier || "#APP-2026-••••"} •{" "}
-                <strong className="text-[#0a0a0a]">
-                  {currencySymbol}
-                  {computedContractedFee.toLocaleString()} Total Contracted
-                </strong>
-              </span>
+          {/* SUBMISSION FOOTER */}
+          <div className="pt-4 border-t border-[#F0ECE6] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-xs text-[#64748B]">
+              Ready to onboard case into active registry and configure ledger schedules.
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <Button
+              <CommonButton
                 asChild
+                type="button"
                 variant="outline"
-                className="w-full sm:w-auto h-12 px-6 rounded-2xl border-[#EAE6DF] text-xs font-bold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer">
-                <Link href={ROUTES.CLIENTS}>Cancel &amp; Return</Link>
-              </Button>
+                className="flex-1 sm:flex-none h-12 px-6 rounded-2xl border border-[#EAE6DF] text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold">
+                <Link href={ROUTES.CLIENTS}>Cancel</Link>
+              </CommonButton>
 
-              <Button
+              <CommonButton
                 type="submit"
                 disabled={isSubmitting || !isMathValid}
-                className="w-full sm:w-auto h-12 px-8 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10, 10, 10,0.2)] text-xs font-bold cursor-pointer gap-2 transition-all disabled:opacity-50">
-                <UserPlus className="h-4 w-4 text-[#F3A712]" />
-                <span>
-                  {isSubmitting
-                    ? "Onboarding Client Case..."
-                    : selectedExistingUser
-                      ? "Add Case for Existing Client"
-                      : "Save & Open Case"}
-                </span>
-              </Button>
+                className="flex-1 sm:flex-none h-12 px-8 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#262626] text-xs font-bold shadow-md cursor-pointer disabled:opacity-50">
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                    Creating Case &amp; Schedules...
+                  </span>
+                ) : (
+                  "Onboard & Authorize Payment Plan"
+                )}
+              </CommonButton>
             </div>
           </div>
         </form>

@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ClientSummaryStats } from "../types";
 import { Check, Clock, AlertCircle, Activity } from "lucide-react";
+import type { ClientSummaryStats } from "../types";
 
 interface ClientMetricCardsProps {
   stats?: ClientSummaryStats;
@@ -12,16 +12,16 @@ interface ClientMetricCardsProps {
 
 export function ClientMetricCards({
   stats = {
-    inProgress: 1284,
-    approved: 8492,
-    actionRequired: 243,
-    delayed: 15,
+    inProgress: 0,
+    approved: 0,
+    actionRequired: 0,
+    delayed: 0,
   },
   className,
 }: ClientMetricCardsProps) {
   const cards = [
     {
-      id: "Processing",
+      id: "ACTIVE",
       label: "IN PROGRESS",
       value: stats.inProgress.toLocaleString(),
       statusText: "Active",
@@ -38,7 +38,7 @@ export function ClientMetricCards({
       indicatorColor: "text-[#0284C7]",
     },
     {
-      id: "Approved",
+      id: "COMPLETED",
       label: "APPROVED",
       value: stats.approved.toLocaleString(),
       statusText: "Success",
@@ -55,7 +55,7 @@ export function ClientMetricCards({
       indicatorColor: "text-[#059669]",
     },
     {
-      id: "Missing Docs",
+      id: "ON_HOLD",
       label: "ACTION REQ.",
       value: stats.actionRequired.toLocaleString(),
       statusText: "Pending",
@@ -72,7 +72,7 @@ export function ClientMetricCards({
       indicatorColor: "text-[#E11D48]",
     },
     {
-      id: "Delayed",
+      id: "OVERDUE",
       label: "DELAYED",
       value: stats.delayed.toLocaleString(),
       statusText: "Late",
