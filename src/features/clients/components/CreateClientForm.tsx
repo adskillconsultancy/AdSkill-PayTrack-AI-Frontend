@@ -6,7 +6,10 @@ import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { useGetServicesQuery } from "@/services/api/services/servicesApi";
 import { useGetUsersQuery } from "@/services/api/users/usersApi";
-import { useCreateClientCaseMutation, useUpdateClientCaseMutation } from "@/services/api/clients/clientCasesApi";
+import {
+  useCreateClientCaseMutation,
+  useUpdateClientCaseMutation,
+} from "@/services/api/clients/clientCasesApi";
 import { useCreatePaymentPlanMutation } from "@/services/api/payment-plans/paymentPlansApi";
 import {
   createClientSchema,
@@ -14,25 +17,34 @@ import {
 } from "@/validations/client.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  AlertCircle,
   AlertTriangle,
   ArrowLeft,
+  Briefcase,
   Check,
   CheckCircle2,
   ChevronRight,
   CreditCard,
   ExternalLink,
   FileText,
+  Globe,
+  Loader2,
+  Mail,
   MapPin,
   MessageCircle,
+  Phone,
   Plus,
+  Receipt,
   Search,
+  Shield,
   ShieldCheck,
+  Sparkles,
   Trash2,
   User,
+  UserCheck,
   UserPlus,
   Users,
   X,
-  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -40,28 +52,70 @@ import * as React from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 const COUNTRY_DIAL_CODES = [
-  { code: "+1", label: "+1 (US & Canada)" },
-  { code: "+44", label: "+44 (United Kingdom)" },
-  { code: "+61", label: "+61 (Australia)" },
-  { code: "+49", label: "+49 (Germany)" },
-  { code: "+91", label: "+91 (India)" },
-  { code: "+971", label: "+971 (UAE)" },
-  { code: "+880", label: "+880 (Bangladesh)" },
-  { code: "+81", label: "+81 (Japan)" },
-  { code: "+33", label: "+33 (France)" },
-  { code: "+65", label: "+65 (Singapore)" },
-  { code: "+966", label: "+966 (Saudi Arabia)" },
-  { code: "+353", label: "+353 (Ireland)" },
-  { code: "+234", label: "+234 (Nigeria)" },
-  { code: "+27", label: "+27 (South Africa)" },
+  { code: "+1", label: "+1 (US & Canada)", country: "US" },
+  { code: "+44", label: "+44 (United Kingdom)", country: "GB" },
+  { code: "+61", label: "+61 (Australia)", country: "AU" },
+  { code: "+49", label: "+49 (Germany)", country: "DE" },
+  { code: "+91", label: "+91 (India)", country: "IN" },
+  { code: "+971", label: "+971 (UAE)", country: "AE" },
+  { code: "+880", label: "+880 (Bangladesh)", country: "BD" },
+  { code: "+81", label: "+81 (Japan)", country: "JP" },
+  { code: "+33", label: "+33 (France)", country: "FR" },
+  { code: "+65", label: "+65 (Singapore)", country: "SG" },
+  { code: "+966", label: "+966 (Saudi Arabia)", country: "SA" },
+  { code: "+353", label: "+353 (Ireland)", country: "IE" },
+  { code: "+234", label: "+234 (Nigeria)", country: "NG" },
+  { code: "+27", label: "+27 (South Africa)", country: "ZA" },
+];
+
+const DESTINATIONS = [
+  { name: "United States", code: "US", flag: "🇺🇸", sub: "USCIS & State Dept" },
+  { name: "Canada", code: "CA", flag: "🇨🇦", sub: "IRCC Federal & Prov" },
+  { name: "United Kingdom", code: "GB", flag: "🇬🇧", sub: "UKVI Home Office" },
+  { name: "Australia", code: "AU", flag: "🇦🇺", sub: "Home Affairs" },
+  { name: "Germany", code: "DE", flag: "🇩🇪", sub: "BAMF Federal" },
 ];
 
 const CURRENCIES = [
-  { code: "USD", symbol: "$", label: "USD ($)" },
-  { code: "CAD", symbol: "C$", label: "CAD (C$)" },
-  { code: "GBP", symbol: "£", label: "GBP (£)" },
-  { code: "EUR", symbol: "€", label: "EUR (€)" },
-  { code: "AUD", symbol: "A$", label: "AUD (A$)" },
+  { code: "USD", symbol: "$", label: "USD" },
+  { code: "CAD", symbol: "C$", label: "CAD" },
+  { code: "GBP", symbol: "£", label: "GBP" },
+  { code: "EUR", symbol: "€", label: "EUR" },
+  { code: "AUD", symbol: "A$", label: "AUD" },
+];
+
+const SCHEDULE_PRESETS = [
+  {
+    id: "single",
+    title: "100% Upfront Retainer",
+    desc: "Single initial payment upon agreement",
+    badge: "100%",
+  },
+  {
+    id: "deposit_2_milestones",
+    title: "40% Retainer + 2 Phases",
+    desc: "40% deposit with 2 subsequent milestone releases",
+    badge: "Popular",
+  },
+  {
+    id: "deposit_3_monthly",
+    title: "34% Retainer + 3 Monthly",
+    desc: "Initial deposit followed by 3 monthly installments",
+    badge: "Monthly",
+  },
+  {
+    id: "custom",
+    title: "Custom Schedule",
+    desc: "Tailored installment breakdown and due dates",
+    badge: "Custom",
+  },
+] as const;
+
+const NOTE_TEMPLATES = [
+  "Standard intake dossier opened following initial legal consultation.",
+  "Priority fast-track processing requested by applicant.",
+  "Corporate-sponsored relocation with direct employer billing authorization.",
+  "Family-stream concurrent application with dependent documentation pending.",
 ];
 
 function parsePhoneAndDialCode(rawPhoneOrWhatsapp?: string): {
@@ -119,6 +173,7 @@ export function CreateClientForm() {
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [createdClientId, setCreatedClientId] = React.useState<string | null>(null);
   const [errorNotice, setErrorNotice] = React.useState<string>("");
+  const [activeTab, setActiveTab] = React.useState<"identity" | "service" | "finance">("identity");
 
   // Applicant Intake Mode: "new" = brand new applicant, "existing" = pick from registered users
   const [intakeMode, setIntakeMode] = React.useState<"new" | "existing">("new");
@@ -133,7 +188,7 @@ export function CreateClientForm() {
     );
   }, [usersApiResponse]);
 
-  // Unified existing users list with Live usersApi integration
+  // Unified existing users list
   const existingUserOptions = React.useMemo<ExistingUserOption[]>(() => {
     const options: ExistingUserOption[] = [];
     const backendUsers = usersApiResponse?.data;
@@ -262,7 +317,7 @@ export function CreateClientForm() {
     if (!currentNotes.trim()) {
       setValue(
         "internalNotes",
-        `New case opened for registered portal client ${user.name} (${user.existingCaseRef || user.email}).`,
+        `Case opened for registered portal client ${user.name} (${user.existingCaseRef || user.email}).`,
       );
     }
   };
@@ -294,6 +349,9 @@ export function CreateClientForm() {
   const watchedCountry = watch("destinationCountry");
   const watchedServiceId = watch("serviceId");
   const watchedVisaCategory = watch("visaCategory");
+  const watchedAssignedConsultant = watch("assignedConsultant");
+  const watchedAssignedConsultantId = watch("assignedConsultantId");
+  const watchedStatus = watch("status");
   const watchedCurrency = watch("currency");
   const watchedBaseFee = watch("baseFee") || 0;
   const watchedDiscount = watch("discountAmount") || 0;
@@ -349,13 +407,13 @@ export function CreateClientForm() {
       replace([
         {
           id: "m1",
-          name: "Milestone 1 - Document Submission",
+          name: "Milestone 1 — Document & Dossier Filing",
           dueDate: m1Date,
           amount: halfRemaining,
         },
         {
           id: "m2",
-          name: "Milestone 2 - Final Case Adjudication",
+          name: "Milestone 2 — Final Adjudication & Decision",
           dueDate: m2Date,
           amount: fee - deposit - halfRemaining,
         },
@@ -367,19 +425,19 @@ export function CreateClientForm() {
       replace([
         {
           id: "m1",
-          name: "Installment #1 - Month 1 Retainer",
+          name: "Installment #1 — First Month Retainer",
           dueDate: m1Date,
           amount: perMonth,
         },
         {
           id: "m2",
-          name: "Installment #2 - Month 2 Retainer",
+          name: "Installment #2 — Second Month Retainer",
           dueDate: m2Date,
           amount: perMonth,
         },
         {
           id: "m3",
-          name: "Installment #3 - Month 3 Retainer",
+          name: "Installment #3 — Third Month Retainer",
           dueDate: m3Date,
           amount: fee - deposit - perMonth * 2,
         },
@@ -417,7 +475,7 @@ export function CreateClientForm() {
         dueDate.setMonth(dueDate.getMonth() + i);
         newMilestones.push({
           id: `m${i}`,
-          name: `Milestone ${i} - Phase Deliverable`,
+          name: `Phase ${i} — Deliverable Verification`,
           dueDate: dueDate.toISOString().slice(0, 10),
           amount:
             i === installmentsCount
@@ -439,11 +497,8 @@ export function CreateClientForm() {
   // Handle destination country change
   const handleCountryChange = (c: string) => {
     setValue("destinationCountry", c);
-    if (c === "Canada") setValue("destinationCode", "CA");
-    else if (c === "United Kingdom") setValue("destinationCode", "GB");
-    else if (c === "Australia") setValue("destinationCode", "AU");
-    else if (c === "Germany") setValue("destinationCode", "DE");
-    else setValue("destinationCode", "US");
+    const dest = DESTINATIONS.find((d) => d.name === c);
+    setValue("destinationCode", dest?.code || "US");
   };
 
   // Handle Consultant Change
@@ -467,7 +522,7 @@ export function CreateClientForm() {
       ...watchedMilestones,
       {
         id: `m_${Date.now()}`,
-        name: `Milestone ${nextIdx} - Custom Phase`,
+        name: `Milestone ${nextIdx} — Custom Deliverable`,
         dueDate: defaultDate.toISOString().slice(0, 10),
         amount: Math.max(0, financialDiscrepancy),
       },
@@ -487,17 +542,19 @@ export function CreateClientForm() {
     "",
   );
   const whatsappPreviewUrl = `https://wa.me/${cleanPhone.replace("+", "")}?text=${encodeURIComponent(
-    `Hello ${watchedName || "Valued Client"}, welcome to AdSkill Consultancy. Your new case is being opened.`,
+    `Hello ${watchedName || "Valued Client"}, welcome to AdSkill Consultancy. Your case onboarding has been initiated.`,
   )}`;
 
   // Submit Handler
   const onSubmit = async (data: CreateClientFormValues) => {
     if (!data.serviceId) {
       setErrorNotice("Please select an active service from the catalog before proceeding.");
+      setActiveTab("service");
       return;
     }
     setErrorNotice("");
     setIsSubmitting(true);
+
     try {
       // 1. Create client case in backend
       const created = await createClientCase({
@@ -541,7 +598,7 @@ export function CreateClientForm() {
         if (data.depositAmount > 0) {
           installmentsToSend.push({
             sequenceNumber: 1,
-            title: "Initial Retainer / Deposit",
+            title: "Initial Retainer / Upfront Deposit",
             amount: Number(data.depositAmount),
             dueDate: new Date().toISOString(),
           });
@@ -563,7 +620,7 @@ export function CreateClientForm() {
         if (installmentsToSend.length === 0) {
           installmentsToSend.push({
             sequenceNumber: 1,
-            title: "Full Contracted Fee",
+            title: "Full Contracted Retainer",
             amount: Number(data.contractedFee),
             dueDate: new Date().toISOString(),
           });
@@ -596,879 +653,1116 @@ export function CreateClientForm() {
     }
   };
 
+  const selectedDestinationObj = DESTINATIONS.find(
+    (d) => d.name === watchedCountry,
+  ) || DESTINATIONS[0];
+
+  const applicantDisplayName = watchedName || "Draft Applicant";
+  const applicantInitials = watchedName
+    ? watchedName
+        .split(" ")
+        .filter(Boolean)
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "NC";
+
+  const selectedServiceName =
+    services.find((s) => s.id === watchedServiceId)?.name || watchedVisaCategory || "No service selected";
+
+  const allocationPercent =
+    computedContractedFee > 0
+      ? Math.min(100, Math.round((totalAllocated / computedContractedFee) * 100))
+      : 100;
+
   return (
-    <div className="space-y-6 w-full">
-      {/* 1. TOP BREADCRUMB & PAGE TITLE BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <CommonButton
-            asChild
-            variant="outline"
-            size="icon"
-            className="h-11 w-11 rounded-2xl bg-white border border-[#EAE6DF] text-[#0a0a0a] hover:bg-[#FAF8F5] shadow-2xs shrink-0 cursor-pointer">
-            <Link href={ROUTES.CLIENTS}>
-              <ArrowLeft className="h-5 w-5 text-[#0a0a0a]" />
-              <span className="sr-only">Back to Client Directory</span>
-            </Link>
-          </CommonButton>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] tracking-tight">
-                Onboard New Client Case
+    <div className="w-full space-y-6 pb-20">
+      {/* 1. TOP HEADER & BREADCRUMB BAR (CLEAN LIGHT DESIGN) */}
+      <div className="rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4">
+            <CommonButton
+              asChild
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 rounded-2xl bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shrink-0 transition-all">
+              <Link href={ROUTES.CLIENTS}>
+                <ArrowLeft className="h-5 w-5" />
+                <span className="sr-only">Return to Client Directory</span>
+              </Link>
+            </CommonButton>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold uppercase tracking-wider">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                  Client Onboarding Studio
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Registry Connected
+                </span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-2">
+                Create Client Case &amp; Schedule
               </h1>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF8FF] text-[#0284C7] text-xs font-bold border border-[#BAE6FD]">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#0284C7]" />
-                Live Database Connected
-              </span>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                Register applicant credentials, set destination jurisdiction, and establish milestone payment terms.
+              </p>
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
-              <Link
-                href={ROUTES.CLIENTS}
-                className="hover:text-[#0a0a0a] transition-colors">
-                Visa Applications
-              </Link>
-              <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <Link
-                href={ROUTES.CLIENTS}
-                className="hover:text-[#0a0a0a] transition-colors">
-                Application List
-              </Link>
-              <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#0a0a0a] font-bold">
-                Create Client Case
+          </div>
+
+          <div className="flex items-center gap-3 self-start sm:self-center shrink-0">
+            <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-right">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                System Reference
+              </span>
+              <span className="font-mono font-bold text-sm text-slate-800">
+                {caseIdentifier || "Auto-assigned on save"}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Top Right Header Controls */}
-        <div className="flex items-center gap-3 self-start sm:self-auto">
-          <div className="flex items-center gap-2.5 bg-white border border-[#EAE6DF] px-4 py-2 rounded-2xl shadow-2xs">
-            <div className="text-right">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#94A3B8] block leading-none">
-                Case Reference
-              </span>
-              <span
-                suppressHydrationWarning
-                className="font-mono font-black text-sm text-[#0a0a0a] mt-0.5 block">
-                {caseIdentifier || "Generated after save"}
-              </span>
-            </div>
-          </div>
+        {/* Stepper Navigation Pills (Clean Light Theme - 3 Steps) */}
+        <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap gap-2 sm:gap-3">
+          {[
+            {
+              id: "identity",
+              step: "1",
+              label: "Applicant Identity",
+              icon: User,
+              valid: Boolean(watchedName && watchedEmail && watchedWhatsapp),
+            },
+            {
+              id: "service",
+              step: "2",
+              label: "Case & Jurisdiction",
+              icon: MapPin,
+              valid: Boolean(watchedServiceId && watchedCountry),
+            },
+            {
+              id: "finance",
+              step: "3",
+              label: "Financial Ledger",
+              icon: CreditCard,
+              valid: Boolean(computedContractedFee > 0 && isMathValid),
+            },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(tab.id as any);
+                  const el = document.getElementById(`section-${tab.id}`);
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
+                  isActive
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+                )}>
+                <span
+                  className={cn(
+                    "flex h-4.5 w-4.5 items-center justify-center rounded-md text-[10px] font-black",
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-200 text-slate-700",
+                  )}>
+                  {tab.step}
+                </span>
+                <Icon className="h-3.5 w-3.5" />
+                <span>{tab.label}</span>
+                {tab.valid && (
+                  <CheckCircle2
+                    className={cn(
+                      "h-3.5 w-3.5 ml-0.5",
+                      isActive ? "text-white" : "text-emerald-600",
+                    )}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* ERROR BANNER */}
+      {/* ERROR NOTICE BANNER */}
       {errorNotice && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 animate-in fade-in duration-200">
-          <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3 shadow-xs animate-in fade-in">
+          <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <h4 className="text-xs font-bold uppercase tracking-wider text-rose-900">
-              Database / Submission Error
+              Case Creation Discrepancy
             </h4>
-            <p className="text-xs text-rose-700">{errorNotice}</p>
+            <p className="text-xs text-rose-700 font-medium">{errorNotice}</p>
           </div>
         </div>
       )}
 
-      {/* 2. SUCCESS NOTICE */}
+      {/* SUCCESS NOTICE BANNER */}
       {isSuccess && (
-        <div className="p-5 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-between gap-4 animate-in fade-in duration-300">
+        <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-in fade-in">
           <div className="flex items-center gap-3">
-            <CheckCircle2 className="h-6 w-6 text-[#059669] shrink-0" />
+            <div className="h-10 w-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
             <div>
-              <h4 className="text-sm font-bold text-[#065F46]">
-                Client Case Successfully Onboarded!
+              <h4 className="text-sm font-bold text-emerald-950">
+                Case Successfully Created &amp; Scheduled!
               </h4>
-              <p className="text-xs text-[#047857]">
-                Assigned Case Reference:{" "}
-                <span className="font-mono font-bold">{caseIdentifier}</span>. Redirecting to dossier...
+              <p className="text-xs text-emerald-800 mt-0.5">
+                Case Code: <span className="font-mono font-bold">{caseIdentifier}</span>. Redirecting to workspace...
               </p>
             </div>
           </div>
           {createdClientId && (
             <Link
               href={`/clients/${createdClientId}`}
-              className="text-xs font-bold text-[#065F46] underline hover:text-[#047857] px-3 py-1.5 rounded-xl bg-white/60">
-              Open Dossier Immediately &rarr;
+              className="inline-flex items-center gap-2 text-xs font-bold text-emerald-950 bg-white px-4 py-2 rounded-xl shadow-xs border border-emerald-200 hover:bg-emerald-100 transition-colors">
+              Open Case Dossier &rarr;
             </Link>
           )}
         </div>
       )}
 
-      {/* 3. MAIN FORM CONTAINER */}
-      <div className="rounded-3xl sm:rounded-[32px] border border-[#EAE6DF] bg-white p-6 sm:p-8 lg:p-10 shadow-[0_8px_30px_rgb(0,0,0,0.03)] space-y-8">
-        {/* Table Top Header Info Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#F0ECE6]">
-          <div className="flex items-center gap-3">
-            <span className="text-[11px] font-extrabold tracking-wider uppercase bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] px-3.5 py-1.5 rounded-xl shadow-2xs">
-              {selectedExistingUser
-                ? "EXISTING CLIENT DOSSIER"
-                : intakeMode === "existing"
-                  ? "EXISTING USER LOOKUP"
-                  : "NEW APPLICANT DOSSIER"}
-            </span>
-            <span className="text-xs font-semibold text-[#64748B]">
-              {selectedExistingUser
-                ? `Opening new case for ${selectedExistingUser.name} (${selectedExistingUser.existingCaseRef})`
-                : ""}
-            </span>
-          </div>
-        </div>
+      {/* 2. MAIN TWO-COLUMN WORKSPACE (CLEAN LIGHT THEME) */}
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          {/* LEFT COLUMN: FORM SECTIONS (8 OF 12 COLS) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* SECTION 1: APPLICANT IDENTITY & COMMUNICATION */}
+            <div
+              id="section-identity"
+              className={cn(
+                "rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs transition-all",
+                activeTab === "identity" ? "ring-2 ring-amber-400/40" : "",
+              )}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-extrabold tracking-tight text-slate-900">
+                      1. Applicant Dossier &amp; Contact
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Legal identity, verification credentials, and direct communication channels
+                    </p>
+                  </div>
+                </div>
 
-        {/* THE FORM */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* SECTION 1: APPLICANT PERSONAL IDENTITY */}
-          <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[#F0ECE6]">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] shadow-2xs">
-                  <User className="h-4.5 w-4.5" />
+                {/* Intake Source Switcher */}
+                <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 self-start sm:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchIntakeMode("new")}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      intakeMode === "new"
+                        ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
+                        : "text-slate-600 hover:text-slate-900",
+                    )}>
+                    <UserPlus className="h-3.5 w-3.5 text-blue-600" />
+                    New Client
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchIntakeMode("existing")}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      intakeMode === "existing"
+                        ? "bg-white text-slate-900 shadow-2xs border border-slate-200/80"
+                        : "text-slate-600 hover:text-slate-900",
+                    )}>
+                    <Users className="h-3.5 w-3.5 text-blue-600" />
+                    Registered Portal User
+                  </button>
+                </div>
+              </div>
+
+              {/* EXISTING USER LOOKUP DRAWER */}
+              {intakeMode === "existing" && (
+                <div className="mt-5 p-5 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-4">
+                  {!selectedExistingUser ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                              Select Registered Portal Account
+                            </h3>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                              {existingUserOptions.length} Active Accounts
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Auto-populates contact and portal identity records instantly.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Search Bar */}
+                      <div className="relative">
+                        <Search className="h-4 w-4 text-slate-400 absolute left-3.5 top-3.5" />
+                        <Input
+                          value={existingSearchQuery}
+                          onChange={(e) => setExistingSearchQuery(e.target.value)}
+                          className="h-11 pl-10 pr-9 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900"
+                        />
+                        {existingSearchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setExistingSearchQuery("")}
+                            className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700">
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* User Items */}
+                      {isUsersLoading ? (
+                        <div className="p-6 text-center text-xs text-slate-500">
+                          <Loader2 className="h-4 w-4 animate-spin inline mr-2 text-slate-700" />
+                          Fetching registered users...
+                        </div>
+                      ) : filteredExistingUsers.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-slate-500 bg-white rounded-xl border border-dashed border-slate-200">
+                          No registered user records match your query.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto pr-1">
+                          {filteredExistingUsers.map((user) => (
+                            <div
+                              key={user.id}
+                              onClick={() => handleSelectExistingUser(user)}
+                              className="p-3 rounded-xl bg-white border border-slate-200 hover:border-blue-500 hover:shadow-2xs transition-all cursor-pointer flex items-center gap-3 group">
+                              <div className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center font-bold text-xs text-blue-700 shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                {user.initials}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="text-xs font-bold text-slate-900 truncate">
+                                    {user.name}
+                                  </span>
+                                  <span className="text-[10px] font-mono font-bold text-slate-500">
+                                    {user.role}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-slate-500 truncate block">
+                                  {user.email}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-white border border-blue-300 shadow-2xs">
+                      <div className="flex items-center gap-3.5">
+                        <div className="h-10 w-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                          {selectedExistingUser.initials}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-xs font-bold text-slate-900">
+                              {selectedExistingUser.name}
+                            </h4>
+                            <span className="px-2 py-0.5 rounded-md bg-blue-50 text-[10px] font-bold text-blue-700 border border-blue-100">
+                              {selectedExistingUser.role}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500">
+                            {selectedExistingUser.email}
+                            {selectedExistingUser.phone && ` • ${selectedExistingUser.phone}`}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleClearExistingUser}
+                        className="text-xs font-bold text-rose-600 hover:text-rose-700 px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors">
+                        Change
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Applicant Fields Grid */}
+              <div className="mt-6 space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <User className="h-3.5 w-3.5 text-slate-400" />
+                        Full Legal Name *
+                      </span>
+                      {errors.name && (
+                        <span className="text-rose-600 font-medium text-[11px]">
+                          {errors.name.message}
+                        </span>
+                      )}
+                    </label>
+                    <Input
+                      {...register("name")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <UserCheck className="h-3.5 w-3.5 text-slate-400" />
+                      Preferred / First Name
+                    </label>
+                    <Input
+                      {...register("preferredName")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Mail className="h-3.5 w-3.5 text-slate-400" />
+                        Email Address *
+                      </span>
+                      {errors.email && (
+                        <span className="text-rose-600 font-medium text-[11px]">
+                          {errors.email.message}
+                        </span>
+                      )}
+                    </label>
+                    <Input
+                      type="email"
+                      {...register("email")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <Phone className="h-3.5 w-3.5 text-slate-400" />
+                      Primary Telephone
+                    </label>
+                    <Input
+                      {...register("phone")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <Shield className="h-3.5 w-3.5 text-slate-400" />
+                      Passport or National ID
+                    </label>
+                    <Input
+                      {...register("passportNumber")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all uppercase"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <Globe className="h-3.5 w-3.5 text-slate-400" />
+                      Country of Origin / Citizenship
+                    </label>
+                    <Input
+                      {...register("countryOfOrigin")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* WhatsApp Direct Sub-card */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-2xs">
+                        <MessageCircle className="h-4.5 w-4.5" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-950">
+                          Direct WhatsApp Client Integration
+                        </h3>
+                        <p className="text-[11px] text-emerald-700">
+                          Automates intake confirmation, payment reminder alerts, and document requests
+                        </p>
+                      </div>
+                    </div>
+
+                    {watchedWhatsapp && (
+                      <a
+                        href={whatsappPreviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-900 bg-white border border-emerald-300 px-3 py-1.5 rounded-xl hover:bg-emerald-100 transition-colors shadow-2xs">
+                        <ExternalLink className="h-3 w-3" />
+                        Test Link
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-emerald-900">
+                        Country Dial Code
+                      </label>
+                      <select
+                        {...register("countryCode")}
+                        className="w-full h-11 px-3 rounded-xl bg-white border border-emerald-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        {COUNTRY_DIAL_CODES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-2 space-y-1">
+                      <label className="text-[11px] font-bold text-emerald-900 flex items-center justify-between">
+                        <span>WhatsApp Mobile Number *</span>
+                        {errors.whatsappNumber && (
+                          <span className="text-rose-600 font-medium text-[11px]">
+                            {errors.whatsappNumber.message}
+                          </span>
+                        )}
+                      </label>
+                      <Input
+                        {...register("whatsappNumber")}
+                        className="h-11 rounded-xl bg-white border-emerald-200 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION 2: CASE SCOPE & JURISDICTION */}
+            <div
+              id="section-service"
+              className={cn(
+                "rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs transition-all",
+                activeTab === "service" ? "ring-2 ring-amber-400/40" : "",
+              )}>
+              <div className="flex items-center gap-3 pb-5 border-b border-slate-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100 shadow-2xs">
+                  <MapPin className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                    1. Applicant Identity &amp; Credentials
-                  </h3>
-                  <p className="text-xs text-[#64748B]">
-                    Legal full identity, passport credentials, and contact details
+                  <h2 className="text-base font-extrabold tracking-tight text-slate-900">
+                    2. Service Scope &amp; Case Jurisdiction
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Catalog program, destination authority, and assigned caseworker
                   </p>
                 </div>
               </div>
 
-              {/* Applicant Intake Source Toggle */}
-              <div className="inline-flex rounded-2xl bg-[#FAF8F5] p-1 border border-[#EAE6DF] shadow-2xs self-start sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => handleSwitchIntakeMode("new")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
-                    intakeMode === "new"
-                      ? "bg-[#0a0a0a] text-white shadow-xs"
-                      : "text-[#64748B] hover:text-[#0a0a0a]",
-                  )}>
-                  <UserPlus className="h-3.5 w-3.5" />
-                  New Applicant
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchIntakeMode("existing")}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
-                    intakeMode === "existing"
-                      ? "bg-[#0a0a0a] text-white shadow-xs"
-                      : "text-[#64748B] hover:text-[#0a0a0a]",
-                  )}>
-                  <Users className="h-3.5 w-3.5" />
-                  Existing User / Client
-                </button>
+              <div className="mt-6 space-y-6">
+                {/* Service Catalog Dropdown */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
+                      Select Service Offering from Live Catalog *
+                    </span>
+                    {errors.serviceId && (
+                      <span className="text-rose-600 font-medium normal-case text-[11px]">
+                        {errors.serviceId.message}
+                      </span>
+                    )}
+                  </label>
+
+                  {isServicesLoading ? (
+                    <div className="text-xs text-slate-500 py-3 flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-slate-800" />
+                      Loading active service programs...
+                    </div>
+                  ) : (
+                    <select
+                      value={watchedServiceId}
+                      onChange={(e) => handleServiceSelect(e.target.value)}
+                      className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs cursor-pointer">
+                      <option value="">-- Choose active immigration or visa offering --</option>
+                      {services.map((s: any) => (
+                        <option key={s.id} value={s.id}>
+                          {`${s.name} [${s.code}] • Category: ${s.category} • Base Fee: $${Number(s.baseFee || 0).toLocaleString()} ${s.currency || "USD"}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {/* Destination Country Grid */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    Destination Jurisdiction Authority *
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    {DESTINATIONS.map((dest) => {
+                      const isSelected = watchedCountry === dest.name;
+                      return (
+                        <button
+                          key={dest.code}
+                          type="button"
+                          onClick={() => handleCountryChange(dest.name)}
+                          className={cn(
+                            "p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1",
+                            isSelected
+                              ? "bg-blue-50 border-blue-600 text-blue-950 shadow-2xs ring-1 ring-blue-600/30"
+                              : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50",
+                          )}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xl">{dest.flag}</span>
+                            <span
+                              className={cn(
+                                "text-[10px] font-mono font-bold px-1.5 py-0.5 rounded",
+                                isSelected ? "bg-blue-200 text-blue-900" : "bg-slate-100 text-slate-600",
+                              )}>
+                              {dest.code}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-xs font-extrabold block leading-tight">
+                              {dest.name}
+                            </span>
+                            <span
+                              className={cn(
+                                "text-[9px] block mt-0.5 leading-tight truncate",
+                                isSelected ? "text-blue-700" : "text-slate-500",
+                              )}>
+                              {dest.sub}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Subcategory, Consultant, Status */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Visa Category Title *</span>
+                      {errors.visaCategory && (
+                        <span className="text-rose-600 font-medium text-[11px]">
+                          {errors.visaCategory.message}
+                        </span>
+                      )}
+                    </label>
+                    <Input
+                      {...register("visaCategory")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-bold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Subcategory / Stream
+                    </label>
+                    <Input
+                      {...register("subCategory")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Assigned Case Consultant
+                    </label>
+                    <select
+                      value={watchedAssignedConsultantId || ""}
+                      onChange={(e) => handleConsultantChange(e.target.value)}
+                      className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                      <option value="">-- Unassigned Caseworker --</option>
+                      {staffConsultants.map((staff) => (
+                        <option key={staff.id} value={staff.id}>
+                          {`${staff.name} (${staff.role?.name || "Consultant"})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Initial Case Status
+                    </label>
+                    <select
+                      {...register("status")}
+                      className="w-full h-11 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                      <option value="INTAKE">Intake (Initial Review)</option>
+                      <option value="ACTIVE">Active (In Preparation)</option>
+                      <option value="ON_HOLD">On Hold (Pending Client)</option>
+                      <option value="COMPLETED">Completed</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* EXISTING USER / CLIENT PICKER PANEL */}
-            {intakeMode === "existing" && (
-              <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                {!selectedExistingUser ? (
-                  <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a] block">
-                            Select Existing User or Client Record
-                          </span>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#059669] text-[10px] font-bold border border-[#A7F3D0]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />
-                            Live Database Users ({existingUserOptions.length})
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#64748B] mt-0.5">
-                          Search among registered clients to open a new case without re-entering data.
-                        </p>
-                      </div>
-                    </div>
+            {/* SECTION 3: FINANCIAL TERMS & PAYMENT MILESTONES */}
+            <div
+              id="section-finance"
+              className={cn(
+                "rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs transition-all",
+                activeTab === "finance" ? "ring-2 ring-amber-400/40" : "",
+              )}>
+              <div className="flex items-center gap-3 pb-5 border-b border-slate-100">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 shadow-2xs font-black">
+                  <CreditCard className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold tracking-tight text-slate-900">
+                    3. Professional Fees &amp; Milestone Plan
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Standard pricing, authorized discount deductions, and scheduled installments
+                  </p>
+                </div>
+              </div>
 
-                    {/* Filter Category Tabs & Search input */}
-                    <div className="relative">
-                      <Search className="h-4 w-4 text-[#94A3B8] absolute left-3.5 top-3.5" />
-                      <Input
-                        value={existingSearchQuery}
-                        onChange={(e) => setExistingSearchQuery(e.target.value)}
-                        placeholder="Search by name, email, phone, or reference ID..."
-                        className="h-11 pl-10 pr-9 rounded-xl bg-white border-[#EAE6DF] text-xs font-medium text-[#0a0a0a]"
-                      />
-                      {existingSearchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setExistingSearchQuery("")}
-                          className="absolute right-3 top-3 p-0.5 rounded-lg hover:bg-[#FAF8F5] text-[#94A3B8] hover:text-[#0a0a0a]">
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
+              <div className="mt-6 space-y-6">
+                {/* Currency & Base Fee Matrix */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">
+                      Contract Billing Currency
+                    </label>
+                    <div className="grid grid-cols-5 gap-1">
+                      {CURRENCIES.map((c) => {
+                        const isSelected = watchedCurrency === c.code;
+                        return (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => setValue("currency", c.code)}
+                            className={cn(
+                              "h-11 rounded-xl border text-xs font-bold transition-all cursor-pointer",
+                              isSelected
+                                ? "bg-amber-50 border-amber-500 text-amber-900 shadow-2xs font-extrabold"
+                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50",
+                            )}>
+                            {c.code}
+                          </button>
+                        );
+                      })}
                     </div>
-
-                    {/* Users list */}
-                    {isUsersLoading ? (
-                      <div className="p-6 text-center text-xs text-[#64748B]">
-                        Loading registered users from database...
-                      </div>
-                    ) : filteredExistingUsers.length === 0 ? (
-                      <div className="p-6 text-center text-xs text-[#64748B] bg-white rounded-xl border border-dashed border-[#EAE6DF]">
-                        No registered users found matching your search.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
-                        {filteredExistingUsers.map((user) => (
-                          <div
-                            key={user.id}
-                            onClick={() => handleSelectExistingUser(user)}
-                            className="p-3.5 rounded-xl bg-white border border-[#EAE6DF] hover:border-[#0a0a0a] hover:shadow-xs transition-all cursor-pointer flex items-start gap-3 group">
-                            <div className="h-9 w-9 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] flex items-center justify-center font-bold text-xs text-[#0a0a0a] shrink-0 group-hover:bg-[#0a0a0a] group-hover:text-white transition-colors">
-                              {user.initials}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="text-xs font-bold text-[#0a0a0a] truncate block">
-                                  {user.name}
-                                </span>
-                                <span className="text-[10px] font-mono font-bold text-[#64748B] shrink-0">
-                                  {user.role}
-                                </span>
-                              </div>
-                              <span className="text-[11px] text-[#64748B] truncate block">
-                                {user.email}
-                              </span>
-                              {user.phone && (
-                                <span className="text-[10px] text-[#94A3B8] block">
-                                  {user.phone}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                ) : (
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-white border border-[#0a0a0a] shadow-xs">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-[#0a0a0a] text-white flex items-center justify-center font-bold text-sm">
-                        {selectedExistingUser.initials}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-xs font-bold text-[#0a0a0a]">
-                            {selectedExistingUser.name}
-                          </h4>
-                          <span className="px-2 py-0.5 rounded-md bg-[#FAF8F5] border border-[#EAE6DF] text-[10px] font-bold text-[#64748B]">
-                            {selectedExistingUser.role}
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#64748B]">
-                          {selectedExistingUser.email}
-                          {selectedExistingUser.phone && ` • ${selectedExistingUser.phone}`}
-                        </p>
-                      </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Base Professional Fee ({currencySymbol}) *</span>
+                      {errors.baseFee && (
+                        <span className="text-rose-600 font-medium text-[11px]">
+                          {errors.baseFee.message}
+                        </span>
+                      )}
+                    </label>
+                    <Input
+                      type="number"
+                      step="any"
+                      {...register("baseFee", { valueAsNumber: true })}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-extrabold text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Upfront Retainer / Deposit ({currencySymbol})</span>
+                      {errors.depositAmount && (
+                        <span className="text-rose-600 font-medium text-[11px]">
+                          {errors.depositAmount.message}
+                        </span>
+                      )}
+                    </label>
+                    <Input
+                      type="number"
+                      step="any"
+                      {...register("depositAmount", { valueAsNumber: true })}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-extrabold text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Discount Deductions */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/70 border border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Approved Discount Amount ({currencySymbol})</span>
+                      {errors.discountAmount && (
+                        <span className="text-rose-600 font-medium text-[11px]">
+                          {errors.discountAmount.message}
+                        </span>
+                      )}
+                    </label>
+                    <Input
+                      type="number"
+                      step="any"
+                      {...register("discountAmount", { valueAsNumber: true })}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-bold text-slate-900"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Discount Justification</span>
+                      {errors.discountReason && (
+                        <span className="text-rose-600 font-medium text-[11px]">
+                          {errors.discountReason.message}
+                        </span>
+                      )}
+                    </label>
+                    <Input
+                      {...register("discountReason")}
+                      className="h-11 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                {/* Schedule Structure Presets */}
+                <div className="space-y-2.5">
+                  <label className="text-xs font-bold text-slate-700 block">
+                    Installment Schedule Structure Preset
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                    {SCHEDULE_PRESETS.map((preset) => {
+                      const isSelected = watchedScheduleType === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => handleScheduleTypeChange(preset.id as any)}
+                          className={cn(
+                            "p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5",
+                            isSelected
+                              ? "bg-amber-50/80 border-amber-400 text-amber-950 shadow-2xs ring-1 ring-amber-400/40"
+                              : "bg-white border-slate-200 text-slate-800 hover:bg-slate-50",
+                          )}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-extrabold block">
+                              {preset.title}
+                            </span>
+                            <span
+                              className={cn(
+                                "text-[9px] font-bold px-2 py-0.5 rounded-full uppercase",
+                                isSelected ? "bg-amber-200 text-amber-900" : "bg-slate-100 text-slate-600",
+                              )}>
+                              {preset.badge}
+                            </span>
+                          </div>
+                          <span
+                            className={cn(
+                              "text-[10px] leading-tight block",
+                              isSelected ? "text-amber-800" : "text-slate-500",
+                            )}>
+                              {preset.desc}
+                            </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Dynamic Milestones Section */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                        Scheduled Milestones &amp; Due Dates
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        {fields.length} milestone installment{fields.length === 1 ? "" : "s"} configured
+                      </p>
                     </div>
+
                     <button
                       type="button"
-                      onClick={handleClearExistingUser}
-                      className="text-xs font-bold text-rose-600 hover:text-rose-700 px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors">
-                      Change Selection
+                      onClick={handleAddMilestone}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-xs font-bold hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer">
+                      <Plus className="h-3.5 w-3.5 text-amber-600" />
+                      Add Phase
                     </button>
                   </div>
-                )}
-              </div>
-            )}
 
-            {/* Applicant Details Input Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                  <span>Full Legal Name *</span>
-                  {errors.name && (
-                    <span className="text-rose-500 font-bold normal-case text-[11px]">
-                      {errors.name.message}
-                    </span>
+                  {fields.length === 0 ? (
+                    <div className="p-6 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center text-xs text-slate-500">
+                      100% upfront payment selected. No separate milestone installments required.
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {fields.map((field, idx) => (
+                        <div
+                          key={field.id}
+                          className="p-3 rounded-2xl bg-slate-50/70 border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                          <div className="h-8 w-8 rounded-xl bg-slate-200 text-slate-800 border border-slate-300 flex items-center justify-center font-bold text-xs shrink-0">
+                            #{idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <Input
+                              {...register(`milestones.${idx}.name` as const)}
+                              className="h-10 rounded-xl bg-white border-slate-200 text-xs font-bold text-slate-900"
+                            />
+                          </div>
+                          <div className="w-full sm:w-44">
+                            <Input
+                              type="date"
+                              {...register(`milestones.${idx}.dueDate` as const)}
+                              className="h-10 rounded-xl bg-white border-slate-200 text-xs font-semibold text-slate-900"
+                            />
+                          </div>
+                          <div className="w-full sm:w-36">
+                            <Input
+                              type="number"
+                              step="any"
+                              {...register(`milestones.${idx}.amount` as const, {
+                                valueAsNumber: true,
+                              })}
+                              className="h-10 rounded-xl bg-white border-slate-200 text-xs font-extrabold text-slate-900 text-right"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMilestone(idx)}
+                            className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors self-end sm:self-center">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </label>
-                <Input
-                  {...register("name")}
-                  placeholder="e.g. Eleanor Vance"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Preferred Name
-                </label>
-                <Input
-                  {...register("preferredName")}
-                  placeholder="e.g. Ellie"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
+                {/* Mathematical Integrity Ledger Balance Bar (Light Theme) */}
+                <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                        Ledger Balancing Engine
+                      </span>
+                      <h4 className="text-sm font-extrabold text-slate-900 mt-0.5">
+                        Deposit ({currencySymbol}{watchedDeposit.toLocaleString()}) + Milestones ({currencySymbol}{totalMilestonesSum.toLocaleString()})
+                      </h4>
+                    </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                  <span>Email Address *</span>
-                  {errors.email && (
-                    <span className="text-rose-500 font-bold normal-case text-[11px]">
-                      {errors.email.message}
-                    </span>
-                  )}
-                </label>
-                <Input
-                  type="email"
-                  {...register("email")}
-                  placeholder="e.g. eleanor.vance@example.com"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
+                    <div className="flex items-center gap-2">
+                      {isMathValid ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold">
+                          <Check className="h-4 w-4 stroke-[3]" />
+                          100% Perfect Balance
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold">
+                          <AlertTriangle className="h-4 w-4 text-amber-600" />
+                          Discrepancy: {currencySymbol}{Math.abs(financialDiscrepancy).toLocaleString()} ({financialDiscrepancy > 0 ? "Unallocated" : "Overallocated"})
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Primary Phone
-                </label>
-                <Input
-                  {...register("phone")}
-                  placeholder="e.g. +1 (555) 234-5678"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Passport / Gov ID Number
-                </label>
-                <Input
-                  {...register("passportNumber")}
-                  placeholder="e.g. A9281940"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Country of Origin
-                </label>
-                <Input
-                  {...register("countryOfOrigin")}
-                  placeholder="e.g. United Kingdom"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION 2: WHATSAPP DIRECT CHANNEL */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-[#F0ECE6]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] shadow-2xs">
-                <MessageCircle className="h-4.5 w-4.5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  2. WhatsApp Communication Channel
-                </h3>
-                <p className="text-xs text-[#64748B]">
-                  Direct client messaging channel &amp; automated notification dispatch
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Country Dial Code
-                </label>
-                <select
-                  {...register("countryCode")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  {COUNTRY_DIAL_CODES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="sm:col-span-2 space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                  <span>WhatsApp Mobile Number *</span>
-                  {errors.whatsappNumber && (
-                    <span className="text-rose-500 font-bold normal-case text-[11px]">
-                      {errors.whatsappNumber.message}
-                    </span>
-                  )}
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    {...register("whatsappNumber")}
-                    placeholder="e.g. 5551234567"
-                    className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] flex-1"
-                  />
-                  {watchedWhatsapp && (
-                    <a
-                      href={whatsappPreviewUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="h-11 px-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-[#128C7E] hover:bg-[#25D366]/20 flex items-center gap-1.5 text-xs font-bold shrink-0 transition-colors">
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      Test Link
-                    </a>
-                  )}
+                  {/* Progress Bar */}
+                  <div className="space-y-1.5">
+                    <div className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all duration-300",
+                          isMathValid
+                            ? "bg-emerald-500"
+                            : financialDiscrepancy > 0
+                              ? "bg-amber-500"
+                              : "bg-rose-500",
+                        )}
+                        style={{ width: `${Math.min(100, allocationPercent)}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[11px] text-slate-600">
+                      <span>Total Contracted: <b className="text-slate-900">{currencySymbol}{computedContractedFee.toLocaleString()}</b></span>
+                      <span>Allocated: <b className="text-slate-900">{currencySymbol}{totalAllocated.toLocaleString()} ({allocationPercent}%)</b></span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* SECTION 3: SERVICE CATALOG & CASE JURISDICTION */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-[#F0ECE6]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#EBF8FF] text-[#0284C7] border border-[#BAE6FD] shadow-2xs">
-                <MapPin className="h-4.5 w-4.5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  3. Service Selection &amp; Case Jurisdiction
-                </h3>
-                <p className="text-xs text-[#64748B]">
-                  Select an active offering from the service catalog to populate legal category and standard pricing
-                </p>
-              </div>
-            </div>
-
-            {/* SERVICE SELECTION DROPDOWN */}
-            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-2">
-              <label className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a] flex items-center justify-between">
-                <span>Select Offering from Active Service Catalog *</span>
-                {errors.serviceId && (
-                  <span className="text-rose-500 font-bold normal-case text-[11px]">
-                    {errors.serviceId.message}
+          {/* RIGHT COLUMN: STICKY LIVE DOSSIER TICKET (CLEAN LIGHT THEME) */}
+          <div className="lg:col-span-4 lg:sticky lg:top-6 space-y-4">
+            {/* Real-time Dossier Card */}
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-4 w-4 text-amber-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                    Live Case Dossier Slip
                   </span>
-                )}
-              </label>
-              {isServicesLoading ? (
-                <div className="text-xs text-[#64748B] py-2 flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#0a0a0a]" />
-                  Loading active services from database...
                 </div>
-              ) : (
-                <select
-                  value={watchedServiceId}
-                  onChange={(e) => handleServiceSelect(e.target.value)}
-                  className="w-full h-12 px-3 rounded-xl bg-white border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a] shadow-2xs cursor-pointer">
-                  <option value="">-- Choose a Service Offering from Database --</option>
-                  {services.map((s: any) => (
-                    <option key={s.id} value={s.id}>
-                      {`${s.name} (${s.code}) • Base Fee: $${Number(s.baseFee || 0).toLocaleString()} ${s.currency || "USD"}`}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Destination Country *
-                </label>
-                <select
-                  value={watchedCountry}
-                  onChange={(e) => handleCountryChange(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  <option value="United States">United States (US)</option>
-                  <option value="Canada">Canada (CA)</option>
-                  <option value="United Kingdom">United Kingdom (GB)</option>
-                  <option value="Australia">Australia (AU)</option>
-                  <option value="Germany">Germany (DE)</option>
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                  <span>Visa Category / Service Name *</span>
-                  {errors.visaCategory && (
-                    <span className="text-rose-500 font-bold normal-case text-[11px]">
-                      {errors.visaCategory.message}
-                    </span>
-                  )}
-                </label>
-                <Input
-                  {...register("visaCategory")}
-                  placeholder="Auto-filled from service..."
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Sub-Category / Stream
-                </label>
-                <Input
-                  {...register("subCategory")}
-                  placeholder="e.g. IMMIGRATION"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Initial Case Status
-                </label>
-                <select
-                  {...register("status")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  <option value="INTAKE">Intake (Initial review)</option>
-                  <option value="ACTIVE">Active (In progress)</option>
-                  <option value="ON_HOLD">On hold (Action required)</option>
-                  <option value="COMPLETED">Completed</option>
-                  <option value="CANCELLED">Cancelled</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Assigned Consultant / Staff Member
-                </label>
-                <select
-                  value={watch("assignedConsultantId") || ""}
-                  onChange={(e) => handleConsultantChange(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  <option value="">-- Unassigned --</option>
-                  {staffConsultants.map((staff) => (
-                    <option key={staff.id} value={staff.id}>
-                      {`${staff.name} (${staff.role?.name || "Staff"}) - ${staff.email}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Target Submission Date
-                </label>
-                <Input
-                  type="date"
-                  {...register("targetSubmissionDate")}
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION 4: FINANCIAL SETUP & PAYMENT MILESTONES */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-[#F0ECE6]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A] shadow-2xs">
-                <CreditCard className="h-4.5 w-4.5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  4. Professional Fees &amp; Milestone Payment Plan
-                </h3>
-                <p className="text-xs text-[#64748B]">
-                  Base fee, approved discount deductions, upfront deposit, and milestone payment schedules
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Currency
-                </label>
-                <select
-                  {...register("currency")}
-                  className="w-full h-11 px-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]">
-                  {CURRENCIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Base Professional Fee ({currencySymbol}) *
-                </label>
-                <Input
-                  type="number"
-                  step="any"
-                  {...register("baseFee", { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                  Upfront Retainer / Deposit ({currencySymbol})
-                </label>
-                <Input
-                  type="number"
-                  step="any"
-                  {...register("depositAmount", { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-            </div>
-
-            {/* Discount Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                  <span>Discount Amount ({currencySymbol})</span>
-                  {errors.discountAmount && (
-                    <span className="text-rose-500 font-bold normal-case text-[11px]">
-                      {errors.discountAmount.message}
-                    </span>
-                  )}
-                </label>
-                <Input
-                  type="number"
-                  step="any"
-                  {...register("discountAmount", { valueAsNumber: true })}
-                  placeholder="0.00"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                  <span>Discount Reason / Justification</span>
-                  {errors.discountReason && (
-                    <span className="text-rose-500 font-bold normal-case text-[11px]">
-                      {errors.discountReason.message}
-                    </span>
-                  )}
-                </label>
-                <Input
-                  {...register("discountReason")}
-                  placeholder="Mandatory if discount is applied"
-                  className="h-11 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a]"
-                />
-              </div>
-            </div>
-
-            {/* Schedule Type Selector */}
-            <div className="space-y-2 pt-2">
-              <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B] block">
-                Payment Schedule Structure
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                {[
-                  { id: "single", title: "Single Payment", desc: "100% upfront deposit" },
-                  { id: "deposit_2_milestones", title: "Deposit + 2 Milestones", desc: "40% deposit, 2 equal phases" },
-                  { id: "deposit_3_monthly", title: "Deposit + 3 Monthly", desc: "34% deposit, 3 monthly payments" },
-                  { id: "custom", title: "Custom Milestones", desc: "Manually customized" },
-                ].map((st) => (
-                  <button
-                    key={st.id}
-                    type="button"
-                    onClick={() => handleScheduleTypeChange(st.id as any)}
-                    className={cn(
-                      "p-3 rounded-xl border text-left transition-all cursor-pointer",
-                      watchedScheduleType === st.id
-                        ? "bg-[#0a0a0a] text-white border-[#0a0a0a] shadow-xs"
-                        : "bg-[#FAF8F5] text-[#0a0a0a] border-[#EAE6DF] hover:border-[#0a0a0a]",
-                    )}>
-                    <span className="text-xs font-bold block">{st.title}</span>
-                    <span
-                      className={cn(
-                        "text-[10px] mt-0.5 block",
-                        watchedScheduleType === st.id ? "text-white/70" : "text-[#64748B]",
-                      )}>
-                      {st.desc}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Milestones Breakdown */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-[#0a0a0a]">
-                  Subsequent Installment Milestones
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                  {watchedCountryCode}
                 </span>
-                <button
-                  type="button"
-                  onClick={handleAddMilestone}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] hover:bg-[#EAE6DF] transition-colors">
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Milestone
-                </button>
               </div>
 
-              {fields.length === 0 ? (
-                <div className="p-4 rounded-xl bg-[#FAF8F5] border border-dashed border-[#EAE6DF] text-center text-xs text-[#64748B]">
-                  No separate milestones added (100% upfront deposit).
+              {/* Applicant Avatar Preview */}
+              <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="h-12 w-12 rounded-2xl bg-amber-100 text-amber-900 border border-amber-200 font-extrabold text-base flex items-center justify-center shrink-0 shadow-2xs">
+                  {applicantInitials}
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {fields.map((field, idx) => (
-                    <div
-                      key={field.id}
-                      className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                      <div className="h-7 w-7 rounded-lg bg-white border border-[#EAE6DF] flex items-center justify-center font-bold text-xs text-[#0a0a0a] shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1">
-                        <Input
-                          {...register(`milestones.${idx}.name` as const)}
-                          placeholder="Milestone title"
-                          className="h-9 rounded-lg bg-white border-[#EAE6DF] text-xs font-semibold"
-                        />
-                      </div>
-                      <div className="w-full sm:w-36">
-                        <Input
-                          type="date"
-                          {...register(`milestones.${idx}.dueDate` as const)}
-                          className="h-9 rounded-lg bg-white border-[#EAE6DF] text-xs font-semibold"
-                        />
-                      </div>
-                      <div className="w-full sm:w-32">
-                        <Input
-                          type="number"
-                          step="any"
-                          {...register(`milestones.${idx}.amount` as const, {
-                            valueAsNumber: true,
-                          })}
-                          placeholder="0.00"
-                          className="h-9 rounded-lg bg-white border-[#EAE6DF] text-xs font-semibold"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveMilestone(idx)}
-                        className="p-2 rounded-lg text-[#94A3B8] hover:text-rose-600 hover:bg-rose-50 transition-colors self-end sm:self-center">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-extrabold text-slate-900 truncate">
+                    {applicantDisplayName}
+                  </h3>
+                  <p className="text-xs text-slate-500 truncate">
+                    {watchedEmail || "No email assigned"}
+                  </p>
+                  <p className="text-[11px] font-medium text-emerald-700 truncate mt-0.5">
+                    {watchedWhatsapp ? `${watchedCountryCode} ${watchedWhatsapp}` : "No mobile assigned"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Case Scope Badge */}
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Destination</span>
+                  <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>{selectedDestinationObj.flag}</span>
+                    <span>{selectedDestinationObj.name}</span>
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Service</span>
+                  <span className="font-bold text-slate-900 max-w-[180px] truncate text-right">
+                    {selectedServiceName}
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Consultant</span>
+                  <span className="font-bold text-slate-900">
+                    {watchedAssignedConsultant || "Unassigned"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-1.5 border-b border-slate-100">
+                  <span className="text-slate-500">Status</span>
+                  <span className="font-bold text-slate-900 uppercase">
+                    {watchedStatus}
+                  </span>
+                </div>
+              </div>
+
+              {/* Financial Ledger Breakdown Slip (Light Theme) */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-600 font-medium">Base Professional Fee</span>
+                  <span className="font-mono font-bold text-slate-900">
+                    {currencySymbol}{watchedBaseFee.toLocaleString()}
+                  </span>
+                </div>
+
+                {watchedDiscount > 0 && (
+                  <div className="flex justify-between items-center text-xs text-amber-700">
+                    <span className="font-medium">Approved Discount</span>
+                    <span className="font-mono font-bold">
+                      -{currencySymbol}{watchedDiscount.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+                <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                      Contracted Fee
+                    </span>
+                    <span className="font-mono font-black text-xl text-slate-900">
+                      {currencySymbol}{computedContractedFee.toLocaleString()}
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-2 py-1 rounded bg-slate-200 text-slate-800">
+                    {watchedCurrency}
+                  </span>
+                </div>
+
+                {/* Retainer & Milestones mini list */}
+                <div className="pt-2 border-t border-slate-200 space-y-1.5 text-xs">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Upfront Retainer</span>
+                    <span className="font-mono font-bold text-slate-900">
+                      {currencySymbol}{watchedDeposit.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {watchedMilestones.map((m, idx) => (
+                    <div key={idx} className="flex justify-between text-slate-500 text-[11px]">
+                      <span className="truncate max-w-[160px]">
+                        #{idx + 1} {m.name || "Milestone"}
+                      </span>
+                      <span className="font-mono text-slate-800 font-semibold">
+                        {currencySymbol}{(Number(m.amount) || 0).toLocaleString()}
+                      </span>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
 
-            {/* Financial Health & Integrity Bar */}
-            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-4 text-xs">
-                <div>
-                  <span className="text-[#64748B] block text-[10px] font-bold uppercase tracking-wider">
-                    Contracted Fee
-                  </span>
-                  <span className="text-sm font-black text-[#0a0a0a]">
-                    {currencySymbol}{computedContractedFee.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[#64748B] block text-[10px] font-bold uppercase tracking-wider">
-                    Deposit
-                  </span>
-                  <span className="text-sm font-black text-[#0a0a0a]">
-                    {currencySymbol}{watchedDeposit.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[#64748B] block text-[10px] font-bold uppercase tracking-wider">
-                    Milestones Total
-                  </span>
-                  <span className="text-sm font-black text-[#0a0a0a]">
-                    {currencySymbol}{totalMilestonesSum.toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[#64748B] block text-[10px] font-bold uppercase tracking-wider">
-                    Total Allocated
-                  </span>
-                  <span className="text-sm font-black text-[#0a0a0a]">
-                    {currencySymbol}{totalAllocated.toLocaleString()}
-                  </span>
+                {/* Math check status */}
+                <div className="pt-2 border-t border-slate-200 flex items-center justify-between text-xs">
+                  <span className="text-slate-600">Balance Integrity</span>
+                  {isMathValid ? (
+                    <span className="text-emerald-700 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      Balanced ($0 diff)
+                    </span>
+                  ) : (
+                    <span className="text-amber-800 font-bold flex items-center gap-1">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                      {currencySymbol}{Math.abs(financialDiscrepancy).toLocaleString()} off
+                    </span>
+                  )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                {isMathValid ? (
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#ECFDF5] text-[#059669] text-xs font-bold border border-[#A7F3D0]">
-                    <Check className="h-4 w-4 stroke-[2.5]" />
-                    Perfect Balance ($0 discrepancy)
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    Difference: {currencySymbol}{Math.abs(financialDiscrepancy).toLocaleString()} ({financialDiscrepancy > 0 ? "Under-allocated" : "Over-allocated"})
-                  </span>
-                )}
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-2">
+                <CommonButton
+                  type="submit"
+                  disabled={isSubmitting || !isMathValid}
+                  className="w-full h-12 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs uppercase tracking-wider shadow-sm hover:shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Authorizing Case &amp; Ledger...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      Authorize &amp; Onboard Case
+                    </span>
+                  )}
+                </CommonButton>
+
+                <CommonButton
+                  asChild
+                  type="button"
+                  variant="ghost"
+                  className="w-full h-10 rounded-2xl text-slate-500 hover:text-slate-900 text-xs font-bold">
+                  <Link href={ROUTES.CLIENTS}>Cancel and Return</Link>
+                </CommonButton>
               </div>
             </div>
           </div>
-
-          {/* SECTION 5: INTERNAL NOTES */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 pb-3 border-b border-[#F0ECE6]">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF] shadow-2xs">
-                <FileText className="h-4.5 w-4.5" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black uppercase tracking-wider text-[#0a0a0a]">
-                  5. Internal Case Notes
-                </h3>
-                <p className="text-xs text-[#64748B]">
-                  Staff records, intake background, and special client instructions
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-extrabold uppercase tracking-wider text-[#64748B]">
-                Confidential Case Notes (Staff &amp; Client Viewable)
-              </label>
-              <textarea
-                {...register("internalNotes")}
-                rows={3}
-                placeholder="Add intake observations, documentation status, or specific instructions..."
-                className="w-full p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:ring-1 focus:ring-[#0a0a0a]"
-              />
-            </div>
-          </div>
-
-          {/* SUBMISSION FOOTER */}
-          <div className="pt-4 border-t border-[#F0ECE6] flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs text-[#64748B]">
-              Ready to onboard case into active registry and configure ledger schedules.
-            </div>
-
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <CommonButton
-                asChild
-                type="button"
-                variant="outline"
-                className="flex-1 sm:flex-none h-12 px-6 rounded-2xl border border-[#EAE6DF] text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold">
-                <Link href={ROUTES.CLIENTS}>Cancel</Link>
-              </CommonButton>
-
-              <CommonButton
-                type="submit"
-                disabled={isSubmitting || !isMathValid}
-                className="flex-1 sm:flex-none h-12 px-8 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#262626] text-xs font-bold shadow-md cursor-pointer disabled:opacity-50">
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-white" />
-                    Creating Case &amp; Schedules...
-                  </span>
-                ) : (
-                  "Onboard & Authorize Payment Plan"
-                )}
-              </CommonButton>
-            </div>
-          </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 }

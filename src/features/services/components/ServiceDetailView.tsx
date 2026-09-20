@@ -3,15 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/common/Button";
-import { Loader } from "@/components/common/Loader";
-import { EmptyState } from "@/components/common/EmptyState";
-import {
-  useGetServiceByIdQuery,
-  useDeleteServiceMutation,
-  useUpdateServiceMutation,
-} from "@/services/api/services/servicesApi";
-import type { BackendService, BackendServiceCategory } from "../types";
 import {
   AlertCircle,
   ArrowLeft,
@@ -37,52 +28,64 @@ import {
   UserPlus,
   WalletCards,
 } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { Loader } from "@/components/common/Loader";
+import { EmptyState } from "@/components/common/EmptyState";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
+import {
+  useGetServiceByIdQuery,
+  useGetServicesQuery,
+  useDeleteServiceMutation,
+  useUpdateServiceMutation,
+} from "@/services/api/services/servicesApi";
+import type { BackendService, BackendServiceCategory } from "../types";
 
 interface ServiceDetailViewProps {
   serviceId: string;
 }
 
-const categoryStyles: Record<
+const CATEGORY_STYLES: Record<
   BackendServiceCategory,
   { label: string; className: string }
 > = {
   IMMIGRATION: {
-    label: "Immigration",
+    label: "Immigration & Visas",
     className: "bg-indigo-50 text-indigo-700 border-indigo-200",
   },
   BUSINESS: {
-    label: "Business",
+    label: "Business Formation",
     className: "bg-emerald-50 text-emerald-700 border-emerald-200",
   },
   CONSULTATION: {
-    label: "Consultation",
-    className: "bg-amber-50 text-amber-700 border-amber-200",
+    label: "Strategic Advisory",
+    className: "bg-amber-50 text-amber-800 border-amber-200",
   },
   DMV_PSB: {
-    label: "DMV / PSB",
+    label: "Licensing & PSB",
     className: "bg-violet-50 text-violet-700 border-violet-200",
   },
   CUSTOM: {
-    label: "Custom Package",
+    label: "Custom Retainer",
     className: "bg-slate-100 text-slate-700 border-slate-200",
   },
 };
 
-const money = (value: number, currency = "USD") =>
+const formatCurrency = (value: number, currency = "USD") =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
   }).format(value || 0);
 
-const dateLabel = (value: string, style: "long" | "short" = "short") =>
-  new Date(value).toLocaleDateString("en-US", {
-    month: style,
+const formatDate = (value?: string) => {
+  if (!value) return "N/A";
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
     day: "numeric",
     year: "numeric",
   });
+};
 
 export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
   const router = useRouter();
@@ -90,6 +93,7 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
   const [copiedLink, setCopiedLink] = React.useState(false);
   const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
 
+  // 1. Direct query by ID
   const {
     data: directResponse,
     isLoading: isDirectLoading,
@@ -97,23 +101,37 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
     refetch: refetchDirect,
   } = useGetServiceByIdQuery(serviceId);
 
+  // 2. Fallback query by code in all services (e.g. for /services/CUSTOM-PKG)
+  const { data: allServicesResponse, isLoading: isAllLoading } =
+    useGetServicesQuery({ limit: 100 }, { skip: !serviceId });
+
   const [deleteServiceMutation, { isLoading: isDeleting }] =
     useDeleteServiceMutation();
   const [updateServiceMutation, { isLoading: isUpdating }] =
     useUpdateServiceMutation();
 
+  // Resolve service from direct query or catalog code lookup
   const service: BackendService | null = React.useMemo(() => {
-    if (!directResponse) return null;
-    if ("data" in directResponse && directResponse.data) {
-      return directResponse.data as BackendService;
+    if (directResponse) {
+      if ("data" in directResponse && directResponse.data) {
+        return directResponse.data as BackendService;
+      }
+      if ("id" in directResponse) {
+        return directResponse as unknown as BackendService;
+      }
     }
-    if ("id" in directResponse) {
-      return directResponse as unknown as BackendService;
+    if (allServicesResponse?.data) {
+      const found = allServicesResponse.data.find(
+        (s) =>
+          s.code?.toLowerCase() === serviceId.toLowerCase() ||
+          s.id === serviceId,
+      );
+      if (found) return found;
     }
     return null;
-  }, [directResponse]);
+  }, [directResponse, allServicesResponse, serviceId]);
 
-  const isLoading = isDirectLoading || (isFetching && !service);
+  const isLoading = (isDirectLoading || isAllLoading) && !service;
 
   const clearStatusSoon = (timeout = 2500) => {
     window.setTimeout(() => setStatusMessage(null), timeout);
@@ -122,7 +140,7 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
   const handleCopySku = (sku: string) => {
     navigator.clipboard.writeText(sku);
     setCopiedSku(true);
-    setStatusMessage(`SKU ${sku} copied`);
+    setStatusMessage(`SKU ${sku} copied to clipboard`);
     window.setTimeout(() => setCopiedSku(false), 2500);
     clearStatusSoon();
   };
@@ -131,7 +149,7 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
     if (typeof window === "undefined") return;
     navigator.clipboard.writeText(window.location.href);
     setCopiedLink(true);
-    setStatusMessage("Service link copied");
+    setStatusMessage("Service offering link copied to clipboard");
     window.setTimeout(() => setCopiedLink(false), 2500);
     clearStatusSoon();
   };
@@ -141,7 +159,7 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
     const newStatus = !service.isActive;
     const confirmMsg = newStatus
       ? `Reactivate service offering "${service.name}" (${service.code})?`
-      : `Deactivate service offering "${service.name}" (${service.code})? Clients will not be able to enroll in this package.`;
+      : `Deactivate service offering "${service.name}" (${service.code})? It will no longer be available for client intake.`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -167,7 +185,7 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
     if (!service) return;
     if (
       !window.confirm(
-        `Are you sure you want to permanently deactivate "${service.name}" (${service.code}) from the catalog?`,
+        `Are you sure you want to delete "${service.name}" (${service.code}) from the active catalog?`,
       )
     ) {
       return;
@@ -180,23 +198,21 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
       const msg =
         typeof err === "object" && err !== null && "data" in err
           ? (err as { data?: { message?: string } }).data?.message ||
-            "Failed to delete service"
-          : "Failed to delete service";
+            "Failed to delete service offering"
+          : "Failed to delete service offering";
       alert(msg);
     }
   };
 
   const renderCategoryBadge = (category: BackendServiceCategory) => {
-    const categoryStyle = categoryStyles[category] || categoryStyles.CUSTOM;
-
+    const style = CATEGORY_STYLES[category] || CATEGORY_STYLES.CUSTOM;
     return (
       <span
         className={cn(
-          "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-wide",
-          categoryStyle.className,
-        )}
-      >
-        {categoryStyle.label}
+          "inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wide",
+          style.className,
+        )}>
+        {style.label}
       </span>
     );
   };
@@ -206,8 +222,8 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
       <div className="py-24">
         <Loader
           size="lg"
-          text="Loading service package..."
-          subtext="Resolving fee schedule, milestone defaults, and status."
+          text="Loading service offering..."
+          subtext="Resolving fee separation architecture and milestone terms."
         />
       </div>
     );
@@ -217,15 +233,14 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
     return (
       <div className="py-16">
         <EmptyState
-          icon={<Briefcase className="h-8 w-8 text-[#64748B]" />}
-          title={`Service SKU "${serviceId}" Not Found`}
-          description="The requested service package or SKU identifier could not be located in the active catalog directory."
+          icon={<Briefcase className="h-8 w-8 text-slate-400" />}
+          title={`Service Offering "${serviceId}" Not Found`}
+          description="The requested service package or SKU identifier could not be located in the catalog."
           action={
             <Button
               variant="default"
               onClick={() => router.push(ROUTES.SERVICES)}
-              className="h-10 px-4 text-xs font-semibold"
-            >
+              className="h-10 px-5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs">
               Back to Catalog
             </Button>
           }
@@ -241,12 +256,14 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
   const thirdParty = Number(service.estimatedThirdPartyFee || 0);
   const passThrough = gov + attorney + thirdParty;
   const totalCost = base + passThrough;
+
   const rawDeposit =
     service.defaultDeposit !== undefined && service.defaultDeposit !== null
       ? Number(service.defaultDeposit)
       : null;
   const deposit =
     rawDeposit !== null && !Number.isNaN(rawDeposit) ? rawDeposit : null;
+
   const rawInstallments =
     service.defaultInstallments !== undefined &&
     service.defaultInstallments !== null
@@ -261,193 +278,235 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
     deposit === null || deposit <= 0 || installments === null || installments <= 1;
 
   const advisoryShare =
-    totalCost > 0 ? Math.max(0, Math.min(100, Math.round((base / totalCost) * 100))) : 100;
+    totalCost > 0
+      ? Math.max(0, Math.min(100, Math.round((base / totalCost) * 100)))
+      : 100;
   const passThroughShare = 100 - advisoryShare;
 
   const feeRows = [
     {
-      label: "Advisory base",
+      label: "AdSkill Advisory Base",
       value: base,
-      detail: "Firm revenue",
+      detail: "Firm professional fee (accounted as taxable revenue)",
       icon: Sparkles,
       color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+      badge: "Firm Revenue",
+      badgeClass: "bg-emerald-100/70 text-emerald-800",
     },
     {
-      label: "Government filing",
+      label: "Government Filing Fee",
       value: gov,
-      detail: "Agency pass-through",
+      detail: "USCIS or designated agency regulatory filing disbursement",
       icon: Landmark,
       color: "text-sky-700 bg-sky-50 border-sky-200",
+      badge: "Pass-Through",
+      badgeClass: "bg-sky-100/70 text-sky-800",
     },
     {
-      label: "Attorney estimate",
+      label: "Attorney Representation",
       value: attorney,
-      detail: "Counsel pass-through",
+      detail: "Outside legal counsel retainer and petition disbursement",
       icon: Lock,
       color: "text-violet-700 bg-violet-50 border-violet-200",
+      badge: "Pass-Through",
+      badgeClass: "bg-violet-100/70 text-violet-800",
     },
     {
-      label: "Third-party expenses",
+      label: "Third-Party Auxiliary Expenses",
       value: thirdParty,
-      detail: "Auxiliary pass-through",
+      detail: "Certified translations, credential evaluations & expert plans",
       icon: Layers,
-      color: "text-amber-700 bg-amber-50 border-amber-200",
+      color: "text-amber-800 bg-amber-50 border-amber-200",
+      badge: "Pass-Through",
+      badgeClass: "bg-amber-100/70 text-amber-800",
     },
   ];
 
   const serviceFacts = [
     {
-      label: "Duration",
+      label: "Turnaround Timeline",
       value: service.estimatedDuration || "Custom timeline",
       icon: Clock,
     },
     {
-      label: "Deposit",
+      label: "Initial Retainer",
       value:
         !isFullPayment && deposit && deposit > 0
-          ? money(deposit, currency)
+          ? `${formatCurrency(deposit, currency)} Upfront`
           : "Full Payment (100%)",
       icon: WalletCards,
     },
     {
-      label: "Installments",
+      label: "Milestone Cadence",
       value:
         !isFullPayment && installments && installments > 1
-          ? `${installments} milestones`
-          : "Full Payment (No installments)",
+          ? `${installments} Milestones`
+          : "Full Upfront Payment",
       icon: CalendarRange,
     },
   ];
 
   return (
-    <div className="pb-12">
+    <div className="w-full space-y-6 pb-20">
+      {/* Toast Notification */}
       {statusMessage && (
-        <div className="fixed right-5 top-20 z-50 flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-xs font-bold text-emerald-700 shadow-lg animate-in fade-in slide-in-from-top-2">
-          <CheckCircle2 className="h-4 w-4" />
+        <div className="fixed right-5 top-20 z-50 flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-xs font-bold text-emerald-800 shadow-lg animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
           <span>{statusMessage}</span>
         </div>
       )}
 
-      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="outline" size="icon" className="h-10 w-10">
-            <Link href={ROUTES.SERVICES}>
-              <ArrowLeft className="h-4 w-4" />
-              <span className="sr-only">Back to services</span>
-            </Link>
-          </Button>
-
-          <div>
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[#64748B]">
-              <span>Catalog</span>
-              <ChevronRight className="h-3 w-3" />
-              <Link href={ROUTES.SERVICES} className="hover:text-[#0a0a0a]">
-                Services
+      {/* 1. TOP HEADER & BREADCRUMB CARD (CLEAN LIGHT DESIGN) */}
+      <div className="rounded-3xl bg-white border border-slate-200/90 p-6 sm:p-7 shadow-xs">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-4">
+            <Button
+              asChild
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 rounded-2xl bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900 shrink-0 transition-all">
+              <Link href={ROUTES.SERVICES}>
+                <ArrowLeft className="h-5 w-5" />
+                <span className="sr-only">Back to Services Catalog</span>
               </Link>
-              <ChevronRight className="h-3 w-3" />
-              <span className="font-mono text-[#0a0a0a]">{service.code}</span>
+            </Button>
+
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Catalog
+                </span>
+                <ChevronRight className="h-3 w-3 text-slate-400" />
+                <Link
+                  href={ROUTES.SERVICES}
+                  className="text-[11px] font-bold uppercase tracking-wider text-slate-600 hover:text-slate-900">
+                  Services
+                </Link>
+                <ChevronRight className="h-3 w-3 text-slate-400" />
+                <button
+                  type="button"
+                  onClick={() => handleCopySku(service.code)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-800 font-mono text-[11px] font-bold hover:bg-slate-200/70 transition-all cursor-pointer">
+                  <span>{service.code}</span>
+                  {copiedSku ? (
+                    <Check className="h-3 w-3 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-3 w-3 text-slate-400" />
+                  )}
+                </button>
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1.5">
+                {service.name}
+              </h1>
             </div>
-            <h1 className="mt-1 text-2xl font-black tracking-tight text-[#0a0a0a]">
-              Service package
-            </h1>
           </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleStatus}
-            disabled={isUpdating}
-            className="h-10 gap-2 px-3.5"
-          >
-            {service.isActive ? (
-              <>
-                <Ban className="h-3.5 w-3.5 text-rose-500" />
-                Deactivate
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                Reactivate
-              </>
-            )}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleToggleStatus}
+              disabled={isUpdating}
+              className="h-10 px-3.5 rounded-xl border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 gap-2 transition-all cursor-pointer">
+              {service.isActive ? (
+                <>
+                  <Ban className="h-3.5 w-3.5 text-rose-500" />
+                  <span>Deactivate</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Reactivate</span>
+                </>
+              )}
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleCopySku(service.code)}
-            className="h-10 gap-2 px-3.5"
-          >
-            {copiedSku ? (
-              <Check className="h-3.5 w-3.5 text-emerald-600" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
-            SKU
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyLink}
+              className="h-10 px-3.5 rounded-xl border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 gap-2 transition-all cursor-pointer">
+              {copiedLink ? (
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+              ) : (
+                <Share2 className="h-3.5 w-3.5 text-slate-500" />
+              )}
+              <span>Share Link</span>
+            </Button>
 
-          <Button asChild variant="outline" size="sm" className="h-10 gap-2 px-3.5 border-[#EAE6DF] hover:bg-[#FAF8F5]">
-            <Link href={`/services/${service.code || service.id}/edit`}>
-              <Pencil className="h-3.5 w-3.5 text-[#F3A712]" />
-              <span>Edit Offering</span>
-            </Link>
-          </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-10 px-3.5 rounded-xl border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 gap-2 transition-all">
+              <Link href={`/services/${service.code || service.id}/edit`}>
+                <Pencil className="h-3.5 w-3.5 text-amber-600" />
+                <span>Edit Offering</span>
+              </Link>
+            </Button>
 
-          <Button asChild size="sm" className="h-10 gap-2 px-4">
-            <Link href={ROUTES.CLIENT_CREATE}>
-              <UserPlus className="h-4 w-4 text-[#F3A712]" />
-              Enroll client
-            </Link>
-          </Button>
+            <Button
+              asChild
+              size="sm"
+              className="h-10 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs gap-2 transition-all">
+              <Link href={ROUTES.CLIENT_CREATE}>
+                <UserPlus className="h-4 w-4" />
+                <span>Enroll Client with Package</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-[1.5rem] border border-[#EAE6DF] bg-white shadow-sm">
-        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
-          <div className="relative min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+      {/* 2. HERO CARD (NO BLACK BOX — MODERN CLEAN LIGHT SAAS DESIGN) */}
+      <section className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-center">
+          <div className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-center gap-2.5">
               {renderCategoryBadge(service.category)}
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-wide",
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wide",
                   service.isActive
                     ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-[#EAE6DF] bg-[#FAF8F5] text-[#64748B]",
-                )}
-              >
+                    : "border-slate-200 bg-slate-100 text-slate-600",
+                )}>
                 <span
                   className={cn(
-                    "h-1.5 w-1.5 rounded-full",
-                    service.isActive ? "bg-emerald-600" : "bg-[#94A3B8]",
+                    "h-2 w-2 rounded-full",
+                    service.isActive
+                      ? "bg-emerald-500 animate-pulse"
+                      : "bg-slate-400",
                   )}
                 />
-                {service.isActive ? "Active" : "Inactive"}
+                {service.isActive ? "Active in Catalog" : "Inactive Offering"}
               </span>
             </div>
 
-            <h2 className="mt-3 max-w-3xl text-2xl font-black tracking-tight text-[#0a0a0a] sm:text-3xl">
-              {service.name}
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#64748B]">
-              {service.description ||
-                "Custom advisory package with separated pass-through costs, default engagement milestones, and client enrollment controls."}
-            </p>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                {service.name}
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm font-medium leading-relaxed text-slate-600 max-w-3xl">
+                {service.description ||
+                  "Comprehensive immigration and advisory service offering with strict regulatory fee separation, pass-through disbursements, and default milestone payment terms."}
+              </p>
+            </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {/* Quick Stats Grid */}
+            <div className="grid gap-3 sm:grid-cols-3 pt-2">
               {serviceFacts.map((fact) => {
                 const Icon = fact.icon;
                 return (
                   <div
                     key={fact.label}
-                    className="rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] px-4 py-3"
-                  >
-                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wide text-[#64748B]">
-                      <Icon className="h-3.5 w-3.5 text-[#F3A712]" />
+                    className="rounded-2xl border border-slate-200/90 bg-slate-50/70 px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      <Icon className="h-3.5 w-3.5 text-amber-500" />
                       {fact.label}
                     </div>
-                    <div className="mt-1.5 text-sm font-black text-[#0a0a0a]">
+                    <div className="mt-1 text-sm font-extrabold text-slate-900 truncate">
                       {fact.value}
                     </div>
                   </div>
@@ -456,280 +515,303 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-[#0a0a0a] p-5 text-white">
+          {/* Right Financial Box (REPLACING THE OLD BLACK CONTAINER) */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 space-y-4">
             <div>
-              <div className="text-[10px] font-black uppercase tracking-wider text-white/45">
-                Estimated total
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Total Client Commitment
               </div>
-              <div className="mt-1 font-mono text-3xl font-black tracking-tight">
-                {money(totalCost, currency)}
+              <div className="mt-1 font-mono text-3xl font-black tracking-tight text-slate-900">
+                {formatCurrency(totalCost, currency)}
               </div>
-              <div className="mt-1 text-xs font-semibold text-[#F3A712]">
-                {money(base, currency)} advisory revenue
+              <div className="mt-1 flex items-center justify-between text-xs font-bold">
+                <span className="text-emerald-700">
+                  {formatCurrency(base, currency)} Advisory
+                </span>
+                <span className="text-sky-700">
+                  {formatCurrency(passThrough, currency)} Pass-Through
+                </span>
               </div>
             </div>
 
-            <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wide text-white/45">
-                <span>Advisory</span>
-                <span>Pass-through</span>
+            <div className="space-y-1.5 pt-3 border-t border-slate-200/80">
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                <span>AdSkill ({advisoryShare}%)</span>
+                <span>Pass-Through ({passThroughShare}%)</span>
               </div>
-              <div className="flex h-2 overflow-hidden rounded-full bg-white/12">
+              <div className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden flex">
                 <div
-                  className="bg-[#F3A712] transition-all duration-700"
+                  className="h-full bg-emerald-500 transition-all duration-700"
                   style={{ width: `${advisoryShare}%` }}
                 />
-              </div>
-              <div className="mt-2 flex items-center justify-between font-mono text-[11px] text-white/55">
-                <span>{advisoryShare}%</span>
-                <span>{passThroughShare}%</span>
+                <div
+                  className="h-full bg-sky-500 transition-all duration-700"
+                  style={{ width: `${passThroughShare}%` }}
+                />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      {/* 3. MAIN CONTENT: 2-COLUMN GRID */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px] items-start">
+        {/* LEFT COLUMN: ARCHITECTURE & ENGAGEMENT (8 COLS) */}
         <div className="space-y-6">
-          <section className="rounded-[1.5rem] border border-[#EAE6DF] bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex flex-col gap-3 border-b border-[#F1ECE4] pb-5 sm:flex-row sm:items-start sm:justify-between">
+          {/* Section: Fee Architecture */}
+          <section className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
               <div>
-                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-[#64748B]">
-                  <Scale className="h-4 w-4 text-[#F3A712]" />
-                  Fee architecture
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                  <Scale className="h-4 w-4 text-amber-500" />
+                  <span>Fee Architecture</span>
                 </div>
-                <h3 className="mt-2 text-xl font-black tracking-tight text-[#0a0a0a]">
-                  Revenue and client disbursements stay separated.
+                <h3 className="mt-1 text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
+                  Separation of Advisory Revenue &amp; Pass-Through Costs
                 </h3>
               </div>
-              <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-black uppercase tracking-wide text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                Audit ready
+                Audit Ready
               </span>
             </div>
 
-            <div className="divide-y divide-[#F5F1EC]">
+            <div className="divide-y divide-slate-100">
               {feeRows.map((row) => {
                 const Icon = row.icon;
                 return (
                   <div
                     key={row.label}
-                    className="grid gap-4 py-5 sm:grid-cols-[44px_minmax(0,1fr)_auto] sm:items-center"
-                  >
+                    className="grid gap-3 py-4 sm:grid-cols-[40px_minmax(0,1fr)_auto] sm:items-center">
                     <div
                       className={cn(
-                        "flex h-11 w-11 items-center justify-center rounded-xl border",
+                        "flex h-10 w-10 items-center justify-center rounded-xl border",
                         row.color,
-                      )}
-                    >
-                      <Icon className="h-5 w-5" />
+                      )}>
+                      <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-black text-[#0a0a0a]">
-                        {row.label}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-bold text-slate-900">
+                          {row.label}
+                        </span>
+                        <span
+                          className={cn(
+                            "font-mono text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded",
+                            row.badgeClass,
+                          )}>
+                          {row.badge}
+                        </span>
                       </div>
-                      <div className="mt-0.5 text-xs font-medium text-[#64748B]">
+                      <div className="mt-0.5 text-xs text-slate-500">
                         {row.detail}
                       </div>
                     </div>
-                    <div className="font-mono text-2xl font-black tracking-tight text-[#0a0a0a]">
-                      {money(row.value, currency)}
+                    <div className="font-mono text-xl sm:text-2xl font-black tracking-tight text-slate-900 text-left sm:text-right">
+                      {formatCurrency(row.value, currency)}
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            <div className="grid gap-3 border-t border-[#F1ECE4] pt-5 sm:grid-cols-3">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-wide text-[#94A3B8]">
-                  Firm revenue
+            {/* Financial Summary Totals */}
+            <div className="grid gap-3 border-t border-slate-100 pt-5 sm:grid-cols-3">
+              <div className="rounded-2xl bg-emerald-50/40 border border-emerald-100 p-3.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                  Firm Advisory Revenue
                 </div>
-                <div className="mt-1 font-mono text-lg font-black text-emerald-700">
-                  {money(base, currency)}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-wide text-[#94A3B8]">
-                  Pass-through
-                </div>
-                <div className="mt-1 font-mono text-lg font-black text-[#0a0a0a]">
-                  {money(passThrough, currency)}
+                <div className="mt-1 font-mono text-xl font-black text-emerald-700">
+                  {formatCurrency(base, currency)}
                 </div>
               </div>
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-wide text-[#94A3B8]">
-                  Total client cost
+
+              <div className="rounded-2xl bg-sky-50/40 border border-sky-100 p-3.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-sky-800">
+                  Pass-Through Disbursements
                 </div>
-                <div className="mt-1 font-mono text-lg font-black text-[#0a0a0a]">
-                  {money(totalCost, currency)}
+                <div className="mt-1 font-mono text-xl font-black text-sky-700">
+                  {formatCurrency(passThrough, currency)}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  Total Client Out-of-Pocket
+                </div>
+                <div className="mt-1 font-mono text-xl font-black text-slate-900">
+                  {formatCurrency(totalCost, currency)}
                 </div>
               </div>
             </div>
           </section>
 
-          <section className="rounded-[1.5rem] border border-[#EAE6DF] bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F3A712] text-white">
-                <CalendarRange className="h-5 w-5" />
+          {/* Section: Engagement Setup & Milestone Cadence */}
+          <section className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-xs space-y-5">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 border border-amber-200 text-amber-700">
+                <CalendarRange className="h-4 w-4" />
               </div>
               <div>
-                <div className="text-[11px] font-black uppercase tracking-wider text-[#64748B]">
-                  Engagement setup
+                <div className="text-[11px] font-black uppercase tracking-wider text-slate-500">
+                  Engagement Setup
                 </div>
-                <h3 className="mt-1 text-xl font-black tracking-tight text-[#0a0a0a]">
-                  Default payment structure
+                <h3 className="mt-0.5 text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
+                  Default Payment Plan &amp; Delivery Milestones
                 </h3>
               </div>
             </div>
 
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl bg-[#FAF8F5] p-5">
-                <div className="text-[10px] font-black uppercase tracking-wider text-[#64748B]">
-                  Upfront retainer
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl bg-slate-50/70 border border-slate-200/80 p-5 space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Upfront Retainer Deposit
                 </div>
-                <div className="mt-2 font-mono text-3xl font-black text-[#0a0a0a]">
+                <div className="font-mono text-2xl sm:text-3xl font-black text-slate-900">
                   {!isFullPayment && deposit && deposit > 0
-                    ? money(deposit, currency)
+                    ? formatCurrency(deposit, currency)
                     : "Full Payment"}
                 </div>
-                <div className="mt-1 text-xs font-semibold text-[#64748B]">
+                <div className="text-xs font-semibold text-slate-500">
                   {!isFullPayment && deposit && deposit > 0
-                    ? `Due at engagement start (${totalCost > 0 ? Math.round((deposit / totalCost) * 100) : 0}% of total)`
+                    ? `Due upon agreement execution (${totalCost > 0 ? Math.round((deposit / totalCost) * 100) : 0}% of package)`
                     : "100% due upon contract execution"}
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-[#FAF8F5] p-5">
-                <div className="text-[10px] font-black uppercase tracking-wider text-[#64748B]">
-                  Installment plan
+              <div className="rounded-2xl bg-slate-50/70 border border-slate-200/80 p-5 space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  Milestone Plan Schedule
                 </div>
-                <div className="mt-2 font-mono text-3xl font-black text-[#0a0a0a]">
+                <div className="font-mono text-2xl sm:text-3xl font-black text-slate-900">
                   {!isFullPayment && installments && installments > 1
-                    ? `${installments}`
-                    : "Full"}
+                    ? `${installments} Milestones`
+                    : "Single Payment"}
                 </div>
-                <div className="mt-1 text-xs font-semibold text-[#64748B]">
+                <div className="text-xs font-semibold text-slate-500">
                   {!isFullPayment && installments && installments > 1
-                    ? `Milestone checkpoints (${money(Math.round((totalCost - (deposit || 0)) / installments), currency)} each)`
-                    : "Single upfront full payment"}
+                    ? `~${formatCurrency(Math.round((totalCost - (deposit || 0)) / installments), currency)} per checkpoint`
+                    : "Single upfront disbursement"}
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 border-t border-[#F1ECE4] pt-5">
-              <div className="mb-2 flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-[#64748B]">
-                <FileText className="h-4 w-4 text-[#F3A712]" />
-                Scope
+            <div className="pt-4 border-t border-slate-100">
+              <div className="mb-2 flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                <FileText className="h-4 w-4 text-amber-500" />
+                <span>Deliverable Scope &amp; Legal Framework</span>
               </div>
-              <p className="max-w-3xl text-sm font-medium leading-7 text-[#334155]">
+              <p className="text-xs sm:text-sm font-medium leading-relaxed text-slate-600">
                 {service.description ||
-                  "This package can be attached to a client profile to create invoices, payment checkpoints, and pass-through tracking for the engagement."}
+                  "This service package can be directly attached to client case profiles to auto-generate invoices, track pass-through disbursements, and issue official payment receipts."}
               </p>
             </div>
           </section>
         </div>
 
+        {/* RIGHT COLUMN: SIDEBAR (4 COLS) */}
         <aside className="space-y-6">
-          <section className="rounded-[1.5rem] border border-[#EAE6DF] bg-white p-5 shadow-sm">
-            <div className="flex items-center justify-between gap-3 border-b border-[#F1ECE4] pb-4">
+          {/* System Record Card */}
+          <section className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div>
-                <div className="text-[11px] font-black uppercase tracking-wider text-[#64748B]">
-                  System record
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  System Record
                 </div>
-                <div className="mt-1 font-mono text-sm font-black text-[#0a0a0a]">
+                <div className="mt-0.5 font-mono text-sm font-black text-slate-900">
                   {service.code}
                 </div>
               </div>
-              <Receipt className="h-5 w-5 text-[#F3A712]" />
+              <Receipt className="h-5 w-5 text-amber-500" />
             </div>
 
-            <dl className="mt-2 divide-y divide-[#F5F1EC]">
+            <dl className="divide-y divide-slate-100">
               {[
-                ["Status", service.isActive ? "Active" : "Inactive"],
-                ["Currency", currency],
-                ["Created by", service.createdBy?.name || "System Admin"],
-                ["Created", dateLabel(service.createdAt, "long")],
-                ["Updated", dateLabel(service.updatedAt)],
+                ["Catalog Status", service.isActive ? "Active" : "Inactive"],
+                ["Billing Currency", currency],
+                ["Created By", service.createdBy?.name || "System Admin"],
+                ["Date Created", formatDate(service.createdAt)],
+                ["Last Updated", formatDate(service.updatedAt)],
               ].map(([label, value]) => (
                 <div
                   key={label}
-                  className="flex items-center justify-between gap-4 py-3 text-xs"
-                >
-                  <dt className="font-bold text-[#64748B]">{label}</dt>
-                  <dd className="text-right font-black text-[#0a0a0a]">{value}</dd>
+                  className="flex items-center justify-between gap-3 py-2.5 text-xs">
+                  <dt className="font-semibold text-slate-500">{label}</dt>
+                  <dd className="text-right font-bold text-slate-900">{value}</dd>
                 </div>
               ))}
             </dl>
           </section>
 
-          <section className="rounded-[1.5rem] border border-[#EAE6DF] bg-white p-5 shadow-sm">
-            <div className="mb-4 text-[11px] font-black uppercase tracking-wider text-[#64748B]">
-              Actions
+          {/* Quick Management Actions Card */}
+          <section className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs space-y-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Management Actions
             </div>
-            <div className="space-y-2">
-              <Button asChild className="h-11 w-full justify-start gap-2 bg-[#0a0a0a] text-white hover:bg-[#171717]">
-                <Link href={`/services/${service.code || service.id}/edit`}>
-                  <Pencil className="h-4 w-4 text-[#F3A712]" />
-                  Edit Service Offering
-                </Link>
-              </Button>
 
-              <Button asChild variant="outline" className="h-11 w-full justify-start gap-2 border-[#EAE6DF] hover:bg-[#FAF8F5]">
-                <Link href={ROUTES.CLIENT_CREATE}>
-                  <UserPlus className="h-4 w-4 text-[#F3A712]" />
-                  Enroll client with this package
-                </Link>
-              </Button>
+            <Button
+              asChild
+              className="w-full h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs gap-2 transition-all">
+              <Link href={`/services/${service.code || service.id}/edit`}>
+                <Pencil className="h-4 w-4" />
+                <span>Edit Service Offering</span>
+              </Link>
+            </Button>
 
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className="flex h-11 w-full items-center gap-3 rounded-xl border border-[#EAE6DF] bg-white px-4 text-left text-xs font-bold text-[#0a0a0a] transition-colors hover:bg-[#FAF8F5]"
-              >
-                {copiedLink ? (
-                  <Check className="h-4 w-4 text-emerald-600" />
-                ) : (
-                  <Share2 className="h-4 w-4 text-[#64748B]" />
-                )}
-                {copiedLink ? "Link copied" : "Copy service link"}
-              </button>
+            <Button
+              asChild
+              variant="outline"
+              className="w-full h-11 rounded-xl border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 gap-2 transition-all">
+              <Link href={ROUTES.CLIENT_CREATE}>
+                <UserPlus className="h-4 w-4 text-amber-600" />
+                <span>Enroll Client with this Package</span>
+              </Link>
+            </Button>
 
-              <button
-                type="button"
-                onClick={() => handleCopySku(service.code)}
-                className="flex h-11 w-full items-center gap-3 rounded-xl border border-[#EAE6DF] bg-white px-4 text-left text-xs font-bold text-[#0a0a0a] transition-colors hover:bg-[#FAF8F5]"
-              >
-                {copiedSku ? (
-                  <Check className="h-4 w-4 text-emerald-600" />
-                ) : (
-                  <Copy className="h-4 w-4 text-[#64748B]" />
-                )}
-                {copiedSku ? "SKU copied" : "Copy SKU"}
-              </button>
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer">
+              {copiedLink ? (
+                <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+              ) : (
+                <Share2 className="h-4 w-4 text-slate-400 shrink-0" />
+              )}
+              <span>{copiedLink ? "Link Copied" : "Copy Service Link"}</span>
+            </button>
 
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="flex h-11 w-full items-center gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 text-left text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100 disabled:opacity-50"
-              >
-                <Trash2 className="h-4 w-4" />
-                Deactivate offering
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => handleCopySku(service.code)}
+              className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-4 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer">
+              {copiedSku ? (
+                <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+              ) : (
+                <Copy className="h-4 w-4 text-slate-400 shrink-0" />
+              )}
+              <span>{copiedSku ? "SKU Copied" : "Copy SKU Identifier"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="flex h-11 w-full items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50/70 px-4 text-left text-xs font-bold text-rose-700 hover:bg-rose-100 transition-all disabled:opacity-50 cursor-pointer">
+              <Trash2 className="h-4 w-4 shrink-0" />
+              <span>Deactivate Offering</span>
+            </button>
           </section>
 
-          <section className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5">
+          {/* Compliance & Policy Alert */}
+          <section className="rounded-3xl border border-amber-200 bg-amber-50/70 p-5">
             <div className="flex gap-3">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
               <div>
-                <div className="text-xs font-black text-amber-900">
-                  Pass-through policy
+                <div className="text-xs font-extrabold text-amber-900">
+                  Regulatory Compliance Standard
                 </div>
-                <p className="mt-1 text-xs font-semibold leading-5 text-amber-800/80">
-                  Government, attorney, and auxiliary estimates are tracked
-                  separately from AdSkill advisory revenue.
+                <p className="mt-1 text-xs font-medium leading-relaxed text-amber-800/90">
+                  USCIS, attorney representation, and auxiliary filing costs are segregated into pass-through escrow accounts and excluded from AdSkill taxable gross advisory revenue.
                 </p>
               </div>
             </div>

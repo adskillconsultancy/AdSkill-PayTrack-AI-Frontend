@@ -545,21 +545,20 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed left-0 z-50 flex flex-col bg-white transition-all duration-300 ease-in-out shadow-[4px_0_24px_-4px_rgba(10, 10, 10,0.03)]",
-          isOpen
-            ? "top-0 h-screen w-64"
-            : "top-16 sm:top-18 h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] w-15 border-r border-[#EAE6DF]",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+          "fixed left-0 z-50 flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out shadow-[4px_0_24px_-4px_rgba(0,0,0,0.06)]",
+          "border-r border-sidebar-border/70",
+          isOpen ? "top-0 h-screen w-64" : "top-16 h-[calc(100vh-4rem)] w-20",
+          isMobileOpen ? "translate-x-0 w-72" : "-translate-x-full lg:translate-x-0",
         )}>
         {/* 🏢 1. HEADER (SHOWN ONLY WHEN SIDEBAR IS OPEN - COMPLETELY BORDERLESS) 🏢 */}
         {isOpen && (
-          <div className="h-16 sm:h-18 shrink-0 flex items-center justify-between px-3.5 transition-all">
+          <div className="h-16 shrink-0 flex items-center justify-between px-3.5 border-b border-sidebar-border/70 transition-all">
             {/* Full Brand Lockup when Open */}
             <Link
               href={ROUTES.DASHBOARD}
               onClick={closeMobileSidebar}
               className="flex items-center gap-3 overflow-hidden group">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] p-1.5 shadow-2xs group-hover:bg-[#F3A712]/10 transition-colors">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted p-1 shadow-2xs group-hover:bg-primary/10 transition-colors">
                 <Image
                   src="/logo-icon.svg"
                   alt="AdSkill PayTrack AI"
@@ -570,10 +569,10 @@ export function Sidebar() {
               </div>
 
               <div className="flex flex-col">
-                <div className="text-[17px] font-black tracking-tight text-[#0a0a0a] leading-tight">
+                <div className="text-base font-extrabold tracking-tight text-foreground leading-tight">
                   PayTrack<span className="text-[#F3A712]"> AI</span>
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#525252]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   by AdSkill
                 </div>
               </div>

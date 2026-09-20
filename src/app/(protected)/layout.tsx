@@ -42,123 +42,97 @@ export default function ProtectedLayout({
   };
 
   return (
-    <div className="min-h-screen bg-white text-[#0a0a0a] flex">
+    <div className="min-h-screen bg-background text-foreground flex">
       {/* Sidebar Navigation */}
       <Sidebar />
 
-      {/* ── MAIN CONTENT SHELL ── */}
+      {/* Main content shell */}
       <div
         className={cn(
-          "transition-all duration-300 ease-in-out min-h-screen flex-1 flex flex-col bg-white",
+          "transition-all duration-300 ease-in-out min-h-screen flex-1 flex flex-col min-w-0 bg-background",
           isOpen ? "lg:ml-64" : "lg:ml-0",
         )}>
-        {/* ── 1. TOP HEADER (BORDERLESS & SEAMLESS) ── */}
-        <header className="sticky top-0 z-30 flex h-16 sm:h-18 items-center justify-between bg-white px-4 sm:px-8 shrink-0">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-sidebar/95 backdrop-blur-md px-4 sm:px-6 shrink-0 border-b border-border/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)]">
           <div className="flex items-center gap-3">
-            {/* Mobile Hamburger */}
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden h-9 w-9 rounded-xl text-[#0a0a0a] hover:bg-[#FAF8F5]">
+              className="lg:hidden h-9 w-9 rounded-lg text-foreground hover:bg-muted">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open menu</span>
             </Button>
 
-            {/* When collapsed on desktop: show Logo squircle on the far left of header! (Exact match to screenshot 2) */}
             {!isOpen && (
-              <div className="hidden lg:flex w-[60px] -ml-4 sm:-ml-8 justify-center shrink-0">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FAF8F5] p-1.5 shadow-2xs">
+              <div className="hidden lg:flex w-10 justify-center shrink-0">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted p-1 shadow-2xs">
                   <Image
                     src="/logo-icon.svg"
                     alt="AdSkill PayTrack AI"
-                    width={28}
-                    height={28}
+                    width={26}
+                    height={26}
                     className="object-contain"
                   />
                 </div>
               </div>
             )}
 
-            {/* Brand Title on Left */}
             <div className="flex items-center gap-2">
-              <span className="text-base sm:text-lg font-black tracking-tight text-[#0a0a0a]">
+              <span className="text-sm sm:text-base font-bold tracking-tight text-foreground">
                 AdSkill PayTrack AI
               </span>
             </div>
           </div>
 
-          {/* Right Header Actions (Exact matching reference layout with global colors) */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Search Input */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
             <div className="relative hidden md:block w-52 lg:w-64">
               <Input
                 type="text"
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
                 placeholder="Search clients, invoices, payments..."
-                className="pl-9 pr-3 h-9 rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-xs text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal shadow-2xs focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
+                className="pl-9 pr-3 h-9 rounded-lg bg-background/50 border-border text-xs text-foreground placeholder:text-muted-foreground shadow-none focus-visible:border-ring focus-visible:ring-ring"
               />
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-[#94A3B8]" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             </div>
 
-            {/* Country Flag Pill Button */}
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-sm shadow-2xs" title={user?.country || "Account region"}>
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 border border-border text-sm shadow-2xs" title={user?.country || "Account region"}>
               <span>{user?.country === "Canada" ? "🇨🇦" : user?.country === "United Kingdom" ? "🇬🇧" : "🌐"}</span>
             </div>
 
-            {/* Settings Button */}
-            <button
-              type="button"
-              title="Settings"
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
+            <button type="button" title="Settings" className="flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-2xs cursor-pointer">
               <Settings className="h-4 w-4" />
             </button>
 
-            {/* Fullscreen Button */}
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
+            <button type="button" onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"} className="hidden sm:flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-2xs cursor-pointer">
               <Maximize2 className="h-4 w-4" />
             </button>
 
-            {/* Notification Bell with Badge */}
-            <button
-              type="button"
-              title="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#F1F5F9] transition-colors shadow-2xs cursor-pointer">
+            <button type="button" title="Notifications" className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-2xs cursor-pointer">
               <Bell className="h-4 w-4" />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#E11D48] ring-2 ring-white" />
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-sidebar" />
             </button>
 
-            {/* User Profile Badge */}
-            <div className="flex items-center gap-2.5 pl-1 sm:pl-2 cursor-pointer group">
-              <div className="relative h-9 w-9 rounded-full overflow-hidden border border-[#EAE6DF] bg-[#0a0a0a] text-[#F3A712] flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
+            <div className="flex items-center gap-2 pl-1 sm:pl-2 border-l border-border/70 cursor-pointer group">
+              <div className="relative h-8 w-8 rounded-lg overflow-hidden border border-border bg-foreground text-background flex items-center justify-center font-bold text-xs shadow-2xs shrink-0">
                 {user?.avatar ? <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" /> : (user?.name?.slice(0, 1).toUpperCase() || "U")}
               </div>
               <div className="hidden sm:block text-left">
-                <div className="text-xs font-bold text-[#0a0a0a] leading-none group-hover:text-[#F3A712] transition-colors">
+                <div className="text-xs font-semibold text-foreground leading-none group-hover:text-primary transition-colors">
                   {user?.preferredName || user?.name || "Account"}
                 </div>
-                <div className="text-[10px] font-medium text-[#64748B] mt-0.5">
+                <div className="text-[10px] text-muted-foreground mt-1">
                   {user?.role?.name || "User"}
                 </div>
               </div>
-              <ChevronDown className="h-3.5 w-3.5 text-[#64748B] group-hover:text-[#0a0a0a] transition-colors" />
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
           </div>
         </header>
 
-        {/* ── 2. MAIN BODY VIEWPORT (FLUSH ON TOP, LEFT & RIGHT; BORDERLESS CURVED CORNERS) ── */}
-        <div
-          className={cn(
-            "flex-1 bg-white pt-0 px-0 pb-3 sm:pb-4 transition-all duration-300",
-            !isOpen && "lg:ml-[60px]",
-          )}>
-          <main className="min-h-[calc(100vh-4rem)] sm:min-h-[calc(100vh-4.5rem)] bg-[hsl(0,0%,100%)] rounded-[64px] p-5 sm:p-6 space-y-5 shadow-xs">
+        <div className="flex-1 p-4 sm:p-6 pb-20 sm:pb-6 w-full">
+          <main className="min-h-[calc(100vh-4rem)] rounded-2xl bg-card border border-border/70 p-4 sm:p-6 space-y-6 shadow-sm">
             {children}
           </main>
         </div>
