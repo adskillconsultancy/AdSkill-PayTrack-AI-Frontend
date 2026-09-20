@@ -4,6 +4,20 @@ import type { ClientCase, CreateClientCaseInput, UpdateClientCaseInput } from "@
 
 export const clientCasesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    getAllCases: builder.query<ApiResponse<ClientCase[]>, { search?: string; status?: string; category?: string } | void>({
+      query: (params) => {
+        if (!params) return "/client-cases";
+        const queryParams = new URLSearchParams();
+        if (params.search) queryParams.append("search", params.search);
+        if (params.status) queryParams.append("status", params.status);
+        if (params.category) queryParams.append("category", params.category);
+        const qs = queryParams.toString();
+        return qs ? `/client-cases?${qs}` : "/client-cases";
+      },
+      providesTags: (result) => result?.data
+        ? [...result.data.map(({ id }) => ({ type: "Case" as const, id })), { type: "Case", id: "LIST" }]
+        : [{ type: "Case", id: "LIST" }],
+    }),
     getMyCases: builder.query<ApiResponse<ClientCase[]>, void>({
       query: () => "/client-cases/mine",
       providesTags: (result) => result?.data
@@ -26,4 +40,10 @@ export const clientCasesApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const { useGetMyCasesQuery, useGetClientCaseQuery, useCreateClientCaseMutation, useUpdateClientCaseMutation } = clientCasesApi;
+export const {
+  useGetAllCasesQuery,
+  useGetMyCasesQuery,
+  useGetClientCaseQuery,
+  useCreateClientCaseMutation,
+  useUpdateClientCaseMutation,
+} = clientCasesApi;

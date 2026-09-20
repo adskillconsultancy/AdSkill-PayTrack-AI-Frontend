@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { DataTable, ColumnDef } from "@/components/common/DataTable";
-import { useGetMyCasesQuery } from "@/services/api/clients/clientCasesApi";
+import { useGetAllCasesQuery } from "@/services/api/clients/clientCasesApi";
 import type { ClientCase, CaseStatus } from "@/types/client-case.types";
 import { FileText, ChevronRight, Eye, Copy, ExternalLink, MessageCircle, RefreshCw } from "lucide-react";
 import { ClientMetricCards } from "./ClientMetricCards";
@@ -37,7 +37,7 @@ const formatDate = (value: string) => new Intl.DateTimeFormat("en-US", { dateSty
 
 export function ClientListView({ pageTitle = "Application List", categoryLabel = "ALL APPLICATIONS", parentBreadcrumb = "Visa Applications" }: ClientListViewProps) {
   const router = useRouter();
-  const { data, isLoading, isError, refetch } = useGetMyCasesQuery();
+  const { data, isLoading, isError, refetch } = useGetAllCasesQuery();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
   const [destinationFilter, setDestinationFilter] = React.useState("ALL");

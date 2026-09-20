@@ -211,6 +211,7 @@ export interface Receipt {
 }
 
 export interface CreateClientCaseInput {
+  userId?: string;
   serviceId: string;
   destinationCountry?: string;
   caseCategory?: string;

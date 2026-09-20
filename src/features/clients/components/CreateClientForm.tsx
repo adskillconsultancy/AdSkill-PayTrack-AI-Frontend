@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { useGetServicesQuery } from "@/services/api/services/servicesApi";
-import { useGetUsersQuery } from "@/services/api/users/usersApi";
+import { useGetUsersQuery, useCreateUserMutation } from "@/services/api/users/usersApi";
 import {
   useCreateClientCaseMutation,
   useUpdateClientCaseMutation,
@@ -146,6 +146,7 @@ export function CreateClientForm() {
   const [createClientCase] = useCreateClientCaseMutation();
   const [updateClientCase] = useUpdateClientCaseMutation();
   const [createPaymentPlan] = useCreatePaymentPlanMutation();
+  const [createUser] = useCreateUserMutation();
 
   const [caseIdentifier, setCaseIdentifier] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -475,8 +476,50 @@ export function CreateClientForm() {
     setIsSubmitting(true);
 
     try {
-      // 1. Create client case in backend
+      let targetUserId = "";
+
+      if (intakeMode === "existing") {
+        if (!selectedExistingUser?.userId) {
+          setErrorNotice("Please select an existing registered client account from the list.");
+          setActiveTab("identity");
+          setIsSubmitting(false);
+          return;
+        }
+        targetUserId = selectedExistingUser.userId;
+      } else {
+        // NEW APPLICANT: Create user account first in backend with auto-generated clientId
+        if (!data.name?.trim() || !data.email?.trim()) {
+          setErrorNotice("Please provide the applicant's legal full name and email address.");
+          setActiveTab("identity");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const dialCode = data.countryCode || "+1";
+        const cleanPhone = data.phone?.trim() ? `${dialCode} ${data.phone.trim()}` : undefined;
+        const cleanWhatsapp = data.whatsappNumber?.trim() ? `${dialCode} ${data.whatsappNumber.trim()}` : cleanPhone;
+
+        const newUserRes = await createUser({
+          name: data.name.trim(),
+          preferredName: data.preferredName?.trim() || undefined,
+          email: data.email.toLowerCase().trim(),
+          password: `AdSkill@${new Date().getFullYear()}!`,
+          phone: cleanPhone,
+          whatsapp: cleanWhatsapp,
+          country: data.countryOfOrigin?.trim() || data.destinationCountry || undefined,
+          city: data.city?.trim() || undefined,
+          roleName: "CLIENT",
+        }).unwrap();
+
+        if (!newUserRes?.data?.id) {
+          throw new Error("Failed to create client user account.");
+        }
+        targetUserId = newUserRes.data.id;
+      }
+
+      // 1. Create client case in backend attached to the resolved target client
       const created = await createClientCase({
+        userId: targetUserId,
         serviceId: data.serviceId,
         destinationCountry: data.destinationCountry,
         caseCategory: data.visaCategory,
