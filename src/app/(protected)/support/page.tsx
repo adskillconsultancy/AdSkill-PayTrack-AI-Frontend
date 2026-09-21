@@ -1,583 +1,998 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import {
   AlertCircle,
   ArrowRight,
+  ArrowUpRight,
   BadgeCheck,
   Building,
+  Building2,
   Calendar,
   Check,
-  CheckCircle2,
+  CheckCheck,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
+  CircleDot,
   Clock,
   ExternalLink,
+  FileCheck,
   FileText,
-  Globe,
   HelpCircle,
+  Inbox,
+  Info,
   Loader2,
   Mail,
   MapPin,
   MessageCircle,
   MessageSquare,
   Phone,
+  PhoneCall,
+  Plus,
+  RefreshCw,
+  Search,
   Send,
   Shield,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   User,
   UserCheck,
+  Users,
+  X,
 } from "lucide-react";
-import { Button } from "@/components/common/Button";
+import { Button } from "@/components/common";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   useGetSupportOverviewQuery,
-  useCreateSupportInquiryMutation,
-  useGetMyInquiriesQuery,
+  useGetSupportConversationsQuery,
+  useGetSupportTicketByIdQuery,
+  useSendTicketMessageMutation,
+  useMarkTicketReadMutation,
+  useCreateSupportTicketMutation,
+  ConversationChannel,
 } from "@/services/api/support/supportApi";
 import { cn } from "@/lib/utils";
-import { ROUTES } from "@/constants/routes";
 
-const FAQS = [
-  {
-    q: "How do I make a payment against my invoice?",
-    a: "You can navigate to the Payments section in your sidebar and select 'Record Payment'. Choose your active application case, specify whether it's a general deposit or a milestone payment, select your payment channel (bKash, Nagad, Bank, Cash, etc.), and provide your transaction reference. Our accounting team will verify it within 24 business hours.",
-  },
-  {
-    q: "How are project milestones tracked and verified?",
-    a: "Milestones are defined during onboarding with clear deliverables and due dates. Once you or your advisor marks a milestone deliverable ready, it is reviewed by the client lead. Invoices and receipts are instantly generated upon payment confirmation.",
-  },
-  {
-    q: "Can I contact my consultant directly through WhatsApp?",
-    a: "Yes! If your consultant has configured their WhatsApp number, you'll find a direct WhatsApp link on your Support card above. Click it to open an encrypted direct chat with your assigned advisor.",
-  },
-  {
-    q: "Where can I download my receipts and official invoices?",
-    a: "Official signed invoices and payment receipts are available in the 'Invoices & Receipts' tab under Payments. You can download PDF copies anytime for accounting and tax records.",
-  },
-  {
-    q: "What should I do if an emergency arises outside normal hours?",
-    a: "For critical payment or case issues, use our 24/7 hotline or submit a High Priority inquiry form below. Our on-duty supervisor will be alerted immediately.",
-  },
+const QUICK_PROMPTS = [
+  "Please provide an update on my case filing timeline.",
+  "I have uploaded a bank wire deposit proof for verification.",
+  "Could you review my submitted identity and education certificates?",
+  "I would like to schedule a 30-minute consultation call.",
 ];
 
 export default function SupportPage() {
   const { user } = useAuth();
-  const { data: supportData, isLoading: isSupportLoading, refetch: refetchSupport } = useGetSupportOverviewQuery();
-  const { data: inquiriesData, isLoading: isInquiriesLoading, refetch: refetchInquiries } = useGetMyInquiriesQuery();
-  const [createInquiry, { isLoading: isSubmittingInquiry }] = useCreateSupportInquiryMutation();
+  const { isClientAccount, roleName } = usePermissions();
 
-  const [openFaq, setOpenFaq] = React.useState<number | null>(0);
-  const [inquirySubject, setInquirySubject] = React.useState("");
-  const [inquiryMessage, setInquiryMessage] = React.useState("");
-  const [inquiryCategory, setInquiryCategory] = React.useState<"BILLING_PAYMENT" | "MILESTONE_SCHEDULE" | "DOCUMENT_VERIFICATION" | "CASE_STATUS" | "GENERAL">("GENERAL");
-  const [inquiryPriority, setInquiryPriority] = React.useState<"LOW" | "NORMAL" | "URGENT">("NORMAL");
+  // Queries
+  const {
+    data: conversationsData,
+    isLoading: isConversationsLoading,
+    refetch: refetchConversations,
+  } = useGetSupportConversationsQuery(undefined, {
+    pollingInterval: 8000,
+  });
+
+  const { data: supportOverviewData } = useGetSupportOverviewQuery();
+
+  // State
+  const channels = conversationsData?.data?.activeChannels || [];
+  const [selectedChannelId, setSelectedChannelId] = React.useState<string | null>(null);
+  const [channelFilter, setChannelFilter] = React.useState<"ALL" | "CONSULTANT" | "MANAGEMENT">("ALL");
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [messageText, setMessageText] = React.useState("");
+  const [isNewTicketModalOpen, setIsNewTicketModalOpen] = React.useState(false);
+  const [showFaqModal, setShowFaqModal] = React.useState(false);
+  const [openFaqId, setOpenFaqId] = React.useState<string | null>("faq-1");
+
+  // New Ticket Modal Form State
+  const [newTargetType, setNewTargetType] = React.useState<"CONSULTANT" | "MANAGEMENT_ADMIN">("CONSULTANT");
+  const [newCategory, setNewCategory] = React.useState<any>("CASE_STATUS");
+  const [newSubject, setNewSubject] = React.useState("");
+  const [newInitialMessage, setNewInitialMessage] = React.useState("");
   const [selectedCaseId, setSelectedCaseId] = React.useState<string>("");
-  const [inquirySuccess, setInquirySuccess] = React.useState(false);
-  const [inquiryError, setInquiryError] = React.useState<string | null>(null);
 
-  const consultant = supportData?.data?.assignedConsultant;
-  const cases = supportData?.data?.activeCases || [];
-  const desk = supportData?.data?.centralSupport;
-  const inquiries = inquiriesData?.data || [];
+  // Mutations
+  const [sendMessage, { isLoading: isSendingMessage }] = useSendTicketMessageMutation();
+  const [markAsRead] = useMarkTicketReadMutation();
+  const [createTicket, { isLoading: isCreatingTicket }] = useCreateSupportTicketMutation();
 
-  const handleInquirySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inquirySubject.trim() || !inquiryMessage.trim()) {
-      setInquiryError("Please enter both a subject and a message.");
-      return;
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Set default selected channel once channels load
+  React.useEffect(() => {
+    if (channels.length > 0 && !selectedChannelId) {
+      setSelectedChannelId(channels[0].id);
     }
+  }, [channels, selectedChannelId]);
 
-    setInquiryError(null);
-    setInquirySuccess(false);
+  // Active channel details
+  const activeChannel = channels.find((c) => c.id === selectedChannelId) || channels[0] || null;
+  const isDirectPlaceholder = activeChannel?.id?.includes("-direct");
+
+  // Fetch full messages for active ticket if valid UUID
+  const shouldFetchTicket = Boolean(activeChannel?.id && !isDirectPlaceholder);
+  const {
+    data: ticketDetailsData,
+    isLoading: isTicketLoading,
+    refetch: refetchTicket,
+  } = useGetSupportTicketByIdQuery(activeChannel?.id || "", {
+    skip: !shouldFetchTicket,
+    pollingInterval: 6000,
+  });
+
+  const activeTicket = ticketDetailsData?.data || null;
+
+  // Mark as read when opening channel
+  React.useEffect(() => {
+    if (activeChannel?.id && !isDirectPlaceholder && activeChannel.unreadCount > 0) {
+      markAsRead(activeChannel.id);
+    }
+  }, [activeChannel?.id, isDirectPlaceholder, activeChannel?.unreadCount, markAsRead]);
+
+  // Auto-scroll messages to bottom
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  React.useEffect(() => {
+    scrollToBottom();
+  }, [activeTicket?.messages]);
+
+  // Handle Send Message
+  const handleSendMessage = async (e?: React.FormEvent, customText?: string) => {
+    if (e) e.preventDefault();
+    const textToSend = customText || messageText;
+    if (!textToSend.trim()) return;
+
+    const trimmed = textToSend.trim();
+    if (!customText) setMessageText("");
 
     try {
-      await createInquiry({
-        subject: inquirySubject.trim(),
-        message: inquiryMessage.trim(),
-        category: inquiryCategory,
-        priority: inquiryPriority,
+      if (isDirectPlaceholder || !activeChannel?.id) {
+        // Direct channel without ticket yet: initialize ticket
+        const targetType = activeChannel?.channelType || "MANAGEMENT_ADMIN";
+        const result = await createTicket({
+          targetType,
+          category: targetType === "CONSULTANT" ? "CASE_STATUS" : "GENERAL",
+          subject: targetType === "CONSULTANT" ? "Case Advisory Chat" : "Support Desk Inquiry",
+          initialMessage: trimmed,
+          caseId: activeChannel?.caseInfo?.id,
+        }).unwrap();
+
+        if (result?.data?.id) {
+          setSelectedChannelId(result.data.id);
+          refetchConversations();
+        }
+      } else {
+        // Send in existing ticket
+        await sendMessage({
+          ticketId: activeChannel.id,
+          message: trimmed,
+        }).unwrap();
+        refetchTicket();
+        refetchConversations();
+      }
+      setTimeout(scrollToBottom, 100);
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      if (!customText) setMessageText(trimmed);
+    }
+  };
+
+  // Handle Create New Conversation Topic
+  const handleCreateNewTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubject.trim() || !newInitialMessage.trim()) return;
+
+    try {
+      const result = await createTicket({
+        targetType: newTargetType,
+        category: newCategory,
+        subject: newSubject.trim(),
+        initialMessage: newInitialMessage.trim(),
         caseId: selectedCaseId || undefined,
       }).unwrap();
 
-      setInquirySuccess(true);
-      setInquirySubject("");
-      setInquiryMessage("");
-      setSelectedCaseId("");
-      refetchInquiries();
-      setTimeout(() => setInquirySuccess(false), 6000);
-    } catch (err: any) {
-      setInquiryError(err?.data?.message || "Failed to submit inquiry. Please try again.");
+      setIsNewTicketModalOpen(false);
+      setNewSubject("");
+      setNewInitialMessage("");
+      if (result?.data?.id) {
+        setSelectedChannelId(result.data.id);
+      }
+      refetchConversations();
+    } catch (err) {
+      console.error("Failed to create ticket:", err);
     }
   };
 
-  const getWhatsAppLink = (number?: string | null) => {
-    if (!number) return null;
-    const cleaned = number.replace(/[^0-9]/g, "");
-    return `https://wa.me/${cleaned}?text=${encodeURIComponent("Hello! I am contacting you regarding my AdSkill application case.")}`;
-  };
+  // Filtered Channels
+  const filteredChannels = channels.filter((channel) => {
+    const matchesSearch =
+      channel.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (channel.subtitle && channel.subtitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      channel.ticketCode.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (channelFilter === "CONSULTANT") return channel.channelType === "CONSULTANT";
+    if (channelFilter === "MANAGEMENT") return channel.channelType === "MANAGEMENT_ADMIN";
+    return true;
+  });
+
+  const overview = supportOverviewData?.data;
+  const activeCases = overview?.activeCases || [];
+  const central = overview?.centralSupport;
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* 🧭 Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border/40 pb-6">
+    <div className="space-y-4">
+      {/* 1. TOP BREADCRUMB & HEADER SECTION (Site Signature Style) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border-b border-border/70 pb-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-2">
-            <ShieldCheck className="h-3.5 w-3.5" /> AdSkill Client Care & Advisory
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
-            Client Support & Advisory Hub
+          <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
+            <span>Support & Advisory Hub</span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#F3A712]/15 text-[#B47B00] dark:text-[#F3A712] border border-[#F3A712]/30">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#F3A712] animate-pulse" />
+              Direct Advisory
+            </span>
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Connect directly with your assigned consultant, submit official inquiries, and access fast-track help.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link href={ROUTES.PROFILE}>
-            <Button variant="outline" className="gap-2 text-xs">
-              <User className="h-4 w-4" /> View My Profile
-            </Button>
-          </Link>
-          <Link href={ROUTES.PAYMENT_RECORD}>
-            <Button className="gap-2 text-xs bg-primary hover:bg-primary/90">
-              <Sparkles className="h-4 w-4" /> Record Payment
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* 🌟 Top Row: Assigned Consultant & Central Help Desk */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Assigned Consultant Card */}
-        <div className="lg:col-span-2 rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card to-primary/5 p-6 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-            <UserCheck className="w-44 h-44" />
-          </div>
-
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-lg">
-                {consultant ? (consultant.name?.[0] || "C") : <User className="h-6 w-6" />}
-              </div>
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                  Dedicated Advisor
-                </span>
-                <h2 className="text-xl font-bold text-foreground">
-                  {consultant ? consultant.name : isSupportLoading ? "Loading consultant..." : "Senior AdSkill Advisory Team"}
-                </h2>
-                {consultant?.role && (
-                  <p className="text-xs text-muted-foreground">{consultant.role}</p>
-                )}
-              </div>
-            </div>
-
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              Active Assignment
-            </span>
-          </div>
-
-          <p className="text-sm text-muted-foreground mb-6">
-            Your consultant oversees your active application cases, reviews milestone requirements, and coordinates payments with the financial team.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-border/40">
-            {/* Direct Email */}
-            <div className="p-3.5 rounded-xl bg-background/60 border border-border/50">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <Mail className="h-3.5 w-3.5 text-primary" /> Consultant Email
-              </div>
-              <p className="text-xs font-semibold text-foreground truncate select-all">
-                {consultant?.email || "advisory@adskill.com"}
-              </p>
-            </div>
-
-            {/* Direct Phone */}
-            <div className="p-3.5 rounded-xl bg-background/60 border border-border/50">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <Phone className="h-3.5 w-3.5 text-primary" /> Phone Line
-              </div>
-              <p className="text-xs font-semibold text-foreground truncate select-all">
-                {consultant?.phone || "+880 1700-000000"}
-              </p>
-            </div>
-
-            {/* WhatsApp Direct Action */}
-            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col justify-between">
-              <div className="flex items-center gap-2 text-xs font-medium text-emerald-600 dark:text-emerald-400 mb-1">
-                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp Direct
-              </div>
-              {consultant?.whatsapp || consultant?.phone ? (
-                <a
-                  href={getWhatsAppLink(consultant?.whatsapp || consultant?.phone) || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 underline underline-offset-2"
-                >
-                  Open WhatsApp Chat <ExternalLink className="h-3 w-3" />
-                </a>
-              ) : (
-                <span className="text-xs text-muted-foreground">Available on desk line</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Central AdSkill Help Desk Card */}
-        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
-              <Building className="h-3.5 w-3.5" /> Central Support
-            </div>
-            <h3 className="text-lg font-bold text-foreground mb-1">
-              {desk?.agencyName || "AdSkill Client Help Desk"}
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              Our central operations team is on standby to assist with verification, billing queries, and emergencies.
-            </p>
-
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center gap-2.5 text-muted-foreground">
-                <Mail className="h-4 w-4 text-primary shrink-0" />
-                <span className="font-semibold text-foreground">{desk?.email || "support@adskill.com"}</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-muted-foreground">
-                <Phone className="h-4 w-4 text-primary shrink-0" />
-                <span className="font-semibold text-foreground">{desk?.hotline || "+880 1711-000000"}</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-muted-foreground">
-                <Clock className="h-4 w-4 text-primary shrink-0" />
-                <span>{desk?.businessHours || "Sat - Thu: 9:00 AM - 7:00 PM (BST)"}</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-muted-foreground">
-                <MapPin className="h-4 w-4 text-primary shrink-0" />
-                <span>{desk?.officeAddress || "Dhaka, Bangladesh"}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-border/40">
-            <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1.5">
-              <Shield className="h-3.5 w-3.5 text-emerald-500" />
-              Direct escalations: {desk?.responseTime || "Within 4 business hours"}.
+          <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mt-0.5">
+            <span>Communications</span>
+            <ChevronRight className="h-3 w-3 text-muted-foreground/70" />
+            <span className="text-foreground font-bold">
+              {isClientAccount ? "Advisory & Support Messenger" : "Staff Support Desk"}
             </span>
           </div>
         </div>
-      </div>
 
-      {/* 🚀 Middle Section: Submit Ticket & Active Cases Snapshot */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Ticket Submission Form (7 Cols) */}
-        <div className="lg:col-span-7 rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <Send className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-foreground">Submit a Direct Inquiry</h3>
-              <p className="text-xs text-muted-foreground">
-                Sent straight to your consultant and client relationship supervisor.
-              </p>
-            </div>
-          </div>
+        <div className="flex items-center gap-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFaqModal(true)}
+            className="cursor-pointer gap-1.5 font-semibold text-xs border-[#EAE6DF]"
+          >
+            <HelpCircle className="h-3.5 w-3.5 text-[#F3A712]" />
+            <span>Knowledge Base & FAQs</span>
+          </Button>
 
-          {inquirySuccess && (
-            <div className="mb-5 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
-              <div>
-                <p className="font-semibold">Inquiry submitted successfully!</p>
-                <p className="text-[11px] text-muted-foreground">Your inquiry has been logged and assigned to your advisor team.</p>
-              </div>
-            </div>
-          )}
-
-          {inquiryError && (
-            <div className="mb-5 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />
-              <span>{inquiryError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleInquirySubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Linked Case Dropdown */}
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Related Case
-                </label>
-                <select
-                  value={selectedCaseId}
-                  onChange={(e) => setSelectedCaseId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
-                >
-                  <option value="">General Account</option>
-                  {cases.map((c: any) => (
-                    <option key={c.id} value={c.id}>
-                      {c.caseCode} - {c.serviceName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Category
-                </label>
-                <select
-                  value={inquiryCategory}
-                  onChange={(e) => setInquiryCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
-                >
-                  <option value="GENERAL">General Query</option>
-                  <option value="BILLING_PAYMENT">Billing & Payment</option>
-                  <option value="MILESTONE_SCHEDULE">Milestone & Delivery</option>
-                  <option value="DOCUMENT_VERIFICATION">Document Verification</option>
-                  <option value="CASE_STATUS">Case Status</option>
-                </select>
-              </div>
-
-              {/* Priority */}
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Priority Level
-                </label>
-                <select
-                  value={inquiryPriority}
-                  onChange={(e) => setInquiryPriority(e.target.value as any)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
-                >
-                  <option value="LOW">Low</option>
-                  <option value="NORMAL">Normal</option>
-                  <option value="URGENT">Urgent</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Subject */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Subject <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g., Query regarding Milestone deliverable sign-off"
-                value={inquirySubject}
-                onChange={(e) => setInquirySubject(e.target.value)}
-                required
-                className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-primary focus:outline-none"
-              />
-            </div>
-
-            {/* Message Body */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                Message Details <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                rows={4}
-                placeholder="Please describe your question or issue in detail. Include any relevant reference numbers or timeline requirements."
-                value={inquiryMessage}
-                onChange={(e) => setInquiryMessage(e.target.value)}
-                required
-                className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-primary focus:outline-none resize-none"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isSubmittingInquiry || !inquirySubject.trim() || !inquiryMessage.trim()}
-              className="gap-2 text-xs w-full sm:w-auto"
-            >
-              {isSubmittingInquiry ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4" /> Send Inquiry to Advisor
-                </>
-              )}
-            </Button>
-          </form>
-        </div>
-
-        {/* Active Cases Snapshot (5 Cols) */}
-        <div className="lg:col-span-5 rounded-2xl border border-border/60 bg-card p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" />
-                <h3 className="text-base font-bold text-foreground">Your Active Cases</h3>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">
-                {cases.length} Case{cases.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-
-            <p className="text-xs text-muted-foreground mb-4">
-              Overview of your applications currently handled by AdSkill consultants.
-            </p>
-
-            <div className="space-y-3">
-              {cases.length === 0 ? (
-                <div className="p-6 rounded-xl border border-dashed border-border/60 text-center">
-                  <p className="text-xs text-muted-foreground">No active cases under this client profile.</p>
-                </div>
-              ) : (
-                cases.map((c: any) => (
-                  <div
-                    key={c.id}
-                    className="p-3.5 rounded-xl border border-border/50 bg-background/60 hover:border-border transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className="text-xs font-mono font-bold text-primary">{c.caseCode}</span>
-                      <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                        {c.status || "ACTIVE"}
-                      </span>
-                    </div>
-                    <p className="text-xs font-semibold text-foreground truncate">{c.serviceName}</p>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/40 text-[11px] text-muted-foreground">
-                      <span>Destination: {c.destinationCountry || "Global"}</span>
-                      <span className="font-medium text-foreground">{c.financialStatus}</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <div className="mt-6 pt-4 border-t border-border/40">
-            <Link href={ROUTES.PAYMENTS} className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-              View full payment breakdown & receipts <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* 📜 Past Support Inquiries Timeline */}
-      <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <MessageSquare className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-foreground">Recent Inquiries & Requests</h3>
-              <p className="text-xs text-muted-foreground">
-                Track the status and official responses to questions you have submitted.
-              </p>
-            </div>
-          </div>
-
-          <Button variant="outline" size="sm" onClick={() => refetchInquiries()} className="text-xs">
-            Refresh
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setIsNewTicketModalOpen(true)}
+            className="cursor-pointer gap-1.5 font-bold text-xs bg-[#0a0a0a] text-white hover:bg-[#171717] dark:bg-[#F3A712] dark:text-black shadow-xs"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>New Inquiry Topic</span>
           </Button>
         </div>
+      </div>
 
-        {isInquiriesLoading ? (
-          <div className="py-12 flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      {/* 2. KPI / ASSISTANCE QUICK HIGHLIGHT CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card 1: Assigned Advisor */}
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex items-center justify-between hover:border-[#F3A712]/40 transition-colors">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+              ASSIGNED ADVISOR
+            </div>
+            <div className="text-sm font-bold text-foreground truncate mt-1">
+              {overview?.assignedConsultant?.name || "Senior Immigration Advisor"}
+            </div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              {overview?.assignedConsultant?.officeHours || "Mon-Fri: 9AM - 6PM EST"}
+            </div>
           </div>
-        ) : inquiries.length === 0 ? (
-          <div className="py-10 text-center border border-dashed border-border/60 rounded-xl">
-            <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
-            <p className="text-xs font-semibold text-foreground">No inquiries submitted yet</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Whenever you need guidance, submit a ticket above and your advisor will reply here.
-            </p>
+          <div className="h-10 w-10 rounded-full bg-[#F3A712]/15 text-[#B47B00] dark:text-[#F3A712] flex items-center justify-center shrink-0 shadow-2xs">
+            <UserCheck className="h-5 w-5" />
           </div>
-        ) : (
-          <div className="divide-y divide-border/40">
-            {inquiries.map((inq: any) => (
-              <div key={inq.id} className="py-4 space-y-2">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-foreground">{inq.subject}</span>
-                    <span
-                      className={cn(
-                        "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
-                        inq.status === "RESOLVED"
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                          : inq.status === "IN_PROGRESS"
-                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                      )}
-                    >
-                      {inq.status || "OPEN"}
-                    </span>
-                    <span className="text-[10px] font-mono text-muted-foreground">
-                      {inq.ticketCode}
-                    </span>
+        </div>
+
+        {/* Card 2: Central Hotline */}
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex items-center justify-between hover:border-blue-500/30 transition-colors">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+              OFFICIAL HOTLINE
+            </div>
+            <div className="text-sm font-bold text-foreground truncate mt-1">
+              {central?.hotline || "+1 (800) 555-SKILL"}
+            </div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              Toll-free verification desk
+            </div>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
+            <PhoneCall className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Card 3: Priority WhatsApp */}
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex items-center justify-between hover:border-emerald-500/30 transition-colors">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+              DIRECT WHATSAPP
+            </div>
+            <div className="text-sm font-bold text-foreground truncate mt-1">
+              {overview?.assignedConsultant?.whatsapp || central?.whatsapp || "+1 (212) 555-0199"}
+            </div>
+            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
+              Online for urgent queries
+            </div>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs">
+            <MessageCircle className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Card 4: Guaranteed SLA */}
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-xs flex items-center justify-between hover:border-purple-500/30 transition-colors">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+              RESPONSE GUARANTEE
+            </div>
+            <div className="text-sm font-bold text-foreground truncate mt-1">
+              Within 2-4 Business Hours
+            </div>
+            <div className="text-[11px] text-muted-foreground truncate">
+              Archived in your legal case file
+            </div>
+          </div>
+          <div className="h-10 w-10 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* 3. MAIN MESSENGER HUB (Two Column Editorial FinTech Layout) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 rounded-2xl border border-border bg-card shadow-sm overflow-hidden h-[680px]">
+        {/* LEFT COLUMN: Conversation Inbox & Channels (5 cols on lg) */}
+        <div className="lg:col-span-4 border-r border-border flex flex-col h-full bg-[#FAF8F5]/60 dark:bg-card/40">
+          {/* Search Header */}
+          <div className="p-3.5 border-b border-border/80 space-y-2.5 bg-card/60">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search conversations, advisor, case..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#F3A712]/30 focus:border-[#F3A712]"
+              />
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1 p-1 bg-muted/70 rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setChannelFilter("ALL")}
+                className={cn(
+                  "flex-1 py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer",
+                  channelFilter === "ALL"
+                    ? "bg-card text-foreground font-bold shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                All Chats
+              </button>
+              <button
+                type="button"
+                onClick={() => setChannelFilter("CONSULTANT")}
+                className={cn(
+                  "flex-1 py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer",
+                  channelFilter === "CONSULTANT"
+                    ? "bg-card text-[#B47B00] dark:text-[#F3A712] font-bold shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Advisor
+              </button>
+              <button
+                type="button"
+                onClick={() => setChannelFilter("MANAGEMENT")}
+                className={cn(
+                  "flex-1 py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer",
+                  channelFilter === "MANAGEMENT"
+                    ? "bg-card text-foreground font-bold shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Support Desk
+              </button>
+            </div>
+          </div>
+
+          {/* Channels List */}
+          <div className="flex-1 overflow-y-auto p-2.5 space-y-2">
+            {isConversationsLoading ? (
+              <div className="flex flex-col items-center justify-center h-48 text-muted-foreground text-xs">
+                <Loader2 className="h-6 w-6 animate-spin mb-2 text-[#F3A712]" />
+                <span>Connecting live desk...</span>
+              </div>
+            ) : filteredChannels.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-48 text-center p-4">
+                <Inbox className="h-8 w-8 text-muted-foreground/60 mb-2" />
+                <p className="text-xs font-bold text-foreground">No channels found</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Click 'New Inquiry Topic' above to start a conversation
+                </p>
+              </div>
+            ) : (
+              filteredChannels.map((channel) => {
+                const isSelected = channel.id === activeChannel?.id;
+                const isConsultant = channel.channelType === "CONSULTANT";
+
+                return (
+                  <div
+                    key={channel.id}
+                    onClick={() => setSelectedChannelId(channel.id)}
+                    className={cn(
+                      "group relative flex items-start gap-3 p-3.5 rounded-xl cursor-pointer transition-all duration-150",
+                      isSelected
+                        ? "bg-card border border-[#F3A712]/50 shadow-xs border-l-4 border-l-[#F3A712]"
+                        : "hover:bg-muted/70 border border-transparent"
+                    )}
+                  >
+                    {/* Avatar Icon with presence badge */}
+                    <div className="relative shrink-0 mt-0.5">
+                      <div
+                        className={cn(
+                          "h-11 w-11 rounded-full flex items-center justify-center font-bold text-sm shadow-xs border",
+                          isConsultant
+                            ? "bg-[#0a0a0a] text-[#F3A712] border-[#F3A712]/30"
+                            : "bg-muted text-foreground border-border"
+                        )}
+                      >
+                        {isConsultant ? (
+                          <UserCheck className="h-5 w-5" />
+                        ) : (
+                          <Building2 className="h-5 w-5" />
+                        )}
+                      </div>
+                      <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background" />
+                    </div>
+
+                    {/* Channel Metadata */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <h3 className="text-xs font-bold text-foreground truncate">
+                          {channel.title}
+                        </h3>
+                        {channel.lastMessage?.createdAt && (
+                          <span className="text-[10px] text-muted-foreground font-medium shrink-0">
+                            {new Date(channel.lastMessage.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1.5 mb-1.5">
+                        <span
+                          className={cn(
+                            "inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
+                            isConsultant
+                              ? "bg-[#F3A712]/15 text-[#B47B00] dark:text-[#F3A712]"
+                              : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {isConsultant ? "Assigned Advisor" : "Central Desk"}
+                        </span>
+
+                        {channel.subtitle && (
+                          <span className="text-[10px] text-muted-foreground truncate font-medium">
+                            {channel.subtitle}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-muted-foreground truncate leading-snug">
+                        {channel.lastMessage ? (
+                          <>
+                            {channel.lastMessage.isFromMe && <span className="font-semibold text-foreground">You: </span>}
+                            <span>{channel.lastMessage.text}</span>
+                          </>
+                        ) : (
+                          <span className="italic text-muted-foreground/70">Click to start messaging...</span>
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Unread Counter Badge */}
+                    {channel.unreadCount > 0 && (
+                      <span className="shrink-0 px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-[#F3A712] text-black shadow-xs animate-bounce">
+                        {channel.unreadCount}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-[11px] text-muted-foreground">
-                    {new Date(inq.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN: Active Chat Window (7 cols on lg) */}
+        <div className="lg:col-span-8 flex flex-col h-full bg-background">
+          {activeChannel ? (
+            <>
+              {/* Active Conversation Top Banner */}
+              <div className="p-3.5 border-b border-border flex items-center justify-between gap-3 bg-card/80 backdrop-blur-xs">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 border",
+                      activeChannel.channelType === "CONSULTANT"
+                        ? "bg-[#0a0a0a] text-[#F3A712] border-[#F3A712]/30"
+                        : "bg-muted text-foreground border-border"
+                    )}
+                  >
+                    {activeChannel.channelType === "CONSULTANT" ? (
+                      <UserCheck className="h-5 w-5" />
+                    ) : (
+                      <Building2 className="h-5 w-5" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-bold text-foreground truncate">
+                        {activeTicket?.handlerInfo?.name || activeChannel.title}
+                      </h2>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F3A712]/15 text-[#B47B00] dark:text-[#F3A712]">
+                        {activeTicket?.handlerInfo?.role || activeChannel.avatarRole}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium truncate mt-0.5">
+                      {activeChannel.caseInfo && (
+                        <span className="text-foreground font-bold">
+                          Case: {activeChannel.caseInfo.caseCode}
+                        </span>
+                      )}
+                      {activeChannel.caseInfo && <span>•</span>}
+                      <span>{activeChannel.contact?.officeHours || "Business Hours: 9 AM - 6 PM EST"}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{inq.content || inq.message}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ❓ Client FAQ Accordion */}
-      <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-            <HelpCircle className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-foreground">Frequently Asked Questions</h3>
-            <p className="text-xs text-muted-foreground">
-              Quick answers about payment schedules, invoice receipts, and milestone verification.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          {FAQS.map((faq, idx) => {
-            const isOpen = openFaq === idx;
-            return (
-              <div
-                key={idx}
-                className="rounded-xl border border-border/50 bg-background/50 overflow-hidden transition-all"
-              >
-                <button
-                  onClick={() => setOpenFaq(isOpen ? null : idx)}
-                  className="w-full px-4 py-3.5 flex items-center justify-between text-left hover:bg-muted/40 transition-colors"
-                >
-                  <span className="text-xs font-semibold text-foreground flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    {faq.q}
-                  </span>
-                  {isOpen ? (
-                    <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+                {/* Direct Action Contacts */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {activeChannel.contact?.whatsapp && (
+                    <a
+                      href={`https://wa.me/${activeChannel.contact.whatsapp.replace(/[^0-9]/g, "")}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 transition-colors border border-emerald-500/20 cursor-pointer"
+                      title="Open WhatsApp Chat"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </a>
                   )}
-                </button>
-                {isOpen && (
-                  <div className="px-4 pb-4 pt-1 text-xs text-muted-foreground leading-relaxed border-t border-border/30 bg-muted/10">
-                    {faq.a}
+
+                  {activeChannel.contact?.phone && (
+                    <a
+                      href={`tel:${activeChannel.contact.phone}`}
+                      className="p-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border cursor-pointer"
+                      title="Call Direct Phone"
+                    >
+                      <Phone className="h-4 w-4" />
+                    </a>
+                  )}
+
+                  {activeChannel.contact?.email && (
+                    <a
+                      href={`mailto:${activeChannel.contact.email}`}
+                      className="p-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border cursor-pointer"
+                      title="Send Official Email"
+                    >
+                      <Mail className="h-4 w-4" />
+                    </a>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      refetchTicket();
+                      refetchConversations();
+                    }}
+                    className="p-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border cursor-pointer"
+                    title="Refresh Messages"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Message Thread Scroll Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
+                {isTicketLoading ? (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs">
+                    <Loader2 className="h-6 w-6 animate-spin mb-2 text-[#F3A712]" />
+                    <span>Loading conversation history...</span>
                   </div>
+                ) : !activeTicket || activeTicket.messages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center max-w-md mx-auto p-6 space-y-3">
+                    <div className="h-12 w-12 rounded-full bg-[#F3A712]/15 text-[#B47B00] dark:text-[#F3A712] flex items-center justify-center shadow-xs">
+                      <Sparkles className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-sm font-bold text-foreground">
+                      Start your advisory dialogue with {activeChannel.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Questions regarding immigration documentation, milestone installments, and wire settlements sent here are logged into your case file.
+                    </p>
+
+                    <div className="pt-2 text-left w-full space-y-1.5">
+                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground text-center mb-1">
+                        QUICK PROMPTS (CLICK TO SEND)
+                      </div>
+                      {QUICK_PROMPTS.map((prompt, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => handleSendMessage(undefined, prompt)}
+                          className="w-full text-left p-2.5 rounded-xl bg-card border border-border hover:border-[#F3A712]/60 hover:bg-[#FAF8F5]/80 dark:hover:bg-card text-xs text-foreground font-medium transition-all shadow-2xs flex items-center justify-between group cursor-pointer"
+                        >
+                          <span>"{prompt}"</span>
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[#F3A712] transition-colors" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Official Legal & Audit Record Header Notice */}
+                    <div className="flex items-center justify-center">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold bg-card border border-border text-muted-foreground shadow-2xs">
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                        <span>AdSkill Official Advisory Channel • End-to-End Audit Logged</span>
+                      </div>
+                    </div>
+
+                    {/* Messages List */}
+                    {activeTicket.messages.map((msg, idx) => {
+                      const isMe = msg.senderId === user?.id;
+
+                      return (
+                        <div
+                          key={msg.id || idx}
+                          className={cn("flex flex-col", isMe ? "items-end" : "items-start")}
+                        >
+                          <div className={cn("flex items-end gap-2.5 max-w-[82%]", isMe && "flex-row-reverse")}>
+                            {!isMe && (
+                              <div className="h-7 w-7 rounded-full bg-[#0a0a0a] text-[#F3A712] flex items-center justify-center text-[11px] font-black shrink-0 border border-[#F3A712]/30 mb-1 shadow-2xs">
+                                {msg.sender.name.charAt(0)}
+                              </div>
+                            )}
+
+                            <div>
+                              {!isMe && (
+                                <div className="flex items-center gap-2 mb-1 ml-1">
+                                  <span className="text-[11px] font-bold text-foreground">
+                                    {msg.sender.name}
+                                  </span>
+                                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#F3A712]/15 text-[#B47B00] dark:text-[#F3A712] uppercase tracking-wider">
+                                    {msg.sender.role?.name || (msg.isStaffReply ? "Staff" : "Client")}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Message Bubble (Luxury Black for User, Card White for Staff) */}
+                              <div
+                                className={cn(
+                                  "rounded-2xl px-4 py-2.5 text-xs leading-relaxed break-words shadow-2xs",
+                                  isMe
+                                    ? "bg-[#0a0a0a] text-white rounded-br-xs dark:bg-zinc-800 dark:text-zinc-100"
+                                    : "bg-card border border-border text-foreground rounded-bl-xs"
+                                )}
+                              >
+                                {msg.message}
+                              </div>
+
+                              {/* Timestamp and Read Status */}
+                              <div
+                                className={cn(
+                                  "flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1 px-1",
+                                  isMe ? "justify-end" : "justify-start"
+                                )}
+                              >
+                                <span>
+                                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                                {isMe && (
+                                  <CheckCheck
+                                    className={cn(
+                                      "h-3 w-3",
+                                      msg.readAt ? "text-[#F3A712]" : "text-muted-foreground"
+                                    )}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </>
                 )}
               </div>
-            );
-          })}
+
+              {/* Bottom Message Input Area */}
+              <div className="p-3.5 border-t border-border bg-card space-y-2">
+                {/* Quick chip suggestions if message is empty */}
+                {!messageText && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap mr-1">
+                      Quick:
+                    </span>
+                    {QUICK_PROMPTS.slice(0, 3).map((prompt, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setMessageText(prompt)}
+                        className="px-2.5 py-1 rounded-lg bg-muted/60 hover:bg-muted border border-border text-[11px] text-muted-foreground hover:text-foreground font-medium whitespace-nowrap transition-colors cursor-pointer"
+                      >
+                        {prompt.slice(0, 32)}...
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <form
+                  onSubmit={handleSendMessage}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder={`Message ${activeChannel.title}... (Press Enter to send)`}
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    className="flex-1 px-4 py-2.5 text-xs rounded-xl bg-background border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#F3A712]/30 focus:border-[#F3A712]"
+                  />
+
+                  <Button
+                    type="submit"
+                    disabled={!messageText.trim() || isSendingMessage || isCreatingTicket}
+                    className="h-10 px-5 rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] dark:bg-[#F3A712] dark:text-black font-bold shadow-xs cursor-pointer"
+                  >
+                    {isSendingMessage || isCreatingTicket ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <span>Send</span>
+                        <Send className="h-3.5 w-3.5 ml-1.5 text-[#F3A712] dark:text-black" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-xs">
+              Select a conversation channel to start messaging
+            </div>
+          )}
         </div>
       </div>
+
+      {/* 4. NEW INQUIRY MODAL (Site Signature FinTech Modal) */}
+      {isNewTicketModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/40">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-[#F3A712]/15 text-[#B47B00] dark:text-[#F3A712] flex items-center justify-center">
+                  <Plus className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Start a New Support or Advisory Topic
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Select target recipient and describe your request
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewTicketModalOpen(false)}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateNewTicket} className="p-5 space-y-4">
+              {/* Routing Cards */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground uppercase tracking-wider text-[10px]">
+                  WHO IS THIS INQUIRY FOR?
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div
+                    onClick={() => setNewTargetType("CONSULTANT")}
+                    className={cn(
+                      "p-3.5 rounded-xl border cursor-pointer transition-all",
+                      newTargetType === "CONSULTANT"
+                        ? "border-[#F3A712] bg-[#F3A712]/10 ring-2 ring-[#F3A712]/20"
+                        : "border-border hover:border-border/80"
+                    )}
+                  >
+                    <UserCheck className="h-5 w-5 mb-1.5 text-[#F3A712]" />
+                    <p className="text-xs font-bold text-foreground">Assigned Consultant</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                      Case status, legal filings, document reviews
+                    </p>
+                  </div>
+
+                  <div
+                    onClick={() => setNewTargetType("MANAGEMENT_ADMIN")}
+                    className={cn(
+                      "p-3.5 rounded-xl border cursor-pointer transition-all",
+                      newTargetType === "MANAGEMENT_ADMIN"
+                        ? "border-[#F3A712] bg-[#F3A712]/10 ring-2 ring-[#F3A712]/20"
+                        : "border-border hover:border-border/80"
+                    )}
+                  >
+                    <Building2 className="h-5 w-5 mb-1.5 text-foreground" />
+                    <p className="text-xs font-bold text-foreground">Central Support Desk</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
+                      Bank wires, milestone plans, fee invoices
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Case Dropdown if available */}
+              {activeCases.length > 0 && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-foreground uppercase tracking-wider">
+                    RELATED CLIENT CASE (OPTIONAL)
+                  </label>
+                  <select
+                    value={selectedCaseId}
+                    onChange={(e) => setSelectedCaseId(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl bg-background border border-border text-foreground font-medium"
+                  >
+                    <option value="">General inquiry (No specific case attached)</option>
+                    {activeCases.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.caseCode} — {c.serviceName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Subject */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-foreground uppercase tracking-wider">
+                  TOPIC SUBJECT
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Wire Transfer Reference Verification"
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-background border border-border text-foreground font-medium"
+                />
+              </div>
+
+              {/* Initial Message */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-foreground uppercase tracking-wider">
+                  INITIAL MESSAGE
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Describe your inquiry with transaction dates, reference IDs or questions..."
+                  value={newInitialMessage}
+                  onChange={(e) => setNewInitialMessage(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-background border border-border text-foreground font-medium leading-relaxed"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsNewTicketModalOpen(false)}
+                  className="text-xs rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isCreatingTicket}
+                  className="text-xs rounded-xl bg-[#0a0a0a] text-white hover:bg-[#171717] dark:bg-[#F3A712] dark:text-black font-bold cursor-pointer"
+                >
+                  {isCreatingTicket ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Start Conversation"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 5. FAQS & KNOWLEDGE BASE MODAL */}
+      {showFaqModal && overview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/40">
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-lg bg-[#F3A712]/15 text-[#B47B00] dark:text-[#F3A712] flex items-center justify-center">
+                  <HelpCircle className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    AdSkill Advisory & Billing Knowledge Base
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Answers to common payment, invoice, and case milestone questions
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFaqModal(false)}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-3">
+              {overview.faqs.map((faq) => {
+                const isOpen = openFaqId === faq.id;
+                return (
+                  <div
+                    key={faq.id}
+                    className="rounded-xl border border-border bg-card overflow-hidden shadow-2xs"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
+                      className="w-full p-3.5 flex items-center justify-between text-left hover:bg-muted/40 transition-colors cursor-pointer"
+                    >
+                      <div className="pr-3">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#B47B00] dark:text-[#F3A712]">
+                          {faq.category}
+                        </span>
+                        <h4 className="text-xs font-bold text-foreground mt-0.5">
+                          {faq.question}
+                        </h4>
+                      </div>
+                      <ChevronDown
+                        className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")}
+                      />
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-3.5 pb-3.5 pt-1 text-xs text-muted-foreground leading-relaxed border-t border-border/60 bg-muted/20">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

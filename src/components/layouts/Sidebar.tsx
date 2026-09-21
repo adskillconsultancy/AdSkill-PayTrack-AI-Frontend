@@ -17,6 +17,7 @@ import {
   FileBarChart,
   FileText,
   HelpCircle,
+  MessageSquare,
   History,
   LayoutGrid,
   LogOut,
@@ -237,6 +238,18 @@ const navSections: NavSection[] = [
     ],
   },
 
+  {
+    sectionTitle: "COMMUNICATION & DESK",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "Support & Messenger",
+        href: ROUTES.SUPPORT,
+        icon: MessageSquare,
+      },
+    ],
+  },
+
   // ==================== DEDICATED CLIENT PORTAL ====================
   {
     sectionTitle: "CLIENT PORTAL",
@@ -284,9 +297,9 @@ const navSections: NavSection[] = [
         icon: User,
       },
       {
-        title: "Support & Help",
+        title: "Support & Messenger",
         href: ROUTES.SUPPORT,
-        icon: HelpCircle,
+        icon: MessageSquare,
       },
     ],
   },
