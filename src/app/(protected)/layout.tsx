@@ -281,7 +281,11 @@ export default function ProtectedLayout({
           </div>
         </header>
 
-        <div className="flex-1 p-4 sm:p-6 pb-20 sm:pb-6 w-full">
+        <div
+          className={cn(
+            "flex-1 p-4 sm:p-6 pb-20 sm:pb-6 w-full transition-all duration-300",
+            !isOpen && "lg:pl-[calc(5rem+1.5rem)]",
+          )}>
           <main className="min-h-[calc(100vh-4rem)] rounded-2xl bg-card border border-border/70 p-4 sm:p-6 space-y-6 shadow-sm">
             {children}
           </main>

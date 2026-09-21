@@ -1,1 +1,12 @@
 export { DashboardOverview } from "./DashboardOverview";
+export { DashboardHeader } from "./DashboardHeader";
+export { DashboardDateFilter } from "./DashboardDateFilter";
+export { DashboardKPICards } from "./DashboardKPICards";
+export { DashboardPaymentAnalytics } from "./DashboardPaymentAnalytics";
+export { DashboardClientGrowth } from "./DashboardClientGrowth";
+export { DashboardVerificationQueue } from "./DashboardVerificationQueue";
+export { DashboardCaseDistribution } from "./DashboardCaseDistribution";
+export { DashboardRecentActivity } from "./DashboardRecentActivity";
+export { DashboardRerouteNotice } from "./DashboardRerouteNotice";
+export { ClientDashboardHub } from "./ClientDashboardHub";
+export { StaffDashboardHub } from "./StaffDashboardHub";
