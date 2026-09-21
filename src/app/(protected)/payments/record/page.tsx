@@ -23,6 +23,7 @@ import {
   Receipt,
   Search,
   Shield,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Trash2,
@@ -35,7 +36,11 @@ import {
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { Skeleton } from "@/components/common/Skeleton";
-import { useGetMyCasesQuery, useGetClientCaseQuery } from "@/services/api/clients/clientCasesApi";
+import {
+  useGetMyCasesQuery,
+  useGetAllCasesQuery,
+  useGetClientCaseQuery,
+} from "@/services/api/clients/clientCasesApi";
 import { useGetCasePaymentPlansQuery } from "@/services/api/payment-plans/paymentPlansApi";
 import { useCreatePaymentMutation, useGetCasePaymentsQuery } from "@/services/api/payments/paymentsApi";
 import { useUploadCaseDocumentsMutation } from "@/services/api/documents/documentsApi";
@@ -60,15 +65,28 @@ export default function RecordPaymentPage() {
   const initialCaseId = searchParams.get("caseId") || "";
   const initialInstallmentId = searchParams.get("installmentId") || "";
 
-  const { hasPermission, isClientAccount } = usePermissions();
-  const canRecord = hasPermission("payment:record");
+  const { user, hasPermission, isClientAccount, isSuperAdmin } = usePermissions();
+  const userRole = user?.role?.name;
+  const isConsultant = userRole === "CONSULTANT";
+  const isManager = userRole === "MANAGER";
+  const canVerify = isSuperAdmin || isManager || hasPermission("payment:verify");
 
   // Selected case state
   const [selectedCaseId, setSelectedCaseId] = React.useState<string>(initialCaseId);
   const [caseSearch, setCaseSearch] = React.useState("");
 
-  // All cases for switcher
-  const { data: casesResponse, isLoading: isLoadingCases } = useGetMyCasesQuery();
+  // Role-appropriate cases query:
+  // - Client uses /client-cases/mine
+  // - Staff/Consultant uses /client-cases (automatically filtered to assigned cases for consultant)
+  const { data: myCasesResponse, isLoading: isLoadingMyCases } = useGetMyCasesQuery(undefined, {
+    skip: !isClientAccount,
+  });
+  const { data: staffCasesResponse, isLoading: isLoadingStaffCases } = useGetAllCasesQuery(undefined, {
+    skip: isClientAccount,
+  });
+
+  const casesResponse = isClientAccount ? myCasesResponse : staffCasesResponse;
+  const isLoadingCases = isClientAccount ? isLoadingMyCases : isLoadingStaffCases;
   const allCases = casesResponse?.data ?? [];
 
   // If initialCaseId wasn't set but cases exist, pick first case
@@ -301,6 +319,29 @@ export default function RecordPaymentPage() {
 
   const installments = isPlansLoading ? [] : (activePlan?.installments || []);
 
+  // Title and badge labels based on role
+  const pageHeaderTitle = isClientAccount
+    ? "Submit Offline Payment Proof"
+    : isConsultant
+      ? "Record Client Payment"
+      : "Record Manual Settlement";
+
+  const badgeIcon = canVerify ? (
+    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+  ) : (
+    <Clock className="h-3.5 w-3.5 text-amber-600" />
+  );
+
+  const badgeText = canVerify
+    ? "Staff Instant Credit"
+    : isConsultant
+      ? "Pending Manager Audit"
+      : "Pending Staff Verification";
+
+  const badgeClass = canVerify
+    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+    : "bg-amber-50 text-amber-700 border-amber-200";
+
   return (
     <div className="min-h-screen pb-24">
       {/* Top Breadcrumbs */}
@@ -320,22 +361,24 @@ export default function RecordPaymentPage() {
                 href="/payments"
                 className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
               >
-                Payments Ledger
+                {isClientAccount ? "Client Portal" : "Payments Ledger"}
               </Link>
               <span className="text-slate-300">/</span>
-              <span className="text-xs font-extrabold text-slate-900">Record Offline Payment</span>
+              <span className="text-xs font-extrabold text-slate-900">
+                {isClientAccount ? "Submit Offline Payment" : "Record Offline Payment"}
+              </span>
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 mt-1 flex items-center gap-2.5">
-              Record Manual Settlement
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                Staff Instant Credit
+              {pageHeaderTitle}
+              <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border", badgeClass)}>
+                {badgeIcon}
+                {badgeText}
               </span>
             </h1>
           </div>
         </div>
 
-        {selectedCaseId && (
+        {selectedCaseId && !isClientAccount && (
           <Button
             variant="outline"
             size="sm"
@@ -365,15 +408,30 @@ export default function RecordPaymentPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
                 <User className="h-3.5 w-3.5 text-amber-500" />
-                Target Client & Application
+                {isClientAccount ? "Your Application Case" : "Target Client & Application"}
               </h3>
               <span className="text-[11px] font-bold text-slate-400">Step 1 of 3</span>
             </div>
 
-            {/* Case Dropdown / Picker */}
-            {allCases.length > 1 && (
+            {/* If user is client with 1 case, show friendly badge instead of dropdown */}
+            {isClientAccount && allCases.length === 1 ? (
+              <div className="mb-4 p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between">
+                <span className="text-xs font-bold text-amber-900">
+                  Linked Account Case File
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-wider bg-amber-200/70 text-amber-900 px-2 py-0.5 rounded-lg">
+                  {allCases[0].caseCode}
+                </span>
+              </div>
+            ) : allCases.length > 1 ? (
               <div className="mb-4">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Select Case Account</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  {isClientAccount
+                    ? "Select Your Application"
+                    : isConsultant
+                      ? "Select Assigned Client Case"
+                      : "Select Case Account"}
+                </label>
                 <select
                   value={selectedCaseId}
                   onChange={(e) => setSelectedCaseId(e.target.value)}
@@ -381,12 +439,29 @@ export default function RecordPaymentPage() {
                 >
                   {allCases.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.user?.name || "Client"} • {c.caseCode} ({c.service?.name || "Service"})
+                      {isClientAccount
+                        ? `${c.caseCode} — ${c.service?.name || "Service"} (${c.destinationCountry || "Global"})`
+                        : `${c.user?.name || "Client"} • ${c.caseCode} (${c.service?.name || "Service"})`}
                     </option>
                   ))}
                 </select>
               </div>
-            )}
+            ) : allCases.length === 0 && !isLoadingCases ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center mb-4">
+                <p className="text-xs font-bold text-slate-600">
+                  {isClientAccount
+                    ? "No active application cases found on your account."
+                    : isConsultant
+                      ? "You currently have no clients assigned to your portfolio."
+                      : "No client cases available in the system."}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {isClientAccount
+                    ? "Please contact your assigned consultant or immigration advisor."
+                    : "Assign clients to your account to record payments."}
+                </p>
+              </div>
+            ) : null}
 
             {/* Live Case Card */}
             {isCaseLoading ? (
@@ -533,192 +608,175 @@ export default function RecordPaymentPage() {
             </div>
           ) : null}
 
-          {/* INSTALLMENT MILESTONE SELECTOR */}
+          {/* STEP 2: MILESTONE SCHEDULE ALLOCATION */}
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <Receipt className="h-3.5 w-3.5 text-amber-500" />
+                <Calendar className="h-3.5 w-3.5 text-amber-500" />
                 Allocate to Milestone Schedule
               </h3>
               <span className="text-[11px] font-bold text-slate-400">Step 2 of 3</span>
             </div>
 
             {isPlansLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={`milestone-skel-${i}`}
-                    className="p-3 rounded-2xl border border-slate-200/80 bg-slate-50/50 flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Skeleton className="h-5 w-5 rounded-full shrink-0" />
-                      <div className="space-y-1.5">
-                        <Skeleton className="h-3.5 w-44 sm:w-56 rounded" />
-                        <Skeleton className="h-2.5 w-24 rounded" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-4 w-16 rounded" />
-                  </div>
-                ))}
+              <div className="space-y-3">
+                <Skeleton className="h-16 w-full rounded-2xl" />
+                <Skeleton className="h-16 w-full rounded-2xl" />
               </div>
             ) : installments.length > 0 ? (
-              <div className="space-y-2">
-                {installments.map((inst) => {
-                  const isSelected = selectedInstallmentId === inst.id;
-                  const isPaid = inst.status === "PAID";
-                  return (
-                    <div
-                      key={inst.id}
-                      onClick={() => handleSelectInstallment(inst)}
-                      className={cn(
-                        "p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between",
-                        isSelected
-                          ? "bg-amber-500/5 border-amber-500 ring-2 ring-amber-500/20 shadow-xs"
-                          : "bg-slate-50/50 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={cn(
-                            "h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
-                            isSelected ? "border-amber-600 bg-amber-500 text-white" : "border-slate-300 bg-white"
-                          )}
-                        >
-                          {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-black text-slate-900">
-                              #{inst.sequenceNumber}: {inst.title || `Milestone ${inst.sequenceNumber}`}
-                            </span>
-                            {isPaid && (
-                              <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold uppercase bg-emerald-100 text-emerald-800">
-                                Paid
-                              </span>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-medium block">
-                            Due: {new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(inst.dueDate))}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-black text-slate-900 block">
-                          {money(inst.amount, activePlan?.currency || "USD")}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Custom / Unallocated Option */}
+              <div className="space-y-2.5">
+                {/* General Deposit Option */}
                 <div
                   onClick={() => handleSelectInstallment(null)}
                   className={cn(
-                    "p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between",
-                    !selectedInstallmentId
-                      ? "bg-amber-500/5 border-amber-500 ring-2 ring-amber-500/20 shadow-xs"
-                      : "bg-slate-50/50 border-slate-200/80 hover:bg-slate-50 hover:border-slate-300"
+                    "p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between",
+                    selectedInstallmentId === ""
+                      ? "border-amber-500 bg-amber-50/40 ring-1 ring-amber-500/20"
+                      : "border-slate-200 hover:border-slate-300 bg-slate-50/40"
                   )}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={cn(
-                        "h-5 w-5 rounded-full border flex items-center justify-center transition-colors",
-                        !selectedInstallmentId ? "border-amber-600 bg-amber-500 text-white" : "border-slate-300 bg-white"
+                        "h-5 w-5 rounded-full border flex items-center justify-center text-xs",
+                        selectedInstallmentId === ""
+                          ? "border-amber-500 bg-amber-500 text-slate-950 font-black"
+                          : "border-slate-300"
                       )}
                     >
-                      {!selectedInstallmentId && <Check className="h-3 w-3 stroke-[3]" />}
+                      {selectedInstallmentId === "" && <Check className="h-3 w-3" />}
                     </div>
                     <div>
-                      <span className="text-xs font-black text-slate-900">General Retainer / Custom Amount</span>
-                      <span className="text-[10px] text-slate-400 font-medium block">
-                        Credit directly to case balance without linking milestone
-                      </span>
+                      <p className="text-xs font-black text-slate-800">
+                        General Unallocated Deposit
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        Credit general account balance without tying to a specific milestone
+                      </p>
                     </div>
                   </div>
                 </div>
+
+                {/* List Installments */}
+                {installments.map((inst) => {
+                  const isSelected = selectedInstallmentId === inst.id;
+                  const isPaid = inst.status === "PAID";
+
+                  return (
+                    <div
+                      key={inst.id}
+                      onClick={() => !isPaid && handleSelectInstallment(inst)}
+                      className={cn(
+                        "p-3.5 rounded-2xl border transition-all flex items-center justify-between",
+                        isPaid
+                          ? "border-slate-100 bg-slate-50/30 opacity-60 cursor-not-allowed"
+                          : isSelected
+                            ? "border-amber-500 bg-amber-50/40 ring-1 ring-amber-500/20 cursor-pointer"
+                            : "border-slate-200 hover:border-slate-300 bg-white cursor-pointer"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={cn(
+                            "h-5 w-5 rounded-full border flex items-center justify-center text-xs",
+                            isPaid
+                              ? "border-emerald-500 bg-emerald-50 text-emerald-600 font-black"
+                              : isSelected
+                                ? "border-amber-500 bg-amber-500 text-slate-950 font-black"
+                                : "border-slate-300"
+                          )}
+                        >
+                          {isPaid ? <Check className="h-3 w-3 text-emerald-600" /> : isSelected ? <Check className="h-3 w-3" /> : null}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                              #{inst.sequenceNumber}
+                            </span>
+                            <p className="text-xs font-black text-slate-900">{inst.title}</p>
+                          </div>
+                          <p className="text-[10px] text-slate-400 font-medium">
+                            Due {new Date(inst.dueDate).toLocaleDateString()} • {inst.status}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-black text-slate-900 block">
+                          {money(inst.amount, planCurrency)}
+                        </span>
+                        {isPaid && (
+                          <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600">
+                            Already Settled
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <p className="text-xs text-slate-400 p-4 text-center">No payment plan active. You can record a general deposit.</p>
+              <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center">
+                <p className="text-xs font-bold text-slate-600">
+                  No payment plan active. You can record a general deposit.
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Payments will credit the case ledger balance.
+                </p>
+              </div>
             )}
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Payment Details & Proof Upload */}
+        {/* RIGHT COLUMN: Transaction Entry & Proof Dropzone */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-6">
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <CreditCard className="h-3.5 w-3.5 text-amber-500" />
-                Transaction Specifications & Details
-              </h3>
+              <div>
+                <h2 className="text-lg font-black tracking-tight text-slate-900">
+                  Payment Details & Proof of Deposit
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  {isClientAccount
+                    ? "Enter settlement details and attach your wire transfer or bank deposit slip."
+                    : "Specify the settlement channel, currency, and wire confirmation code."}
+                </p>
+              </div>
               <span className="text-[11px] font-bold text-slate-400">Step 3 of 3</span>
             </div>
 
-            {/* AMOUNT & CURRENCY */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-              <div className="sm:col-span-8">
-                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
-                  Settled Amount <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">
-                    {currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "GBP" ? "£" : "$"}
-                  </span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="w-full pl-8 pr-4 py-3 rounded-2xl border border-slate-200 text-lg font-black text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                  />
-                </div>
-              </div>
-              <div className="sm:col-span-4">
-                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">Currency</label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full py-3 px-3 rounded-2xl border border-slate-200 bg-slate-50/50 text-sm font-black text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 cursor-pointer"
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="CAD">CAD ($)</option>
-                  <option value="GBP">GBP (£)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="AUD">AUD ($)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* PAYMENT CHANNEL / METHOD */}
+            {/* PAYMENT METHOD SELECTOR */}
             <div>
               <label className="block text-xs font-extrabold text-slate-700 mb-2">
                 Settlement Channel / Method <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {PAYMENT_METHODS.map((method) => {
-                  const Icon = method.icon;
-                  const isSelected = paymentMethod === method.value;
+                {PAYMENT_METHODS.map((m) => {
+                  const Icon = m.icon;
+                  const isSelected = paymentMethod === m.value;
                   return (
                     <div
-                      key={method.value}
-                      onClick={() => setPaymentMethod(method.value)}
+                      key={m.value}
+                      onClick={() => setPaymentMethod(m.value)}
                       className={cn(
-                        "p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3",
+                        "p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3",
                         isSelected
-                          ? "bg-amber-500/10 border-amber-500 text-slate-900 ring-2 ring-amber-500/20 shadow-xs"
-                          : "bg-slate-50/50 border-slate-200/80 hover:bg-slate-50 text-slate-700"
+                          ? "border-amber-500 bg-amber-50/50 ring-1 ring-amber-500/20"
+                          : "border-slate-200 hover:border-slate-300 bg-slate-50/30"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 shrink-0 mt-0.5", isSelected ? "text-amber-600" : "text-slate-400")} />
+                      <div
+                        className={cn(
+                          "h-8 w-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5",
+                          isSelected
+                            ? "bg-amber-500 text-slate-950 font-black"
+                            : "bg-slate-200/80 text-slate-600"
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
                       <div>
-                        <span className="text-xs font-black block leading-tight text-slate-900">{method.label}</span>
-                        <span className={cn("text-[10px] leading-tight block mt-0.5 font-medium", isSelected ? "text-amber-800" : "text-slate-400")}>
-                          {method.desc}
-                        </span>
+                        <p className="text-xs font-black text-slate-900">{m.label}</p>
+                        <p className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5">{m.desc}</p>
                       </div>
                     </div>
                   );
@@ -726,7 +784,45 @@ export default function RecordPaymentPage() {
               </div>
             </div>
 
-            {/* PAYMENT DATE & EXTERNAL REFERENCE */}
+            {/* AMOUNT & CURRENCY */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                  Amount Received / Deposited <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
+                    {currency}
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    required
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="w-full pl-14 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-sm font-black text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
+                  Currency <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={3}
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-black uppercase text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                />
+              </div>
+            </div>
+
+            {/* DATE & REFERENCE */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
@@ -761,14 +857,20 @@ export default function RecordPaymentPage() {
               </div>
             </div>
 
-            {/* OPERATIONAL NOTES */}
+            {/* OPERATIONAL / CLIENT NOTES */}
             <div>
               <label className="block text-xs font-extrabold text-slate-700 mb-1.5">
-                Caseworker Operational Notes & Remarks
+                {isClientAccount
+                  ? "Deposit Notes & Reference Remarks"
+                  : "Caseworker Operational Notes & Remarks"}
               </label>
               <textarea
                 rows={2}
-                placeholder="Add cashier notes, teller details, or client billing requests..."
+                placeholder={
+                  isClientAccount
+                    ? "Add teller info, bank branch name, or sender name on transfer account..."
+                    : "Add cashier notes, teller details, or client billing requests..."
+                }
                 value={operationalNotes}
                 onChange={(e) => setOperationalNotes(e.target.value)}
                 className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50/50 text-xs font-medium text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
@@ -780,7 +882,9 @@ export default function RecordPaymentPage() {
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-extrabold text-slate-700 flex items-center gap-2">
                   <UploadCloud className="h-3.5 w-3.5 text-amber-500" />
-                  Bank Wire Slip / Screenshot Proof
+                  {isClientAccount
+                    ? "Bank Wire Slip / Screenshot Proof (Recommended)"
+                    : "Bank Wire Slip / Screenshot Proof"}
                 </label>
                 <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
                   Automated R2 Archival
@@ -812,7 +916,9 @@ export default function RecordPaymentPage() {
                     <FileUp className="h-5 w-5" />
                   </div>
                   <p className="text-xs font-extrabold text-slate-800">
-                    Upload Bank Transfer Slip or Screenshot
+                    {isClientAccount
+                      ? "Upload Wire Transfer Receipt or Deposit Slip"
+                      : "Upload Bank Transfer Slip or Screenshot"}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1">
                     Drag and drop or browse files (PDF, PNG, JPG up to 15MB)
@@ -874,12 +980,16 @@ export default function RecordPaymentPage() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin text-slate-950" />
-                    {isUploadingDocument ? "Archiving Proof in R2..." : "Crediting Payment..."}
+                    {isUploadingDocument ? "Archiving Proof in R2..." : "Submitting Settlement..."}
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4" />
-                    Record & Credit Payment
+                    {isClientAccount
+                      ? "Submit Payment Proof for Verification"
+                      : isConsultant
+                        ? "Submit Payment for Verification"
+                        : "Record & Credit Payment"}
                   </>
                 )}
               </Button>

@@ -16,11 +16,13 @@ import {
   CreditCard,
   FileBarChart,
   FileText,
+  HelpCircle,
   History,
   LayoutGrid,
   LogOut,
   Receipt,
   ShieldAlert,
+  User,
   Users,
 } from "lucide-react";
 import Image from "next/image";
@@ -252,10 +254,16 @@ const navSections: NavSection[] = [
         requiredPermission: "plan:read",
       },
       {
-        title: "Pay Installment",
+        title: "Pay Online",
         href: `${ROUTES.PAYMENTS}?action=pay`,
         icon: CreditCard,
         requiredPermission: "payment:pay",
+      },
+      {
+        title: "Submit Offline Payment",
+        href: ROUTES.PAYMENT_RECORD,
+        icon: Receipt,
+        requiredAnyPermissions: ["payment:pay", "payment:read"],
       },
       {
         title: "Invoices & Receipts",
@@ -271,9 +279,14 @@ const navSections: NavSection[] = [
         ],
       },
       {
-        title: "Profile & Support",
+        title: "My Profile",
         href: ROUTES.PROFILE,
-        icon: Users,
+        icon: User,
+      },
+      {
+        title: "Support & Help",
+        href: ROUTES.SUPPORT,
+        icon: HelpCircle,
       },
     ],
   },

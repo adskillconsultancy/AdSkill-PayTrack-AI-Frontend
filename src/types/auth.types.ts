@@ -8,6 +8,8 @@ export interface UserRole {
 export interface User {
   id: string;
   clientId?: string | null;
+  customClientId?: string | null;
+  bio?: string | null;
   name: string;
   preferredName?: string | null;
   email: string;

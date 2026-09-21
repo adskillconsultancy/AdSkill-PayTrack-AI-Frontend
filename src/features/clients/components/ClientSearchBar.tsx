@@ -25,6 +25,7 @@ interface ClientSearchBarProps {
   onNewClientClick: () => void;
   availableDestinations?: string[];
   className?: string;
+  showNewClientButton?: boolean;
 }
 
 export function ClientSearchBar({
@@ -37,6 +38,7 @@ export function ClientSearchBar({
   onNewClientClick,
   availableDestinations = ["Canada", "United Kingdom", "Australia", "Germany", "United States"],
   className,
+  showNewClientButton = true,
 }: ClientSearchBarProps) {
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
   const filterRef = React.useRef<HTMLDivElement>(null);
@@ -78,7 +80,7 @@ export function ClientSearchBar({
         className
       )}
     >
-      {/* ── 1. SEARCH INPUT BAR ── */}
+      {/* 1. SEARCH INPUT BAR */}
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
           <Search className="h-4.5 w-4.5 text-[#94A3B8]" />
@@ -101,7 +103,7 @@ export function ClientSearchBar({
         )}
       </div>
 
-      {/* ── 2. ACTIONS: FILTERS & NEW CLIENT ── */}
+      {/* 2. ACTIONS: FILTERS & NEW CLIENT */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
         {/* Filters Popover Button */}
         <div className="relative" ref={filterRef}>
@@ -225,16 +227,18 @@ export function ClientSearchBar({
           )}
         </div>
 
-        {/* "+ New Client" Primary CTA button linking to dedicated /clients/create */}
-        <Button
-          asChild
-          className="h-12 px-5 sm:px-6 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10, 10, 10,0.2)] gap-2 font-bold text-xs sm:text-sm cursor-pointer transition-all"
-        >
-          <Link href={ROUTES.CLIENT_CREATE}>
-            <Plus className="h-4 w-4 text-[#F3A712]" />
-            <span>New Client</span>
-          </Link>
-        </Button>
+        {/* "+ New Client" Primary CTA button (conditionally shown based on permissions) */}
+        {showNewClientButton && (
+          <Button
+            asChild
+            className="h-12 px-5 sm:px-6 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10, 10, 10,0.2)] gap-2 font-bold text-xs sm:text-sm cursor-pointer transition-all"
+          >
+            <Link href={ROUTES.CLIENT_CREATE}>
+              <Plus className="h-4 w-4 text-[#F3A712]" />
+              <span>New Client</span>
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );
