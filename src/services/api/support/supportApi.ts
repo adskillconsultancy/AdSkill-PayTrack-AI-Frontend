@@ -222,16 +222,12 @@ export const supportApi = baseApi.injectEndpoints({
     getSupportConversations: builder.query<ApiResponse<ConversationListResponse>, void>({
       query: () => "/support/conversations",
       providesTags: ["Support"],
-      // Auto-poll every 8 seconds for live chat feel without WebSockets
-      pollingInterval: 8000,
     }),
 
     // Ticket Conversation Thread (Right panel)
     getSupportTicketById: builder.query<ApiResponse<TicketDetailsResponse>, string>({
       query: (id) => `/support/tickets/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Support", id }],
-      // Auto-poll every 6 seconds while viewing active conversation
-      pollingInterval: 6000,
     }),
 
     // Send Message in Conversation

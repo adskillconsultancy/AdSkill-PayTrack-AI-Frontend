@@ -65,7 +65,7 @@ const QUICK_PROMPTS = [
 
 export default function SupportPage() {
   const { user } = useAuth();
-  const { isClientAccount, roleName } = usePermissions();
+  const { isClientAccount, role } = usePermissions();
 
   // Queries
   const {
