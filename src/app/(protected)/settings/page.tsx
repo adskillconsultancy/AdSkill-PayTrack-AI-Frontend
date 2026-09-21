@@ -1,11 +1,21 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/shared/PageHeader";
 
 export const metadata: Metadata = {
   title: "Settings",
 };
 
-export default function SettingsPage() {
+interface SettingsPageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  const { tab } = await searchParams;
+  if (tab === "audit") {
+    redirect("/audit");
+  }
+
   return (
     <div className="container py-10">
       <PageHeader

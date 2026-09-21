@@ -214,9 +214,9 @@ const navSections: NavSection[] = [
     items: [
       {
         title: "Audit Trail",
-        href: `${ROUTES.SETTINGS}?tab=audit`,
+        href: ROUTES.AUDIT,
         icon: History,
-        requiredPermission: "user:manage-role",
+        requiredSuperAdmin: true,
       },
     ],
   },
@@ -811,3 +811,6 @@ export function Sidebar() {
     </>
   );
 }
+
+
+

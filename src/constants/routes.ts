@@ -1,4 +1,4 @@
-// 🧭 Application Route Constants 🧭
+// Application Route Constants
 
 export const ROUTES = {
   // Public
@@ -36,6 +36,7 @@ export const ROUTES = {
   USER_EDIT: (id: string) => `/users/${id}/edit`,
   ROLES: "/roles",
   ROLES_CREATE: "/roles/create",
+  AUDIT: "/audit",
 } as const;
 
 export const PUBLIC_ROUTES = [
@@ -73,4 +74,5 @@ export const PROTECTED_ROUTES = [
   ROUTES.USER_CREATE,
   ROUTES.ROLES,
   ROUTES.ROLES_CREATE,
+  ROUTES.AUDIT,
 ] as const;

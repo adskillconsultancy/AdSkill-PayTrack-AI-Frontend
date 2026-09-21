@@ -1,6 +1,6 @@
-// ── Next.js Edge Middleware ─────────────────────────────
+// Next.js Edge Middleware
 // Handles authentication redirects at the edge.
-// Runs before every route — checks for auth token in cookies/headers.
+// Runs before every route - checks for auth token in cookies/headers.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -17,6 +17,9 @@ const protectedPaths = [
   "/settings",
   "/users",
   "/services",
+  "/roles",
+  "/support",
+  "/audit",
 ];
 
 // Routes only for unauthenticated users
