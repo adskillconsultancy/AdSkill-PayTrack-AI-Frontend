@@ -141,6 +141,40 @@ const parseSafeIsoDate = (d?: string) => {
   return isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
 };
 
+const DEFAULT_FORM_VALUES: CreateClientFormValues = {
+  name: "",
+  preferredName: "",
+  email: "",
+  phone: "",
+  passportNumber: "",
+  countryOfOrigin: "",
+  city: "",
+  countryCode: "+1",
+  whatsappNumber: "",
+  sendWelcomeWhatsApp: true,
+  serviceId: "",
+  destinationCountry: "United States",
+  destinationCode: "US",
+  visaCategory: "",
+  subCategory: "",
+  assignedConsultant: "",
+  assignedConsultantId: "",
+  status: "INTAKE",
+  currency: "USD",
+  baseFee: 0,
+  discountAmount: 0,
+  discountReason: "",
+  contractedFee: 0,
+  depositAmount: 0,
+  scheduleType: "service_default",
+  milestones: [],
+  remindersEnabled: true,
+  sendEmailInvitation: true,
+  clientVisibleNotes: "",
+  internalNotes: "",
+  superAdminNotes: "",
+};
+
 export function CreateClientForm() {
   const router = useRouter();
   const { data: servicesResponse, isLoading: isServicesLoading } = useGetServicesQuery({
@@ -170,6 +204,39 @@ export function CreateClientForm() {
   const handleDepositProofChange = (file: File | null) => {
     setDepositProofFile(file);
   };
+
+  // Reset all form fields to completely empty defaults
+  const handleResetForm = () => {
+    reset(DEFAULT_FORM_VALUES);
+    replace([]);
+    setSelectedExistingUser(null);
+    setIntakeMode("new");
+    setExistingSearchQuery("");
+    setDepositProofFile(null);
+    setRecordDepositNow(false);
+    setDepositReference("");
+    setDepositNotes("");
+    setErrorNotice("");
+    setActiveTab("service");
+  };
+
+  // Start new case onboarding: clear all form values and reset success view
+  const handleStartNewCase = () => {
+    handleResetForm();
+    setCaseIdentifier("");
+    setCreatedClientId(null);
+    setCreatedClientEmail("");
+    setCreatedClientName("");
+    setCreatedClientPhone("");
+    setCreatedClientBizId("");
+    setHasCopiedCredentials(false);
+    setIsSuccess(false);
+
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
 
   const [caseIdentifier, setCaseIdentifier] = React.useState<string>("");
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -261,42 +328,11 @@ export function CreateClientForm() {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<CreateClientFormValues>({
     resolver: zodResolver(createClientSchema),
-    defaultValues: {
-      name: "",
-      preferredName: "",
-      email: "",
-      phone: "",
-      passportNumber: "",
-      countryOfOrigin: "",
-      city: "",
-      countryCode: "+1",
-      whatsappNumber: "",
-      sendWelcomeWhatsApp: true,
-      serviceId: "",
-      destinationCountry: "United States",
-      destinationCode: "US",
-      visaCategory: "",
-      subCategory: "",
-      assignedConsultant: "",
-      assignedConsultantId: "",
-      status: "INTAKE",
-      currency: "USD",
-      baseFee: 0,
-      discountAmount: 0,
-      discountReason: "",
-      contractedFee: 0,
-      depositAmount: 0,
-      scheduleType: "service_default",
-      milestones: [],
-      remindersEnabled: true,
-      sendEmailInvitation: true,
-      clientVisibleNotes: "",
-      internalNotes: "",
-      superAdminNotes: "",
-    },
+    defaultValues: DEFAULT_FORM_VALUES,
   });
 
   const { fields, replace } = useFieldArray({
@@ -715,6 +751,7 @@ Please log in and update your password upon your first visit. If you have any qu
       }
 
       setIsSuccess(true);
+      handleResetForm();
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -795,6 +832,15 @@ Please log in and update your password upon your first visit. If you have any qu
           </div>
 
           <div className="flex items-center gap-3 self-start sm:self-center shrink-0">
+            <CommonButton
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResetForm}
+              className="h-10 px-3.5 rounded-2xl border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-xs font-bold cursor-pointer gap-1.5 transition-colors">
+              <Trash2 className="h-3.5 w-3.5" />
+              Reset to Empty
+            </CommonButton>
             <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-right">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                 System Reference
@@ -896,8 +942,8 @@ Please log in and update your password upon your first visit. If you have any qu
       )}
 
       {/* SUCCESS & ACCOUNT HANDOVER CREDENTIALS */}
-      {isSuccess && (
-        <div className="space-y-4 animate-in fade-in duration-300">
+      {isSuccess ? (
+        <div className="space-y-6 animate-in fade-in duration-300">
           <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0">
@@ -1025,11 +1071,40 @@ Please log in and update your password upon your first visit. If you have any qu
               </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* 2. MAIN TWO-COLUMN WORKSPACE (CLEAN LIGHT THEME) */}
-      <form onSubmit={handleSubmit(onSubmit)}>
+          {/* POST-CREATION ACTION BAR: ONBOARD ANOTHER CLIENT OR OPEN DOSSIER */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-3xl bg-slate-50 border border-slate-200/90 shadow-xs">
+            <CommonButton
+              type="button"
+              onClick={handleStartNewCase}
+              className="w-full sm:w-auto h-12 px-6 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-2 cursor-pointer transition-all">
+              <Plus className="h-4 w-4" />
+              + Onboard Another Client (New Empty Form)
+            </CommonButton>
+
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-end">
+              <CommonButton
+                asChild
+                variant="outline"
+                className="h-12 px-5 rounded-2xl border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold">
+                <Link href={ROUTES.CLIENTS}>View All Clients</Link>
+              </CommonButton>
+
+              {createdClientId && (
+                <CommonButton
+                  asChild
+                  className="h-12 px-6 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold gap-2 shadow-xs">
+                  <Link href={`/clients/${createdClientId}`}>
+                    Open Client Dossier &rarr;
+                  </Link>
+                </CommonButton>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* 2. MAIN TWO-COLUMN WORKSPACE (CLEAN LIGHT THEME) */
+        <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* LEFT COLUMN: FORM SECTIONS (8 OF 12 COLS) */}
           <div className="lg:col-span-8 space-y-6">
@@ -2200,6 +2275,15 @@ Please log in and update your password upon your first visit. If you have any qu
                 </CommonButton>
 
                 <CommonButton
+                  type="button"
+                  variant="outline"
+                  onClick={handleResetForm}
+                  className="w-full h-10 rounded-2xl border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-xs font-bold transition-colors cursor-pointer gap-2">
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Clear Form / Reset to Empty
+                </CommonButton>
+
+                <CommonButton
                   asChild
                   type="button"
                   variant="ghost"
@@ -2211,6 +2295,7 @@ Please log in and update your password upon your first visit. If you have any qu
           </div>
         </div>
       </form>
+      )}
     </div>
   );
 }
