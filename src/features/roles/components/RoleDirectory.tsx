@@ -2,6 +2,12 @@ import * as React from "react";
 import { Lock, Users, Settings2, Trash2 } from "lucide-react";
 import { Button } from "@/components/common";
 import type { RoleItem } from "../types";
+import {
+  getRoleDisplayName,
+  getRoleDescription,
+  getPermissionDisplayName,
+  getPermissionDescription,
+} from "../utils/roleFormatters";
 
 interface RoleDirectoryProps {
   roles: RoleItem[];
@@ -34,8 +40,8 @@ export function RoleDirectory({
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-sm font-black text-[#0a0a0a]">
-                  {role.name}
+                <span className="text-sm font-black text-[#0a0a0a]">
+                  {getRoleDisplayName(role.name)}
                 </span>
                 {role.isSystemRole ? (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF5FF] text-[#7E22CE] border border-[#E9D5FF]">
@@ -47,19 +53,28 @@ export function RoleDirectory({
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-[#64748B] mt-1">
-                <Users className="h-3 w-3" />
-                <span>{role.userCount} assigned users</span>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="font-mono text-[10px] font-semibold text-[#94A3B8]">
+                  {role.name}
+                </span>
+                <span className="text-[#CBD5E1] text-[10px]">-</span>
+                <div className="flex items-center gap-1 text-[11px] text-[#64748B]">
+                  <Users className="h-3 w-3" />
+                  <span>{role.userCount} assigned users</span>
+                </div>
               </div>
+              <p className="text-[11px] text-[#64748B] mt-1 line-clamp-1">
+                {getRoleDescription(role.name)}
+              </p>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 shrink-0">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => onConfigure(role)}
-                className="h-8 px-3 rounded-lg text-xs font-bold gap-1 cursor-pointer"
+                className="h-8 px-3 rounded-lg text-xs font-bold gap-1 cursor-pointer hover:bg-[#FAF8F5]"
               >
                 <Settings2 className="h-3.5 w-3.5 text-[#0a0a0a]" />
                 <span>Configure</span>
@@ -85,15 +100,15 @@ export function RoleDirectory({
             <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider block">
               Granted Capabilities ({role.permissions.length})
             </span>
-            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+            <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
               {role.permissions.length > 0 ? (
                 role.permissions.map((p) => (
                   <span
                     key={p.id}
-                    title={p.description || p.name}
-                    className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF]"
+                    title={`${p.name}: ${getPermissionDescription(p.name, p.description)}`}
+                    className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-medium bg-[#FAF8F5] text-[#1E293B] border border-[#EAE6DF] hover:border-[#F3A712] transition-colors cursor-help"
                   >
-                    {p.name}
+                    {getPermissionDisplayName(p.name)}
                   </span>
                 ))
               ) : (

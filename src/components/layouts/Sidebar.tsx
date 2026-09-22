@@ -137,7 +137,7 @@ const navSections: NavSection[] = [
         title: "Payments",
         href: ROUTES.PAYMENTS,
         icon: Receipt,
-        requiredAnyPermissions: ["payment:read", "payment:record", "payment:create"],
+        requiredAnyPermissions: ["payment:read", "payment:record"],
         subItems: [
           {
             title: "Payments Ledger",
@@ -147,7 +147,25 @@ const navSections: NavSection[] = [
           {
             title: "Record Payment",
             href: ROUTES.PAYMENT_RECORD,
-            requiredAnyPermissions: ["payment:record", "payment:create"],
+            requiredPermission: "payment:record",
+          },
+        ],
+      },
+      {
+        title: "Invoices & Receipts",
+        href: ROUTES.INVOICES,
+        icon: FileText,
+        requiredAnyPermissions: ["invoice:read", "receipt:read"],
+        subItems: [
+          {
+            title: "Invoices",
+            href: ROUTES.INVOICES,
+            requiredPermission: "invoice:read",
+          },
+          {
+            title: "Payment Receipts",
+            href: `${ROUTES.PAYMENTS}?tab=receipts`,
+            requiredPermission: "receipt:read",
           },
         ],
       },
@@ -161,7 +179,7 @@ const navSections: NavSection[] = [
         title: "Financial Reports",
         href: ROUTES.REPORTS,
         icon: FileBarChart,
-        requiredSuperAdmin: true,
+        requiredAnyPermissions: ["report:view", "report:export"],
       },
     ],
   },
@@ -246,6 +264,7 @@ const navSections: NavSection[] = [
         title: "Support & Messenger",
         href: ROUTES.SUPPORT,
         icon: MessageSquare,
+        requiredPermission: "support:read",
       },
     ],
   },
@@ -300,6 +319,7 @@ const navSections: NavSection[] = [
         title: "Support & Messenger",
         href: ROUTES.SUPPORT,
         icon: MessageSquare,
+        requiredPermission: "support:read",
       },
     ],
   },

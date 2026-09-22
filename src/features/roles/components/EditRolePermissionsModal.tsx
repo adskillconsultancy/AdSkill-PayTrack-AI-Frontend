@@ -3,6 +3,11 @@ import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/common";
 import { useUpdateRolePermissionsMutation } from "@/services/api/roles/rolesApi";
 import type { RoleItem, PermissionGroup } from "../types";
+import {
+  getRoleDisplayName,
+  getPermissionDisplayName,
+  getPermissionDescription,
+} from "../utils/roleFormatters";
 
 interface EditRolePermissionsModalProps {
   role: RoleItem | null;
@@ -66,8 +71,11 @@ export function EditRolePermissionsModal({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-base font-black text-[#0a0a0a]">
-                Configure Capabilities: {role.name}
+                Configure Capabilities: {getRoleDisplayName(role.name)}
               </h3>
+              <span className="font-mono text-[10px] text-[#94A3B8] font-semibold">
+                ({role.name})
+              </span>
               {role.isSystemRole && (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FAF5FF] text-[#7E22CE]">
                   System Role
@@ -75,7 +83,7 @@ export function EditRolePermissionsModal({
               )}
             </div>
             <p className="text-xs text-[#64748B] mt-0.5">
-              Check or uncheck granular capabilities for this role.
+              Select or deselect capabilities to configure privileges for this role.
             </p>
           </div>
           <button
@@ -146,11 +154,14 @@ export function EditRolePermissionsModal({
                         className="h-4 w-4 mt-0.5 rounded text-[#0a0a0a]"
                       />
                       <div className="min-w-0">
-                        <div className="font-mono text-xs font-bold text-[#0a0a0a] truncate">
-                          {perm.name}
+                        <div className="text-xs font-bold text-[#0a0a0a] truncate">
+                          {getPermissionDisplayName(perm.name)}
                         </div>
                         <div className="text-[10px] text-[#64748B] leading-tight mt-0.5">
-                          {perm.description || "System permission"}
+                          {getPermissionDescription(perm.name, perm.description)}
+                        </div>
+                        <div className="text-[9px] font-mono text-[#94A3B8] mt-0.5">
+                          {perm.name}
                         </div>
                       </div>
                     </label>

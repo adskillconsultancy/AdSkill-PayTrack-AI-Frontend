@@ -3,6 +3,7 @@ import { ShieldAlert } from "lucide-react";
 import { Button, Input } from "@/components/common";
 import { useCreateRoleMutation } from "@/services/api/roles/rolesApi";
 import type { PermissionGroup } from "../types";
+import { getPermissionDisplayName } from "../utils/roleFormatters";
 
 interface CreateRoleModalProps {
   isOpen: boolean;
@@ -116,7 +117,14 @@ export function CreateRoleModal({
                             onChange={() => togglePerm(perm.id)}
                             className="h-3.5 w-3.5 rounded text-[#0a0a0a]"
                           />
-                          <span className="font-mono text-[11px] truncate">{perm.name}</span>
+                          <div className="min-w-0">
+                            <span className="font-bold text-[11px] text-[#0a0a0a] truncate block">
+                              {getPermissionDisplayName(perm.name)}
+                            </span>
+                            <span className="font-mono text-[9px] text-[#94A3B8] truncate block">
+                              {perm.name}
+                            </span>
+                          </div>
                         </label>
                       );
                     })}

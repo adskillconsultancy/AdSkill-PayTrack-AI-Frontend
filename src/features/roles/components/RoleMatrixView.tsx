@@ -1,6 +1,11 @@
 import * as React from "react";
 import { CheckCircle2 } from "lucide-react";
 import type { RoleItem, PermissionGroup } from "../types";
+import {
+  getRoleDisplayName,
+  getPermissionDisplayName,
+  getPermissionDescription,
+} from "../utils/roleFormatters";
 
 interface RoleMatrixViewProps {
   roles: RoleItem[];
@@ -25,10 +30,15 @@ export function RoleMatrixView({ roles, permissionGroups }: RoleMatrixViewProps)
         <table className="w-full text-left text-xs">
           <thead className="bg-[#FAF8F5] border-b border-[#EAE6DF] text-[11px] uppercase font-bold text-[#64748B]">
             <tr>
-              <th className="py-3 px-4 w-72">Capability &amp; Module</th>
+              <th className="py-3 px-4 w-72">Capability &amp; Description</th>
               {roles.map((role) => (
-                <th key={role.id} className="py-3 px-4 text-center font-mono font-bold text-[#0a0a0a]">
-                  {role.name}
+                <th key={role.id} className="py-3 px-4 text-center">
+                  <div className="font-bold text-[#0a0a0a] text-xs">
+                    {getRoleDisplayName(role.name)}
+                  </div>
+                  <div className="font-mono text-[9px] text-[#94A3B8] font-normal">
+                    {role.name}
+                  </div>
                 </th>
               ))}
             </tr>
@@ -43,9 +53,16 @@ export function RoleMatrixView({ roles, permissionGroups }: RoleMatrixViewProps)
                 </tr>
                 {group.permissions.map((perm) => (
                   <tr key={perm.id} className="hover:bg-[#FAF8F5]/50 transition-colors">
-                    <td className="py-2.5 px-4 font-mono text-[#0a0a0a]">
-                      <div className="font-bold">{perm.name}</div>
-                      <div className="text-[10px] text-[#64748B] font-sans">{perm.description}</div>
+                    <td className="py-2.5 px-4 text-[#0a0a0a]">
+                      <div className="font-bold text-xs">
+                        {getPermissionDisplayName(perm.name)}
+                      </div>
+                      <div className="text-[10px] text-[#64748B]">
+                        {getPermissionDescription(perm.name, perm.description)}
+                      </div>
+                      <div className="font-mono text-[9px] text-[#94A3B8] mt-0.5">
+                        {perm.name}
+                      </div>
                     </td>
                     {roles.map((role) => {
                       const hasPerm = role.permissions.some((p) => p.id === perm.id);
@@ -54,7 +71,7 @@ export function RoleMatrixView({ roles, permissionGroups }: RoleMatrixViewProps)
                           {hasPerm ? (
                             <CheckCircle2 className="h-4 w-4 text-[#059669] inline" />
                           ) : (
-                            <span className="text-[#CBD5E1]">—</span>
+                            <span className="text-[#CBD5E1]">-</span>
                           )}
                         </td>
                       );
