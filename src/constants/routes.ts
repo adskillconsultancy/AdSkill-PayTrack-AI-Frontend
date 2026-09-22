@@ -37,6 +37,7 @@ export const ROUTES = {
   ROLES: "/roles",
   ROLES_CREATE: "/roles/create",
   AUDIT: "/audit",
+  INVOICES: "/invoices-receipts",
 } as const;
 
 export const PUBLIC_ROUTES = [
@@ -76,3 +77,4 @@ export const PROTECTED_ROUTES = [
   ROUTES.ROLES_CREATE,
   ROUTES.AUDIT,
 ] as const;
+

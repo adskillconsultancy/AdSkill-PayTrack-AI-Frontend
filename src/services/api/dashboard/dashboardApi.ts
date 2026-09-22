@@ -4,6 +4,7 @@
 import { baseApi } from "@/lib/rtk-query/baseApi";
 import type { ApiResponse } from "@/types/api.types";
 import type {
+  ClientDashboardSummary,
   DashboardCaseDistribution,
   DashboardClientGrowth,
   DashboardFilterParams,
@@ -89,6 +90,15 @@ export const dashboardApi = baseApi.injectEndpoints({
       }),
       providesTags: ["Dashboard"],
     }),
+
+    // 7. Dedicated Client Dashboard Summary (Specification Section 10)
+    getClientDashboardSummary: builder.query<ApiResponse<ClientDashboardSummary>, void>({
+      query: () => ({
+        url: "/dashboard/client-summary",
+        method: "GET",
+      }),
+      providesTags: ["Dashboard", "Case", "Payment", "PaymentPlan", "Invoice", "Receipt"],
+    }),
   }),
   overrideExisting: false,
 });
@@ -100,4 +110,5 @@ export const {
   useGetDashboardVerificationQueueQuery,
   useGetDashboardCaseDistributionQuery,
   useGetDashboardRecentActivityQuery,
+  useGetClientDashboardSummaryQuery,
 } = dashboardApi;

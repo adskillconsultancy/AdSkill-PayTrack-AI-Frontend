@@ -280,11 +280,11 @@ const navSections: NavSection[] = [
       },
       {
         title: "Invoices & Receipts",
-        href: `${ROUTES.PAYMENTS}?tab=invoices`,
+        href: ROUTES.INVOICES,
         icon: FileText,
         requiredAnyPermissions: ["invoice:read", "receipt:read"],
         subItems: [
-          { title: "Invoices", href: `${ROUTES.PAYMENTS}?tab=invoices` },
+          { title: "Invoices", href: ROUTES.INVOICES },
           {
             title: "Payment Receipts",
             href: `${ROUTES.PAYMENTS}?tab=receipts`,
@@ -811,6 +811,8 @@ export function Sidebar() {
     </>
   );
 }
+
+
 
 
 

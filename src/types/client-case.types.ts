@@ -187,29 +187,94 @@ export interface PaymentLedgerResponse {
   stats: PaymentLedgerStats;
 }
 
+export interface InvoiceCaseUser {
+  id: string;
+  clientId?: string | null;
+  name: string;
+  preferredName?: string | null;
+  email: string;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+}
+
+export interface InvoiceCaseService {
+  id: string;
+  name: string;
+  code: string;
+  baseFee?: number | string;
+  estimatedGovFee?: number | string;
+  estimatedAttorneyFee?: number | string;
+  estimatedThirdPartyFee?: number | string;
+  currency?: string;
+}
+
+export interface InvoiceCasePlan {
+  contractedFee: number | string;
+  currency: string;
+  scheduleType: string;
+  paymentMethod?: string | null;
+  baseFeeSnapshot?: number | string;
+  discountAmount?: number | string;
+  discountReason?: string | null;
+  installments?: Array<{ sequenceNumber: number; title?: string | null; amount: number | string; dueDate: string }>;
+}
+
+export interface InvoiceCase {
+  id: string;
+  caseCode: string;
+  userId: string;
+  serviceNameSnapshot: string;
+  serviceCodeSnapshot: string;
+  assignedConsultantId?: string | null;
+  user?: InvoiceCaseUser | null;
+  service?: InvoiceCaseService | null;
+  paymentPlans?: InvoiceCasePlan[];
+}
+
 export interface Invoice {
   id: string;
   caseId: string;
   invoiceNumber: string;
   currency: string;
   amount: number | string;
-  issuedAt: string;
+  status: string;
   dueAt?: string | null;
-  status?: string;
+  issuedAt: string;
+  isDeleted?: boolean;
   createdAt: string;
+  case?: InvoiceCase;
+}
+
+export interface ReceiptPayment {
+  id: string;
+  status: string;
+  amount: number | string;
+  currency: string;
+  paymentDate: string;
+  paymentMethod: string;
+  externalReference?: string | null;
+  installment?: { sequenceNumber: number; title?: string | null } | null;
+  verifiedBy?: { id: string; name: string; email: string; role?: { name: string } | null } | null;
 }
 
 export interface Receipt {
   id: string;
   caseId: string;
-  paymentId: string;
+  paymentId?: string | null;
+  invoiceId?: string | null;
   receiptNumber: string;
   currency: string;
   amount: number | string;
+  status: string;
   issuedAt: string;
   createdAt: string;
+  case?: InvoiceCase;
+  payment?: ReceiptPayment | null;
 }
-
 export interface CreateClientCaseInput {
   userId?: string;
   serviceId: string;
@@ -263,3 +328,4 @@ export interface CreatePaymentInput {
   proofDocumentIds?: string[];
   status?: "PENDING" | "VERIFIED";
 }
+
