@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
@@ -29,12 +29,10 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 const formatMoney = (amount: number | string, currency = "USD") =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(Number(amount) || 0);
+  formatCurrencyWithCode(amount, currency);
 
-const formatDate = (d?: string | null) => {
-  if (!d) return "N/A";
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(d));
-};
+const formatDate = (d?: string | null) =>
+  formatExplicitDate(d);
 
 // ── Card Skeleton ─────────────────────────────────────────────────────────────
 function CardSkeleton() {
@@ -201,11 +199,18 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
   const filteredInvoices = React.useMemo(() => {
     return invoices
       .filter((inv) => {
+        const q = search.toLowerCase().trim();
         const matchesSearch =
-          !search ||
-          inv.invoiceNumber.toLowerCase().includes(search.toLowerCase()) ||
-          inv.case?.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
-          inv.case?.caseCode?.toLowerCase().includes(search.toLowerCase());
+          !q ||
+          inv.invoiceNumber.toLowerCase().includes(q) ||
+          inv.status.toLowerCase().includes(q) ||
+          inv.case?.user?.name?.toLowerCase().includes(q) ||
+          inv.case?.user?.clientId?.toLowerCase().includes(q) ||
+          inv.case?.user?.email?.toLowerCase().includes(q) ||
+          inv.case?.user?.phone?.toLowerCase().includes(q) ||
+          inv.case?.serviceNameSnapshot?.toLowerCase().includes(q) ||
+          inv.case?.assignedConsultant?.name?.toLowerCase().includes(q) ||
+          inv.case?.caseCode?.toLowerCase().includes(q);
 
         const matchesStatus = statusFilter === "ALL" || inv.status === statusFilter;
         return matchesSearch && matchesStatus;
@@ -223,12 +228,20 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
   const filteredReceipts = React.useMemo(() => {
     return receipts
       .filter((rct) => {
+        const q = search.toLowerCase().trim();
         const matchesSearch =
-          !search ||
-          rct.receiptNumber.toLowerCase().includes(search.toLowerCase()) ||
-          rct.case?.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
-          rct.case?.caseCode?.toLowerCase().includes(search.toLowerCase()) ||
-          rct.payment?.externalReference?.toLowerCase().includes(search.toLowerCase());
+          !q ||
+          rct.receiptNumber.toLowerCase().includes(q) ||
+          rct.status.toLowerCase().includes(q) ||
+          rct.case?.user?.name?.toLowerCase().includes(q) ||
+          rct.case?.user?.clientId?.toLowerCase().includes(q) ||
+          rct.case?.user?.email?.toLowerCase().includes(q) ||
+          rct.case?.user?.phone?.toLowerCase().includes(q) ||
+          rct.case?.serviceNameSnapshot?.toLowerCase().includes(q) ||
+          rct.case?.assignedConsultant?.name?.toLowerCase().includes(q) ||
+          rct.case?.caseCode?.toLowerCase().includes(q) ||
+          rct.payment?.externalReference?.toLowerCase().includes(q) ||
+          rct.payment?.paymentMethod?.toLowerCase().includes(q);
 
         return matchesSearch;
       })
@@ -531,7 +544,7 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder={tab === "invoices" ? "Search invoice # or client..." : "Search receipt # or ref..."}
+                  placeholder={tab === "invoices" ? "Search invoice #, client name/ID, phone, service, or consultant..." : "Search receipt #, client name/ID, wire ref, or method..."}
                   className="w-full h-9 pl-8 pr-8 rounded-xl border border-slate-200 text-xs text-slate-900 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
                 {search && (

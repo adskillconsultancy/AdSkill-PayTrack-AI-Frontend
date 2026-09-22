@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
 import type { Invoice } from "@/types/client-case.types";
 import {
   FileText, Download, Calendar, CheckCircle2,
@@ -17,12 +17,10 @@ interface Props {
 }
 
 const formatMoney = (amount: number | string, currency = "USD") =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(Number(amount) || 0);
+  formatCurrencyWithCode(amount, currency);
 
-const formatDate = (d?: string | null) => {
-  if (!d) return "N/A";
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(d));
-};
+const formatDate = (d?: string | null) =>
+  formatExplicitDate(d);
 
 const statusConfig: Record<string, { bg: string; text: string; border: string; icon: React.ElementType }> = {
   ISSUED: { bg: "bg-blue-50 text-blue-700", border: "border-blue-200/80", text: "Issued", icon: Clock },

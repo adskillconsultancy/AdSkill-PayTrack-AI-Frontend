@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -45,7 +45,7 @@ import { useGetCasePaymentPlansQuery } from "@/services/api/payment-plans/paymen
 import { useCreatePaymentMutation, useGetCasePaymentsQuery } from "@/services/api/payments/paymentsApi";
 import { useUploadCaseDocumentsMutation } from "@/services/api/documents/documentsApi";
 import { usePermissions } from "@/hooks/usePermissions";
-import { cn } from "@/lib/utils";
+import { cn, formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
 import type { Installment } from "@/types/client-case.types";
 
 const PAYMENT_METHODS = [
@@ -57,7 +57,7 @@ const PAYMENT_METHODS = [
 ];
 
 const money = (value: number | string, currency = "USD") =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(Number(value) || 0);
+  formatCurrencyWithCode(value, currency);
 
 export default function RecordPaymentPage() {
   const router = useRouter();

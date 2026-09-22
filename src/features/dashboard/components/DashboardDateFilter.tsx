@@ -12,6 +12,7 @@ interface DashboardDateFilterProps {
   endDate?: string;
   onCustomDatesChange: (start: string, end: string) => void;
   className?: string;
+  align?: "left" | "right";
 }
 
 const PERIOD_LABELS: Record<DashboardPeriod, string> = {
@@ -30,6 +31,7 @@ export function DashboardDateFilter({
   endDate,
   onCustomDatesChange,
   className,
+  align = "left",
 }: DashboardDateFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [customStart, setCustomStart] = useState(startDate || "");
@@ -37,14 +39,30 @@ export function DashboardDateFilter({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (startDate) setCustomStart(startDate);
+    if (endDate) setCustomEnd(endDate);
+  }, [startDate, endDate]);
+
+  useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   const handleApplyCustom = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +77,7 @@ export function DashboardDateFilter({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 rounded-xl border border-border/80 bg-card px-3.5 py-2 text-xs sm:text-sm font-bold text-foreground shadow-2xs hover:bg-muted/50 transition-all hover:scale-[1.02] cursor-pointer"
+        className="inline-flex h-9 items-center gap-2 rounded-xl border border-border/80 bg-card px-3.5 text-xs font-bold text-foreground shadow-2xs hover:bg-muted/50 transition-all hover:scale-[1.02] cursor-pointer"
         aria-expanded={isOpen}
       >
         <Calendar className="h-4 w-4 text-[#F3A712]" />
@@ -73,7 +91,12 @@ export function DashboardDateFilter({
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-72 origin-top-right rounded-2xl border border-border bg-card p-2 shadow-xl ring-1 ring-black/5 focus:outline-hidden animate-in fade-in-50 zoom-in-95">
+        <div
+          className={cn(
+            "absolute z-50 mt-2 w-72 max-w-[calc(100vw-2.5rem)] rounded-2xl border border-border/80 bg-card p-2.5 shadow-2xl ring-1 ring-black/5 dark:ring-white/10 focus:outline-hidden animate-in fade-in-50 zoom-in-95 duration-150",
+            align === "right" ? "right-0 origin-top-right" : "left-0 origin-top-left"
+          )}
+        >
           <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 py-1.5 border-b border-border/60">
             Time Period Filter
           </div>

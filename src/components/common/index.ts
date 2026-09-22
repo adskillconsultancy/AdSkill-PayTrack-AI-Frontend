@@ -45,3 +45,5 @@ export type {
   SkeletonFormProps,
 } from "./Skeleton";
 
+
+export { GlobalOmniSearch } from "./GlobalOmniSearch";

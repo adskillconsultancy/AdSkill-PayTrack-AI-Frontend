@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 // ── Protected Layout ───────────────────────────────────
 // Shell: Collapsible Sidebar + Straight Top Header + Curved Main Body Container
 
-import { Button } from "@/components/common";
+import { Button, GlobalOmniSearch } from "@/components/common";
 import { Sidebar } from "@/components/layouts/Sidebar";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/stores/sidebar.store";
@@ -94,8 +94,10 @@ export default function ProtectedLayout({
           "transition-all duration-300 ease-in-out min-h-screen flex-1 flex flex-col min-w-0 bg-background",
           isOpen ? "lg:ml-64" : "lg:ml-0",
         )}>
+        {/* Top Header: 3-Zone Layout (Left Context, Center Omni-Search, Right Actions) */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-sidebar/95 backdrop-blur-md px-4 sm:px-6 shrink-0 border-b border-border/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)]">
-          <div className="flex items-center gap-3">
+          {/* Left Zone: Hamburger (mobile) + Brand/Workspace indicator */}
+          <div className="flex items-center gap-3 shrink-0">
             <Button
               type="button"
               variant="ghost"
@@ -106,8 +108,9 @@ export default function ProtectedLayout({
               <span className="sr-only">Open menu</span>
             </Button>
 
+            {/* When collapsed on desktop: show AdSkill logo icon & brand */}
             {!isOpen && (
-              <div className="hidden lg:flex w-10 justify-center shrink-0">
+              <div className="hidden lg:flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted p-1 shadow-2xs">
                   <Image
                     src="/logo-icon.svg"
@@ -117,17 +120,45 @@ export default function ProtectedLayout({
                     className="object-contain"
                   />
                 </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-extrabold tracking-tight text-foreground leading-tight">
+                    PayTrack<span className="text-[#F3A712]"> AI</span>
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                    by AdSkill
+                  </span>
+                </div>
               </div>
             )}
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm sm:text-base font-bold tracking-tight text-foreground">
-                AdSkill PayTrack AI
+            {/* Mobile Brand Title */}
+            <div className="flex lg:hidden items-center gap-2">
+              <span className="text-sm font-bold tracking-tight text-foreground">
+                PayTrack<span className="text-[#F3A712]"> AI</span>
               </span>
             </div>
+
+            {/* When sidebar is open on desktop: show sleek workspace tag without duplicate brand */}
+            {isOpen && (
+              <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-muted/60 border border-border/60 text-xs font-semibold text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#F3A712] animate-pulse" />
+                <span>Enterprise Workspace</span>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Center Zone: Global Omni-Search (Desktop & Tablet) */}
+          <div className="hidden sm:flex flex-1 max-w-md mx-4 lg:mx-8 justify-center">
+            <GlobalOmniSearch />
+          </div>
+
+          {/* Right Zone: Controls & Utility Actions */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            {/* Mobile Search Trigger */}
+            <div className="sm:hidden">
+              <GlobalOmniSearch compact />
+            </div>
+
             <div
               className="flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 border border-border text-sm shadow-2xs"
               title={user?.country || "Account region"}>
@@ -136,7 +167,7 @@ export default function ProtectedLayout({
                   ? "🇨🇦"
                   : user?.country === "United Kingdom"
                   ? "🇬🇧"
-                  : "🌐"}
+                  : "🇺🇸"}
               </span>
             </div>
 
@@ -230,7 +261,7 @@ export default function ProtectedLayout({
                               ? "🇨🇦"
                               : user?.country === "United Kingdom"
                               ? "🇬🇧"
-                              : "🌐"}
+                              : "🇺🇸"}
                           </span>
                           <span>{user.country}</span>
                         </span>

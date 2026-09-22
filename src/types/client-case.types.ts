@@ -1,4 +1,4 @@
-export type CaseStatus = "INTAKE" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+﻿export type CaseStatus = "INTAKE" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
 export type FinancialStatus = "UNPAID" | "PARTIALLY_PAID" | "PAID" | "OVERDUE";
 export type PaymentStatus = "PENDING" | "VERIFIED" | "REJECTED" | "REFUNDED" | "VOIDED";
 export type DocumentType = "AGREEMENT" | "INVOICE" | "RECEIPT" | "PAYMENT_PROOF" | "IDENTITY" | "SUPPORTING" | "OTHER";
@@ -230,6 +230,7 @@ export interface InvoiceCase {
   serviceNameSnapshot: string;
   serviceCodeSnapshot: string;
   assignedConsultantId?: string | null;
+  assignedConsultant?: { id: string; name: string; email?: string } | null;
   user?: InvoiceCaseUser | null;
   service?: InvoiceCaseService | null;
   paymentPlans?: InvoiceCasePlan[];

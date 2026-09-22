@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -34,26 +34,13 @@ import { Button } from "@/components/common/Button";
 import { SkeletonDetailView } from "@/components/common/Skeleton";
 import { useGetPaymentQuery, useVerifyPaymentMutation } from "@/services/api/payments/paymentsApi";
 import { usePermissions } from "@/hooks/usePermissions";
-import { cn } from "@/lib/utils";
+import { cn, formatExplicitDateTime, formatCurrencyWithCode } from "@/lib/utils";
 
-const formatMoney = (amount: number | string, currency = "USD") => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency || "USD",
-  }).format(Number(amount) || 0);
-};
+const formatMoney = (amount: number | string, currency = "USD") =>
+  formatCurrencyWithCode(amount, currency);
 
-const formatDate = (isoString?: string | null) => {
-  if (!isoString) return "N/A";
-  try {
-    return new Intl.DateTimeFormat("en-US", {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(isoString));
-  } catch {
-    return isoString;
-  }
-};
+const formatDate = (isoString?: string | null) =>
+  formatExplicitDateTime(isoString);
 
 const formatFileSize = (bytes: number) => {
   if (!bytes) return "0 B";

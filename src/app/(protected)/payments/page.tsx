@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import type { Payment } from "@/types/client-case.types";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { Skeleton, SkeletonMetricCards } from "@/components/common/Skeleton";
-import { cn } from "@/lib/utils";
+import { cn, formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
 import {
   CreditCard,
   CheckCircle2,
@@ -290,7 +290,7 @@ export default function PaymentsPage() {
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 type="text"
-                placeholder="Search client, case, or wire ref..."
+                placeholder="Search by client name/ID, phone, service, wire ref, or consultant..." aria-label="Search payment records"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 h-10 rounded-xl bg-slate-50 border-slate-200 text-xs font-semibold placeholder:text-slate-400 focus:bg-white"

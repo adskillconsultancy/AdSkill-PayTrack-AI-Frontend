@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
 import type { Receipt } from "@/types/client-case.types";
 import {
   Receipt as ReceiptIcon, Download, Calendar,
@@ -18,12 +18,10 @@ interface Props {
 }
 
 const formatMoney = (amount: number | string, currency = "USD") =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(Number(amount) || 0);
+  formatCurrencyWithCode(amount, currency);
 
-const formatDate = (d?: string | null) => {
-  if (!d) return "N/A";
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(d));
-};
+const formatDate = (d?: string | null) =>
+  formatExplicitDate(d);
 
 export function ReceiptCard({ receipt, apiBaseUrl, token, onView }: Props) {
   const [downloading, setDownloading] = React.useState(false);

@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
+import { formatExplicitDate } from "@/lib/utils";
 import { DataTable, ColumnDef } from "@/components/common/DataTable";
 import { useGetAllCasesQuery } from "@/services/api/clients/clientCasesApi";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -34,7 +35,7 @@ const statusClass: Record<CaseStatus, string> = {
   CANCELLED: "bg-[#F1F5F9] text-[#64748B]",
 };
 
-const formatDate = (value: string) => new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(value));
+const formatDate = (value: string) => formatExplicitDate(value);
 
 export function ClientListView({
   pageTitle = "Application List",
@@ -71,7 +72,7 @@ export function ClientListView({
   const destinations = React.useMemo(() => [...new Set(cases.map((item) => item.destinationCountry).filter(Boolean) as string[])], [cases]);
   const filteredCases = React.useMemo(() => cases.filter((item) => {
     const query = searchQuery.trim().toLowerCase();
-    const matchesQuery = !query || [item.caseCode, item.serviceNameSnapshot, item.serviceCodeSnapshot, item.destinationCountry, item.user?.name, item.user?.email].some((value) => value?.toLowerCase().includes(query));
+    const matchesQuery = !query || [item.caseCode, item.serviceNameSnapshot, item.serviceCodeSnapshot, item.destinationCountry, item.user?.name, item.user?.preferredName, item.user?.email, item.user?.phone, item.user?.whatsapp, item.user?.clientId, item.assignedConsultant?.name, item.caseStatus].some((value) => value?.toLowerCase().includes(query));
     return matchesQuery && (statusFilter === "ALL" || item.caseStatus === statusFilter) && (destinationFilter === "ALL" || item.destinationCountry === destinationFilter);
   }).sort((a, b) => {
     if (selectedSort === "Oldest First") return +new Date(a.createdAt) - +new Date(b.createdAt);

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -83,20 +83,20 @@ export function ClientSearchBar({
       {/* 1. SEARCH INPUT BAR */}
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
-          <Search className="h-4.5 w-4.5 text-[#94A3B8]" />
+          <Search className="h-4.5 w-4.5 text-[#64748B]" />
         </div>
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by client name, passport or ID..."
-          className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-[#EAE6DF] text-sm text-[#0a0a0a] placeholder:text-[#94A3B8]/60 placeholder:font-normal shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all focus:outline-none focus:border-[#0a0a0a] focus:ring-2 focus:ring-[#0a0a0a]/15"
+          placeholder="Search by client name/ID, email, phone, service, or consultant..." aria-label="Search client applications"
+          className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-[#EAE6DF] text-sm text-[#0a0a0a] placeholder:text-[#64748B]/60 placeholder:font-normal shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all focus:outline-none focus:border-[#0a0a0a] focus:ring-2 focus:ring-[#F3A712]"
         />
         {searchQuery && (
           <button
             type="button"
             onClick={() => onSearchChange("")}
-            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#94A3B8] hover:text-[#0a0a0a] transition-colors cursor-pointer"
+            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#64748B] hover:text-[#0a0a0a] transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>

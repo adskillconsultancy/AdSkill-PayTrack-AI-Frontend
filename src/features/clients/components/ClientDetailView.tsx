@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -44,6 +44,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
+import { formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
 import { SkeletonDetailView } from "@/components/common/Skeleton";
 import { RichTextEditor } from "@/components/common/RichTextEditor";
 import { CaseNotesTimeline } from "./CaseNotesTimeline";
@@ -141,10 +142,10 @@ function getFileMeta(originalName: string, mimeType?: string) {
 }
 
 const money = (value: number | string, currency = "USD") =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(Number(value) || 0);
+  formatCurrencyWithCode(value, currency);
 
 const date = (value?: string | null) =>
-  value ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(value)) : "Not set";
+  value ? formatExplicitDate(value) : "Not set";
 
 const errorText = (error: unknown) =>
   error && typeof error === "object" && "data" in error
