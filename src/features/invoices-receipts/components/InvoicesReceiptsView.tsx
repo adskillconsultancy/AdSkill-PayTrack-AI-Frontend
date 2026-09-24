@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { cn, formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -146,7 +147,17 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
   const canReadInvoice = hasPermission("invoice:read");
   const canReadReceipt = hasPermission("receipt:read");
 
-  const [tab, setTab] = React.useState<"invoices" | "receipts">("invoices");
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [tab, setTab] = React.useState<"invoices" | "receipts">(
+    tabParam === "receipts" ? "receipts" : "invoices"
+  );
+
+  React.useEffect(() => {
+    if (tabParam === "receipts" || tabParam === "invoices") {
+      setTab(tabParam);
+    }
+  }, [tabParam]);
   const [viewMode, setViewMode] = React.useState<"grid" | "table">("grid");
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
@@ -294,7 +305,7 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
   };
 
   return (
-    <div className="container py-6 sm:py-8 space-y-6 max-w-7xl mx-auto">
+    <div className="w-full space-y-6 pb-20">
       {/* ── Page Hero Header ────────────────────────────────────────── */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b192c] via-[#112240] to-[#1e3a8a] text-white p-6 sm:p-8 shadow-xl">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 h-64 w-64 rounded-full bg-white/5 blur-2xl pointer-events-none" />

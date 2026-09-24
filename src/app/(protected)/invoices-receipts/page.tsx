@@ -12,7 +12,7 @@ export default function InvoicesReceiptsPage() {
   return (
     <Suspense
       fallback={
-        <div className="container py-10 space-y-6 max-w-7xl mx-auto animate-pulse">
+        <div className="w-full space-y-6 pb-20 animate-pulse">
           <div className="h-8 w-72 bg-slate-100 rounded-lg" />
           <div className="grid grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (

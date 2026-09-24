@@ -164,7 +164,7 @@ const navSections: NavSection[] = [
           },
           {
             title: "Payment Receipts",
-            href: `${ROUTES.PAYMENTS}?tab=receipts`,
+            href: `${ROUTES.INVOICES}?tab=receipts`,
             requiredPermission: "receipt:read",
           },
         ],
@@ -306,7 +306,7 @@ const navSections: NavSection[] = [
           { title: "Invoices", href: ROUTES.INVOICES },
           {
             title: "Payment Receipts",
-            href: `${ROUTES.PAYMENTS}?tab=receipts`,
+            href: `${ROUTES.INVOICES}?tab=receipts`,
           },
         ],
       },

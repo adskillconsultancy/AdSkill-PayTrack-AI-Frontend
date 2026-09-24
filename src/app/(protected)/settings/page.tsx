@@ -17,7 +17,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   }
 
   return (
-    <div className="container py-10">
+    <div className="w-full space-y-6 pb-20">
       <PageHeader
         title="Settings"
         description="Configure application settings."

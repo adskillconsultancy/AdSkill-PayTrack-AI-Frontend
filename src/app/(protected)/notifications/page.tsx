@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function NotificationsPage() {
   return (
-    <div className="container py-10">
+    <div className="w-full space-y-6 pb-20">
       <PageHeader
         title="Notifications"
         description="View your notifications."
