@@ -32,11 +32,16 @@ function getActionStyle(action: string): { bg: string; text: string } {
 }
 
 function formatDate(iso: string): { date: string; time: string } {
-  const d = new Date(iso);
-  return {
-    date: d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-  };
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) throw new Error("Invalid date");
+    return {
+      date: d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+      time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+    };
+  } catch {
+    return { date: iso || "N/A", time: "" };
+  }
 }
 
 // ─── Props ──────────────────────────────────────────────────────────────────
@@ -330,7 +335,7 @@ export function AuditLogTable({
                       {log.targetEntity}
                     </div>
                     <div className="text-[11px] text-[#94A3B8] font-mono mt-0.5 truncate max-w-[120px]">
-                      #{log.targetId.slice(0, 8)}...
+                      {log.targetId ? `#${String(log.targetId).slice(0, 8)}${String(log.targetId).length > 8 ? "..." : ""}` : "—"}
                     </div>
                   </td>
 

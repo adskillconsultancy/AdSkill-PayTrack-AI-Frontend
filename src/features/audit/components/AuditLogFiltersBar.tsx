@@ -13,29 +13,29 @@ const ACTION_OPTIONS = [
   "LOGIN_SUCCESS", "LOGIN_FAILED", "PASSWORD_CHANGE",
   // Client / Case
   "CREATE_CLIENT", "UPDATE_CLIENT", "DELETE_CLIENT",
-  "CREATE_CASE", "UPDATE_CASE", "CLOSE_CASE",
+  "CREATE_CASE", "CREATE_CLIENT_CASE", "UPDATE_CASE", "UPDATE_CLIENT_CASE", "CLOSE_CASE",
   // Payment Plans
-  "CREATE_PLAN", "UPDATE_PLAN", "DELETE_PLAN",
+  "CREATE_PLAN", "CREATE_PAYMENT_PLAN", "UPDATE_PLAN", "DELETE_PLAN",
   "CREATE_INSTALLMENT", "UPDATE_INSTALLMENT",
   // Payments
   "RECORD_PAYMENT", "VERIFY_PAYMENT", "ISSUE_REFUND", "VOID_PAYMENT",
-  // Invoices & Receipts
-  "GENERATE_INVOICE", "GENERATE_RECEIPT",
+  // Invoices & Receipts & Reports
+  "GENERATE_INVOICE", "GENERATE_RECEIPT", "DOWNLOAD_INVOICE_PDF", "DOWNLOAD_RECEIPT_PDF", "GENERATE_EXECUTIVE_REPORT",
   // Services
   "CREATE_SERVICE", "UPDATE_SERVICE", "DELETE_SERVICE",
   // Users / Roles
   "CREATE_USER", "UPDATE_USER", "DEACTIVATE_USER",
   "UPDATE_ROLE", "ASSIGN_PERMISSION",
   // Support
-  "CREATE_TICKET", "CLOSE_TICKET",
+  "CREATE_TICKET", "CREATE_SUPPORT_TICKET", "SEND_SUPPORT_MESSAGE", "CLOSE_TICKET",
 ];
 
 const ENTITY_OPTIONS = [
   "All Entities",
   "User", "ClientCase", "Service",
   "PaymentPlan", "Installment", "Payment",
-  "Invoice", "Receipt", "Document",
-  "CaseNote", "SupportTicket",
+  "Invoice", "Receipt", "REPORT", "Document",
+  "CaseNote", "SupportTicket", "SupportMessage",
 ];
 
 const SORT_OPTIONS = [

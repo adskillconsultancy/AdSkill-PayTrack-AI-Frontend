@@ -10,13 +10,14 @@ import { Button } from "@/components/common/Button";
 import { Skeleton } from "@/components/common/Skeleton";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useGetAuditLogsQuery } from "@/services/api/audit/auditApi";
-import type { AuditLogFilters } from "@/types/audit.types";
+import type { AuditLog, AuditLogFilters } from "@/types/audit.types";
 import { AuditLogFiltersBar } from "./AuditLogFiltersBar";
 import { AuditLogTable } from "./AuditLogTable";
 import { AuditLogDetailModal } from "./AuditLogDetailModal";
 
 export function AuditLogListView() {
-  const { isSuperAdmin } = usePermissions();
+  const { isSuperAdmin, hasPermission, user } = usePermissions();
+  const canReadAudit = isSuperAdmin || hasPermission("audit:read");
 
   const [filters, setFilters] = React.useState<AuditLogFilters>({
     page: 1,
@@ -32,10 +33,19 @@ export function AuditLogListView() {
     isFetching,
     isError,
     refetch,
-  } = useGetAuditLogsQuery(filters, { skip: !isSuperAdmin });
+  } = useGetAuditLogsQuery(filters, { skip: !canReadAudit });
 
-  const logs = response?.data?.data ?? [];
-  const meta = response?.data?.meta;
+  // Defensively extract logs array and pagination meta regardless of backend wrapper structure:
+  // 1) Standard API response: response.data = AuditLog[], response.meta = PaginationMeta
+  // 2) Nested response: response.data.data = AuditLog[], response.data.meta = PaginationMeta
+  const rawData: any = response?.data;
+  const logs: AuditLog[] = Array.isArray(rawData)
+    ? rawData
+    : Array.isArray(rawData?.data)
+      ? rawData.data
+      : [];
+
+  const meta = response?.meta || (rawData && !Array.isArray(rawData) ? rawData.meta : undefined);
 
   const handleFilterChange = (newFilters: Partial<AuditLogFilters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters, page: 1 }));
@@ -46,7 +56,25 @@ export function AuditLogListView() {
   };
 
   // ─── Access Guard ──────────────────────────────────────────────────────────
-  if (!isSuperAdmin) {
+  if (!user) {
+    return (
+      <div className="w-full space-y-6 pb-20">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-10 w-64 rounded-xl" />
+          <Skeleton className="h-9 w-24 rounded-lg" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-12 w-full rounded-2xl" />
+        <Skeleton className="h-96 w-full rounded-2xl" />
+      </div>
+    );
+  }
+
+  if (!canReadAudit) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
         <div className="flex items-center justify-center w-20 h-20 rounded-full bg-red-50 border border-red-100">
@@ -64,7 +92,7 @@ export function AuditLogListView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-6 pb-20">
       {/* ─── Page Header ─────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div className="flex items-start gap-4">

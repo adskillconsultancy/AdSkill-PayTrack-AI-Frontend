@@ -17,6 +17,7 @@ import { Button } from "@/components/common/Button";
 import { Skeleton } from "@/components/common/Skeleton";
 import { cn } from "@/lib/utils";
 import { useGetAuditLogByIdQuery } from "@/services/api/audit/auditApi";
+import type { AuditLog } from "@/types/audit.types";
 
 // ─── JSON Diff Viewer ──────────────────────────────────────────────────────
 
@@ -68,7 +69,10 @@ interface Props {
 
 export function AuditLogDetailModal({ logId, onClose }: Props) {
   const { data: response, isLoading, isError } = useGetAuditLogByIdQuery(logId);
-  const log = response?.data;
+  const rawLog: any = response?.data;
+  const log: AuditLog | undefined = rawLog && typeof rawLog === "object" && "id" in rawLog
+    ? rawLog
+    : rawLog?.data;
 
   // Close on Escape
   React.useEffect(() => {
@@ -83,12 +87,17 @@ export function AuditLogDetailModal({ logId, onClose }: Props) {
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleString("en-US", {
-      year: "numeric", month: "long", day: "numeric",
-      hour: "2-digit", minute: "2-digit", second: "2-digit",
-      timeZoneName: "short",
-    });
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleString("en-US", {
+        year: "numeric", month: "long", day: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        timeZoneName: "short",
+      });
+    } catch {
+      return iso || "N/A";
+    }
+  };
 
   return (
     <>
