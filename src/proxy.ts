@@ -1,6 +1,5 @@
-// Next.js Edge Middleware
-// Handles authentication redirects at the edge.
-// Runs before every route - checks for auth token in cookies/headers.
+// Next.js Proxy (Next.js 16 Edge Proxy)
+// Enforces route protection and redirection before protected and auth pages render.
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -14,7 +13,6 @@ const protectedPaths = [
   "/reports",
   "/notifications",
   "/profile",
-  "/settings",
   "/users",
   "/services",
   "/roles",
@@ -25,30 +23,23 @@ const protectedPaths = [
 // Routes only for unauthenticated users
 const authPaths = ["/login", "/register", "/forgot-password", "/reset-password"];
 
-export function proxy(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // In active development, allow all requests through unless explicitly enforced
   const token = request.cookies.get("accessToken")?.value;
-  const enforceAuth = process.env.NEXT_PUBLIC_ENABLE_AUTH_REDIRECT === "true";
-
-  if (!enforceAuth) {
-    return NextResponse.next();
-  }
 
   const isProtectedRoute = protectedPaths.some((path) =>
     pathname.startsWith(path)
   );
   const isAuthRoute = authPaths.some((path) => pathname.startsWith(path));
 
-  // Redirect unauthenticated users away from protected routes
+  // Redirect unauthenticated users away from protected routes to login
   if (isProtectedRoute && !token) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Redirect authenticated users away from auth routes
+  // Redirect authenticated users away from public auth routes to dashboard
   if (isAuthRoute && token) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
@@ -58,15 +49,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-
-export default proxy;

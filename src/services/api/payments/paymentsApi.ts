@@ -57,6 +57,26 @@ export const paymentsApi = baseApi.injectEndpoints({
           : []),
       ],
     }),
+    refundPayment: builder.mutation<
+      ApiResponse<Payment>,
+      { id: string; reason: string; refundAmount?: number }
+    >({
+      query: ({ id, ...body }) => ({
+        url: `/payments/${id}/refund`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: (result, _error, { id }) => [
+        { type: "Payment", id },
+        { type: "Payment", id: "GLOBAL_LIST" },
+        ...(result?.data?.caseId
+          ? [
+              { type: "Payment" as const, id: result.data.caseId },
+              { type: "Case" as const, id: result.data.caseId },
+            ]
+          : []),
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -67,4 +87,5 @@ export const {
   useGetPaymentQuery,
   useCreatePaymentMutation,
   useVerifyPaymentMutation,
+  useRefundPaymentMutation,
 } = paymentsApi;

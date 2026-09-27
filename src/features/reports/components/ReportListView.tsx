@@ -1,30 +1,25 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
-import { DataTable, ColumnDef } from "@/components/common/DataTable";
-import { useGenerateReportQuery } from "@/services/api/reports/reportsApi";
-import type {
-  ReportCategory,
-  ReportKPIs,
-  ReportRow,
-} from "../types";
-import { ReportMetricCards } from "./ReportMetricCards";
-import { ReportSearchBar } from "./ReportSearchBar";
+import { ColumnDef, DataTable } from "@/components/common/DataTable";
 import { ROUTES } from "@/constants/routes";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useGenerateReportQuery } from "@/services/api/reports/reportsApi";
 import {
   Briefcase,
-  ChevronRight,
-  FileSpreadsheet,
-  ShieldAlert,
-  CheckCircle2,
   Calendar,
-  Printer,
+  CheckCircle2,
+  ChevronRight,
   Download,
+  FileSpreadsheet,
+  Printer,
+  ShieldAlert,
 } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
+import type { ReportCategory, ReportKPIs, ReportRow } from "../types";
+import { ReportMetricCards } from "./ReportMetricCards";
+import { ReportSearchBar } from "./ReportSearchBar";
 
 interface ReportListViewProps {
   pageTitle?: string;
@@ -39,7 +34,8 @@ export function ReportListView({
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
-  const [categoryFilter, setCategoryFilter] = React.useState<ReportCategory>("ALL");
+  const [categoryFilter, setCategoryFilter] =
+    React.useState<ReportCategory>("ALL");
   const [startDate, setStartDate] = React.useState("");
   const [endDate, setEndDate] = React.useState("");
   const [sortOption, setSortOption] = React.useState("Latest Collected");
@@ -61,7 +57,10 @@ export function ReportListView({
       case "Oldest Collected":
         return { sortBy: "paymentDate" as const, sortOrder: "asc" as const };
       case "Collected: High to Low":
-        return { sortBy: "verifiedAmount" as const, sortOrder: "desc" as const };
+        return {
+          sortBy: "verifiedAmount" as const,
+          sortOrder: "desc" as const,
+        };
       case "Collected: Low to High":
         return { sortBy: "verifiedAmount" as const, sortOrder: "asc" as const };
       case "Contract Fee: High to Low":
@@ -102,7 +101,8 @@ export function ReportListView({
   };
 
   const totalCount = meta?.total ?? reportItems.length;
-  const totalPages = meta?.totalPage ?? Math.max(1, Math.ceil(totalCount / pageSize));
+  const totalPages =
+    meta?.totalPage ?? Math.max(1, Math.ceil(totalCount / pageSize));
 
   // Reset Filters
   const handleResetFilters = () => {
@@ -142,7 +142,9 @@ export function ReportListView({
       item.status,
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -190,7 +192,7 @@ export function ReportListView({
                 <td>${item.currency}</td>
                 <td>${item.paymentMethod.replace(/_/g, " ")}</td>
                 <td>${item.status}</td>
-              </tr>`
+              </tr>`,
               )
               .join("")}
           </tbody>
@@ -199,7 +201,9 @@ export function ReportListView({
       </html>
     `;
 
-    const blob = new Blob([tableHtml], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const blob = new Blob([tableHtml], {
+      type: "application/vnd.ms-excel;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -263,10 +267,13 @@ export function ReportListView({
           Access Restricted: Super Administrator Authorization Required
         </h2>
         <p className="mt-2 max-w-md text-xs sm:text-sm text-[#64748B]">
-          This Executive Verified Income Report is exclusively restricted to Super Administrators.
+          This Executive Verified Income Report is exclusively restricted to
+          Super Administrators.
         </p>
         <div className="mt-6 flex items-center gap-3">
-          <Button asChild className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
+          <Button
+            asChild
+            className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
             <Link href={ROUTES.DASHBOARD}>Return to Dashboard</Link>
           </Button>
         </div>
@@ -320,7 +327,13 @@ export function ReportListView({
       cell: (item) => (
         <div className="flex items-center gap-1.5 text-xs text-[#0a0a0a] font-semibold">
           <Calendar className="h-3.5 w-3.5 text-[#94A3B8]" />
-          <span>{new Date(item.collectionDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</span>
+          <span>
+            {new Date(item.collectionDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}
+          </span>
         </div>
       ),
     },
@@ -385,8 +398,7 @@ export function ReportListView({
           <div className="flex items-center gap-2 text-xs font-bold text-[#64748B]">
             <Link
               href={ROUTES.DASHBOARD}
-              className="hover:text-[#0a0a0a] transition-colors"
-            >
+              className="hover:text-[#0a0a0a] transition-colors">
               Management
             </Link>
             <ChevronRight className="h-3.5 w-3.5 text-[#94A3B8]" />
@@ -409,8 +421,7 @@ export function ReportListView({
             type="button"
             variant="outline"
             onClick={handleExportCSV}
-            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
-          >
+            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer">
             <FileSpreadsheet className="h-3.5 w-3.5 text-[#64748B]" />
             <span>CSV</span>
           </Button>
@@ -418,8 +429,7 @@ export function ReportListView({
             type="button"
             variant="outline"
             onClick={handleExportExcel}
-            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
-          >
+            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer">
             <Download className="h-3.5 w-3.5 text-[#059669]" />
             <span>Excel (.xls)</span>
           </Button>
@@ -427,8 +437,7 @@ export function ReportListView({
             type="button"
             variant="outline"
             onClick={handlePrintPDF}
-            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
-          >
+            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer">
             <Printer className="h-3.5 w-3.5 text-[#4F46E5]" />
             <span>Print / PDF</span>
           </Button>

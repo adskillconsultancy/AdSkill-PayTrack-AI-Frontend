@@ -18,11 +18,11 @@ import {
   LogOut,
   Maximize2,
   Menu,
-  Settings,
   User,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 export default function ProtectedLayout({
@@ -30,12 +30,25 @@ export default function ProtectedLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const { isOpen, setMobileOpen } = useSidebarStore();
-  const { user, logout } = useAuth();
+  const { user, accessToken, isAuthenticated, logout } = useAuth();
   const { isClientAccount } = usePermissions();
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
   const profileDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Client-side authentication guard
+  React.useEffect(() => {
+    // Check if both cookie and store are empty
+    const hasCookieToken = document.cookie
+      .split("; ")
+      .some((row) => row.startsWith("accessToken="));
+
+    if (!accessToken && !isAuthenticated && !hasCookieToken) {
+      router.replace(ROUTES.LOGIN);
+    }
+  }, [accessToken, isAuthenticated, router]);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -264,14 +277,6 @@ export default function ProtectedLayout({
                       className="flex items-center gap-2.5 px-3 py-2 text-xs sm:text-sm font-medium rounded-xl hover:bg-muted text-foreground transition-colors group">
                       <User className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                       <span>My Profile</span>
-                    </Link>
-
-                    <Link
-                      href={ROUTES.SETTINGS}
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 text-xs sm:text-sm font-medium rounded-xl hover:bg-muted text-foreground transition-colors group">
-                      <Settings className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span>Account Settings</span>
                     </Link>
 
                     <Link

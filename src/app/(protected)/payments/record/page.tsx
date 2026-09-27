@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { Button } from "@/components/common/Button";
 import { Skeleton } from "@/components/common/Skeleton";
@@ -85,9 +85,7 @@ export default function RecordPaymentPage() {
     usePermissions();
   const userRole = user?.role?.name;
   const isConsultant = userRole === "CONSULTANT";
-  const isManager = userRole === "MANAGER";
-  const canVerify =
-    isSuperAdmin || isManager || hasPermission("payment:verify");
+  const canVerify = hasPermission("payment:verify");
 
   // Selected case state
   const [selectedCaseId, setSelectedCaseId] =

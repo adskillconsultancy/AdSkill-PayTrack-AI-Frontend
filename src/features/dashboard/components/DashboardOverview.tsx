@@ -2,14 +2,14 @@
 
 import { usePermissions } from "@/hooks/usePermissions";
 import { useDashboardFilters } from "../hooks/useDashboardFilters";
+import { ClientDashboardHub } from "./ClientDashboardHub";
+import { DashboardCaseDistribution } from "./DashboardCaseDistribution";
+import { DashboardClientGrowth } from "./DashboardClientGrowth";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardKPICards } from "./DashboardKPICards";
-import { DashboardVerificationQueue } from "./DashboardVerificationQueue";
 import { DashboardPaymentAnalytics } from "./DashboardPaymentAnalytics";
-import { DashboardClientGrowth } from "./DashboardClientGrowth";
-import { DashboardCaseDistribution } from "./DashboardCaseDistribution";
 import { DashboardRecentActivity } from "./DashboardRecentActivity";
-import { ClientDashboardHub } from "./ClientDashboardHub";
+import { DashboardVerificationQueue } from "./DashboardVerificationQueue";
 import { StaffDashboardHub } from "./StaffDashboardHub";
 
 export function DashboardOverview() {

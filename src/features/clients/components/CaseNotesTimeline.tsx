@@ -23,6 +23,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { sanitizeHtml } from "@/lib/sanitize";
 
 export interface CaseNotesTimelineProps {
   caseId: string;
@@ -472,7 +473,7 @@ export function CaseNotesTimeline({
                 {/* Formatted Content */}
                 <div
                   className="text-xs text-slate-800 leading-relaxed prose prose-xs max-w-none pt-1 border-t border-slate-100"
-                  dangerouslySetInnerHTML={{ __html: note.content }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(note.content) }}
                 />
               </div>
             );
