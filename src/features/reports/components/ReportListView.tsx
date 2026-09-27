@@ -22,6 +22,8 @@ import {
   ShieldAlert,
   CheckCircle2,
   Calendar,
+  Printer,
+  Download,
 } from "lucide-react";
 
 interface ReportListViewProps {
@@ -148,6 +150,69 @@ export function ReportListView({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Export Excel (.xls XML format)
+  const handleExportExcel = () => {
+    const tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Verified Collections</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>
+      <body>
+        <h2>AdSkill Verified Income & Collections Report</h2>
+        <p>Generated: ${new Date().toLocaleString()}</p>
+        <table border="1">
+          <thead>
+            <tr style="background-color: #FAF8F5; font-weight: bold;">
+              <th>Collection Date</th>
+              <th>Program</th>
+              <th>Category</th>
+              <th>Client Name</th>
+              <th>Client ID</th>
+              <th>AdSkill Contract Fee</th>
+              <th>Verified Collected Money</th>
+              <th>Currency</th>
+              <th>Payment Channel</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${reportItems
+              .map(
+                (item) => `
+              <tr>
+                <td>${new Date(item.collectionDate).toLocaleDateString()}</td>
+                <td>${item.programName}</td>
+                <td>${item.programCategory}</td>
+                <td>${item.clientName}</td>
+                <td>${item.clientId}</td>
+                <td>${item.contractedFee}</td>
+                <td>${item.verifiedAmount}</td>
+                <td>${item.currency}</td>
+                <td>${item.paymentMethod.replace(/_/g, " ")}</td>
+                <td>${item.status}</td>
+              </tr>`
+              )
+              .join("")}
+          </tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([tableHtml], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `adskill_verified_income_${Date.now()}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Print or Save as PDF
+  const handlePrintPDF = () => {
+    window.print();
   };
 
   // Category Badge Render Helper
@@ -339,15 +404,33 @@ export function ReportListView({
         </div>
 
         {/* Action Buttons Toolbar */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={handleExportCSV}
-            className="h-10 px-3.5 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
+            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
           >
             <FileSpreadsheet className="h-3.5 w-3.5 text-[#64748B]" />
-            <span>Export CSV</span>
+            <span>CSV</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportExcel}
+            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
+          >
+            <Download className="h-3.5 w-3.5 text-[#059669]" />
+            <span>Excel (.xls)</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrintPDF}
+            className="h-9 px-3 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
+          >
+            <Printer className="h-3.5 w-3.5 text-[#4F46E5]" />
+            <span>Print / PDF</span>
           </Button>
         </div>
       </div>

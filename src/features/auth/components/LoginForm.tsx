@@ -20,7 +20,7 @@ import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { ROUTES } from "@/constants";
 import { loginSchema, type LoginFormValues } from "@/validations/auth.schema";
-import { useLoginMutation } from "@/services/api/auth/authApi";
+import { useLoginMutation, useVerifyMfaLoginMutation } from "@/services/api/auth/authApi";
 import { useAuthStore } from "@/stores/auth.store";
 
 export function LoginForm() {
@@ -29,7 +29,11 @@ export function LoginForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [loginUser, { isLoading }] = useLoginMutation();
+  const [verifyMfaLogin, { isLoading: isMfaLoading }] = useVerifyMfaLoginMutation();
   const setAuth = useAuthStore((state) => state.setAuth);
+
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState<string>("");
 
   const {
     register,
@@ -58,15 +62,14 @@ export function LoginForm() {
         password: data.password,
       }).unwrap();
 
+      if ((response.data as any)?.mfaRequired) {
+        setMfaToken((response.data as any).mfaToken);
+        return;
+      }
+
       const { user, accessToken } = response.data;
-
-      // Update Zustand client auth store
       setAuth(user, accessToken);
-
-      // Set cookie for Next.js edge route protection
       document.cookie = `accessToken=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
-
-      // Redirect to main dashboard
       router.push(ROUTES.DASHBOARD);
     } catch (err: any) {
       console.error("Login failed:", err);
@@ -78,6 +81,99 @@ export function LoginForm() {
       setErrorMessage(serverMessage);
     }
   };
+
+  const onMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mfaToken || !mfaCode.trim() || mfaCode.trim().length !== 6) {
+      setErrorMessage("Please enter a valid 6-digit authentication code.");
+      return;
+    }
+    setErrorMessage(null);
+    try {
+      const res = await verifyMfaLogin({
+        mfaToken,
+        code: mfaCode.trim(),
+      }).unwrap();
+
+      const { user, accessToken } = res.data;
+      setAuth(user, accessToken);
+      document.cookie = `accessToken=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
+      router.push(ROUTES.DASHBOARD);
+    } catch (err: any) {
+      const msg = err?.data?.message || "Invalid verification code. Please try again.";
+      setErrorMessage(msg);
+    }
+  };
+
+
+  if (mfaToken) {
+    return (
+      <div className="rounded-2xl border border-[#EAE6DF] bg-white p-7 sm:p-8 shadow-[0_8px_30px_-4px_rgba(10, 10, 10,0.06)]">
+        <div className="mb-6 text-center">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FAF8F5] border border-[#EAE6DF] text-[#F3A712]">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <h2 className="text-xl font-bold text-[#0a0a0a]">Two-Factor Authentication</h2>
+          <p className="text-xs text-[#64748B] mt-1">
+            Enter the 6-digit verification code from your authenticator app (Google Authenticator, Authy, etc.)
+          </p>
+        </div>
+
+        {errorMessage && (
+          <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-3.5 flex items-start gap-2.5 text-xs text-rose-700">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+            <span className="font-medium">{errorMessage}</span>
+          </div>
+        )}
+
+        <form onSubmit={onMfaSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#0a0a0a]">
+              6-Digit Authenticator Code
+            </label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              autoFocus
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+              placeholder="123456"
+              className="h-12 text-center text-xl font-mono tracking-[0.5em] rounded-xl bg-[#FAF8F5] border-[#EAE6DF] text-[#0a0a0a] focus-visible:border-[#F3A712] focus-visible:ring-[#F3A712]"
+            />
+          </div>
+
+          <Button
+            type="submit"
+            disabled={isMfaLoading || mfaCode.length !== 6}
+            className="w-full gap-2"
+          >
+            {isMfaLoading ? (
+              <span>Verifying Code...</span>
+            ) : (
+              <>
+                <ShieldCheck className="h-4 w-4 text-[#F3A712]" />
+                <span>Verify & Sign In</span>
+              </>
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full text-xs text-[#64748B] hover:text-[#0a0a0a]"
+            onClick={() => {
+              setMfaToken(null);
+              setMfaCode("");
+              setErrorMessage(null);
+            }}
+          >
+            Back to regular login
+          </Button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-[#EAE6DF] bg-white p-7 sm:p-8 shadow-[0_8px_30px_-4px_rgba(10, 10, 10,0.06)]">

@@ -466,6 +466,12 @@ export function UserListView() {
           setStatusFilter(s);
           setCurrentPage(1);
         }}
+        onResetFilters={() => {
+          setSearchQuery("");
+          setRoleFilter("ALL");
+          setStatusFilter("ALL");
+          setCurrentPage(1);
+        }}
       />
 
       {/* 4. DATA TABLE CONTAINER */}

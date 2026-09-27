@@ -33,6 +33,9 @@ import {
   useGetProfileQuery,
   useUpdateProfileMutation,
   useChangePasswordMutation,
+  useSetupMfaMutation,
+  useEnableMfaMutation,
+  useDisableMfaMutation,
 } from "@/services/api/auth/authApi";
 import { cn } from "@/lib/utils";
 import { ROUTES } from "@/constants/routes";
@@ -44,6 +47,16 @@ export default function ProfilePage() {
   const { data: profileData, isLoading: isProfileLoading, refetch } = useGetProfileQuery();
   const [updateProfile, { isLoading: isUpdatingProfile }] = useUpdateProfileMutation();
   const [changePassword, { isLoading: isChangingPassword }] = useChangePasswordMutation();
+  const [setupMfa, { isLoading: isSettingUpMfa }] = useSetupMfaMutation();
+  const [enableMfa, { isLoading: isEnablingMfa }] = useEnableMfaMutation();
+  const [disableMfa, { isLoading: isDisablingMfa }] = useDisableMfaMutation();
+
+  const [mfaSecretData, setMfaSecretData] = React.useState<{ secret: string; otpAuthUrl: string; instructions: string } | null>(null);
+  const [mfaVerifyCode, setMfaVerifyCode] = React.useState("");
+  const [mfaDisablePassword, setMfaDisablePassword] = React.useState("");
+  const [mfaSuccessMsg, setMfaSuccessMsg] = React.useState<string | null>(null);
+  const [mfaErrorMsg, setMfaErrorMsg] = React.useState<string | null>(null);
+  const [showDisableConfirm, setShowDisableConfirm] = React.useState(false);
 
   const [activeTab, setActiveTab] = React.useState<TabKey>("PROFILE");
   const [copiedField, setCopiedField] = React.useState<string | null>(null);
@@ -442,8 +455,9 @@ export default function ProfilePage() {
 
       {/* 🔐 TAB 2: SECURITY & PASSWORD */}
       {activeTab === "SECURITY" && (
-        <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm max-w-2xl">
-          <div className="flex items-center gap-3 mb-6">
+        <div className="space-y-6 max-w-2xl">
+          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-6">
             <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
               <KeyRound className="h-5 w-5" />
             </div>
@@ -533,7 +547,207 @@ export default function ProfilePage() {
             </div>
           </form>
         </div>
-      )}
+
+          {/* 🛡️ Two-Factor Authentication (MFA / 2FA) Card */}
+          <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Two-Factor Authentication (2FA)</h3>
+                <p className="text-xs text-muted-foreground">
+                  Protect your account with RFC 6238 time-based one-time passwords (TOTP).
+                </p>
+              </div>
+            </div>
+            <span className={cn(
+              "px-2.5 py-1 rounded-full text-xs font-semibold",
+              user?.isMfaEnabled
+                ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                : "bg-muted text-muted-foreground border border-border"
+            )}>
+              {user?.isMfaEnabled ? "Enabled" : "Disabled"}
+            </span>
+          </div>
+
+          {mfaSuccessMsg && (
+            <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+              <span>{mfaSuccessMsg}</span>
+            </div>
+          )}
+
+          {mfaErrorMsg && (
+            <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />
+              <span>{mfaErrorMsg}</span>
+            </div>
+          )}
+
+          {user?.isMfaEnabled ? (
+            <div className="space-y-4">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Two-Factor Authentication is currently active on your account. Every sign-in requires both your password and an authenticator code.
+              </p>
+
+              {!showDisableConfirm ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+                  onClick={() => setShowDisableConfirm(true)}
+                >
+                  Disable Two-Factor Authentication
+                </Button>
+              ) : (
+                <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/50 space-y-3">
+                  <p className="text-xs font-semibold text-rose-900">
+                    To disable 2FA, please enter your current account password:
+                  </p>
+                  <input
+                    type="password"
+                    placeholder="Current password"
+                    value={mfaDisablePassword}
+                    onChange={(e) => setMfaDisablePassword(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-background text-foreground"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      disabled={isDisablingMfa || !mfaDisablePassword}
+                      className="text-xs bg-rose-600 hover:bg-rose-700 text-white"
+                      onClick={async () => {
+                        setMfaErrorMsg(null);
+                        try {
+                          await disableMfa({ password: mfaDisablePassword }).unwrap();
+                          setMfaSuccessMsg("Two-Factor Authentication has been successfully disabled.");
+                          setShowDisableConfirm(false);
+                          setMfaDisablePassword("");
+                          refetch();
+                        } catch (err: any) {
+                          setMfaErrorMsg(err?.data?.message || "Failed to disable 2FA. Verify password.");
+                        }
+                      }}
+                    >
+                      {isDisablingMfa ? "Disabling..." : "Confirm & Disable 2FA"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="text-xs"
+                      onClick={() => setShowDisableConfirm(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {!mfaSecretData ? (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Add an extra layer of security. Use an authenticator app such as Google Authenticator, Microsoft Authenticator, or Authy.
+                  </p>
+                  <Button
+                    type="button"
+                    disabled={isSettingUpMfa}
+                    className="gap-2 text-xs"
+                    onClick={async () => {
+                      setMfaErrorMsg(null);
+                      try {
+                        const res = await setupMfa().unwrap();
+                        setMfaSecretData(res.data);
+                      } catch (err: any) {
+                        setMfaErrorMsg(err?.data?.message || "Failed to generate 2FA secret.");
+                      }
+                    }}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    {isSettingUpMfa ? "Initializing..." : "Setup Two-Factor Authentication"}
+                  </Button>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-4">
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-bold text-foreground">Step 1: Save Your Secret Key</h4>
+                    <p className="text-[11px] text-muted-foreground">
+                      Enter this secret key in your authenticator app (Google Authenticator, Authy, etc.):
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <code className="px-3 py-1.5 rounded-lg bg-background border border-border font-mono text-xs font-bold tracking-widest text-primary select-all">
+                        {mfaSecretData.secret}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleCopy(mfaSecretData.secret, "mfa_secret")}
+                        className="text-xs gap-1"
+                      >
+                        {copiedField === "mfa_secret" ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                        {copiedField === "mfa_secret" ? "Copied" : "Copy"}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 pt-2 border-t border-border">
+                    <h4 className="text-xs font-bold text-foreground">Step 2: Enter 6-Digit Code</h4>
+                    <p className="text-[11px] text-muted-foreground">
+                      Enter the 6-digit code shown in your authenticator app to verify setup:
+                    </p>
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        type="text"
+                        maxLength={6}
+                        inputMode="numeric"
+                        placeholder="123456"
+                        value={mfaVerifyCode}
+                        onChange={(e) => setMfaVerifyCode(e.target.value.replace(/\D/g, ""))}
+                        className="w-36 px-3 py-2 text-center text-sm font-mono tracking-widest rounded-lg border border-border bg-background text-foreground"
+                      />
+                      <Button
+                        type="button"
+                        disabled={isEnablingMfa || mfaVerifyCode.length !== 6}
+                        className="text-xs gap-2"
+                        onClick={async () => {
+                          setMfaErrorMsg(null);
+                          try {
+                            await enableMfa({ secret: mfaSecretData.secret, code: mfaVerifyCode }).unwrap();
+                            setMfaSuccessMsg("Two-Factor Authentication is now enabled on your account!");
+                            setMfaSecretData(null);
+                            setMfaVerifyCode("");
+                            refetch();
+                          } catch (err: any) {
+                            setMfaErrorMsg(err?.data?.message || "Invalid code. Please try again.");
+                          }
+                        }}
+                      >
+                        {isEnablingMfa ? "Verifying..." : "Verify & Enable 2FA"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="text-xs"
+                        onClick={() => {
+                          setMfaSecretData(null);
+                          setMfaVerifyCode("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )}
     </div>
   );
 }

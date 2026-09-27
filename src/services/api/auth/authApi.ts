@@ -70,14 +70,71 @@ export const authApi = baseApi.injectEndpoints({
       }),
     }),
 
-    refreshToken: builder.mutation<
-      ApiResponse<{ accessToken: string }>,
-      { refreshToken?: string } | void
+    verifyMfaLogin: builder.mutation<
+      ApiResponse<AuthResponse>,
+      { mfaToken: string; code: string }
     >({
       query: (body) => ({
-        url: "/auth/refresh-token",
+        url: "/auth/mfa/login-verify",
         method: "POST",
-        body: body || {},
+        body,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
+    setupMfa: builder.mutation<
+      ApiResponse<{ secret: string; otpAuthUrl: string; instructions: string }>,
+      void
+    >({
+      query: () => ({
+        url: "/auth/mfa/setup",
+        method: "POST",
+      }),
+    }),
+
+    enableMfa: builder.mutation<
+      ApiResponse<{ message: string }>,
+      { secret: string; code: string }
+    >({
+      query: (body) => ({
+        url: "/auth/mfa/enable",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
+    disableMfa: builder.mutation<
+      ApiResponse<{ message: string }>,
+      { password: string }
+    >({
+      query: (body) => ({
+        url: "/auth/mfa/disable",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["User"],
+    }),
+
+    forgotPassword: builder.mutation<
+      ApiResponse<{ message: string }>,
+      { email: string }
+    >({
+      query: (body) => ({
+        url: "/auth/forgot-password",
+        method: "POST",
+        body,
+      }),
+    }),
+
+    resetPassword: builder.mutation<
+      ApiResponse<{ message: string }>,
+      { token: string; newPassword: string }
+    >({
+      query: (body) => ({
+        url: "/auth/reset-password",
+        method: "POST",
+        body,
       }),
     }),
   }),
@@ -90,5 +147,11 @@ export const {
   useGetProfileQuery,
   useUpdateProfileMutation,
   useChangePasswordMutation,
-  useRefreshTokenMutation,
+  useVerifyMfaLoginMutation,
+  useSetupMfaMutation,
+  useEnableMfaMutation,
+  useDisableMfaMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation,
 } = authApi;
+
