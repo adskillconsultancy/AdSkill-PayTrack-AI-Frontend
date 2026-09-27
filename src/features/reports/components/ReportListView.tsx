@@ -19,7 +19,6 @@ import {
   Briefcase,
   ChevronRight,
   FileSpreadsheet,
-  RotateCw,
   ShieldAlert,
   CheckCircle2,
   Calendar,
@@ -80,7 +79,6 @@ export function ReportListView({
     data: response,
     isLoading,
     isFetching,
-    refetch,
   } = useGenerateReportQuery({
     page: currentPage,
     limit: pageSize,
@@ -341,18 +339,7 @@ export function ReportListView({
         </div>
 
         {/* Action Buttons Toolbar */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="h-10 px-3.5 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
-          >
-            <RotateCw className={cn("h-3.5 w-3.5 text-[#64748B]", isFetching && "animate-spin")} />
-            <span className="hidden sm:inline">Refresh</span>
-          </Button>
-
+        <div className="flex items-center gap-2.5">
           <Button
             type="button"
             variant="outline"
@@ -360,7 +347,7 @@ export function ReportListView({
             className="h-10 px-3.5 rounded-xl border-[#EAE6DF] bg-white text-[#0a0a0a] hover:bg-[#FAF8F5] text-xs font-bold shadow-2xs gap-1.5 cursor-pointer"
           >
             <FileSpreadsheet className="h-3.5 w-3.5 text-[#64748B]" />
-            <span className="hidden sm:inline">Export CSV</span>
+            <span>Export CSV</span>
           </Button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 // ── Protected Layout ───────────────────────────────────
 // Shell: Collapsible Sidebar + Straight Top Header + Curved Main Body Container
@@ -6,6 +6,7 @@
 import { Button, GlobalOmniSearch } from "@/components/common";
 import { NotificationBellDropdown } from "@/components/layouts/NotificationBellDropdown";
 import { Sidebar } from "@/components/layouts/Sidebar";
+import { MobileBottomNav } from "@/components/layouts/MobileBottomNav";
 import { ROUTES } from "@/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -304,13 +305,16 @@ export default function ProtectedLayout({
 
         <div
           className={cn(
-            "flex-1 p-4 sm:p-6 pb-20 sm:pb-6 w-full transition-all duration-300",
+            "flex-1 p-4 sm:p-6 pb-24 lg:pb-6 w-full transition-all duration-300",
             !isOpen && "lg:pl-[calc(5rem+1.5rem)]",
           )}>
           <main className="min-h-[calc(100vh-4rem)] rounded-2xl bg-card border border-border/70 p-4 sm:p-6 space-y-6 shadow-sm">
             {children}
           </main>
         </div>
+
+        {/* 📱 Mobile Bottom Navigation (Important Menus Only) */}
+        <MobileBottomNav />
       </div>
     </div>
   );
