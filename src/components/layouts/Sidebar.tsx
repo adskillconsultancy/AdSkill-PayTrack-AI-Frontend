@@ -30,6 +30,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
+import { useGetUnreadCountQuery } from "@/services/api/notifications/notificationsApi";
 
 interface NavSubItem {
   title: string;
@@ -78,6 +79,11 @@ const navSections: NavSection[] = [
         title: "Dashboard",
         href: ROUTES.DASHBOARD,
         icon: LayoutGrid,
+      },
+      {
+        title: "Notifications",
+        href: ROUTES.NOTIFICATIONS,
+        icon: Bell,
       },
     ],
   },
@@ -188,17 +194,10 @@ const navSections: NavSection[] = [
     portalType: "MANAGEMENT",
     items: [
       {
-        title: "Reminders & Alerts",
-        href: ROUTES.NOTIFICATIONS,
-        icon: Bell,
-        requiredPermission: "note:read",
-        subItems: [
-          { title: "Scheduled Reminders", href: ROUTES.NOTIFICATIONS },
-          {
-            title: "Outbound History",
-            href: `${ROUTES.NOTIFICATIONS}?tab=logs`,
-          },
-        ],
+        title: "Support & Messenger",
+        href: ROUTES.SUPPORT,
+        icon: MessageSquare,
+        requiredPermission: "support:read",
       },
     ],
   },
@@ -256,18 +255,7 @@ const navSections: NavSection[] = [
     ],
   },
 
-  {
-    sectionTitle: "COMMUNICATION & DESK",
-    portalType: "MANAGEMENT",
-    items: [
-      {
-        title: "Support & Messenger",
-        href: ROUTES.SUPPORT,
-        icon: MessageSquare,
-        requiredPermission: "support:read",
-      },
-    ],
-  },
+
 
   // ==================== DEDICATED CLIENT PORTAL ====================
   {
@@ -278,6 +266,11 @@ const navSections: NavSection[] = [
         title: "My Dashboard",
         href: ROUTES.DASHBOARD,
         icon: LayoutGrid,
+      },
+      {
+        title: "Notifications",
+        href: ROUTES.NOTIFICATIONS,
+        icon: Bell,
       },
       {
         title: "Payment Schedule",
@@ -333,6 +326,11 @@ export function Sidebar() {
   const { logout } = useAuth();
   const { isOpen, isMobileOpen, toggleSidebar, setSidebarOpen, setMobileOpen } =
     useSidebarStore();
+
+  const { data: unreadData } = useGetUnreadCountQuery(undefined, {
+    pollingInterval: 30000,
+  });
+  const unreadCount = unreadData?.data?.unreadCount || 0;
 
   const [expandedItems, setExpandedItems] = React.useState<
     Record<string, boolean>
@@ -682,6 +680,11 @@ export function Sidebar() {
                             <span className="truncate text-[13.5px]">
                               {item.title}
                             </span>
+                            {item.href === ROUTES.NOTIFICATIONS && unreadCount > 0 && (
+                              <span className="ml-auto flex h-5 min-w-[20px] px-1.5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-2xs">
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                              </span>
+                            )}
                           </Link>
                         )}
 
@@ -743,7 +746,7 @@ export function Sidebar() {
               );
 
               const icon = (
-                <>
+                <div className="relative flex items-center justify-center">
                   <Icon
                     className={cn(
                       "h-5 w-5 shrink-0 transition-colors",
@@ -753,8 +756,13 @@ export function Sidebar() {
                     )}
                     strokeWidth={1.85}
                   />
+                  {item.href === ROUTES.NOTIFICATIONS && unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-[14px] px-0.5 items-center justify-center rounded-full bg-rose-600 text-[8px] font-bold text-white ring-1 ring-background animate-in zoom-in-75">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                   <span className="sr-only">{item.title}</span>
-                </>
+                </div>
               );
 
               if (hasSubItems) {

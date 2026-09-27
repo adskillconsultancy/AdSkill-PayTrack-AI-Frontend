@@ -36,6 +36,7 @@ export {
   SkeletonDetailView,
   SkeletonForm,
   SkeletonCard,
+  SkeletonNotificationList,
 } from "./Skeleton";
 export type {
   SkeletonProps,
@@ -43,6 +44,7 @@ export type {
   SkeletonMetricCardsProps,
   SkeletonTableProps,
   SkeletonFormProps,
+  SkeletonNotificationListProps,
 } from "./Skeleton";
 
 

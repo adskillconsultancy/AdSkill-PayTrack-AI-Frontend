@@ -392,3 +392,107 @@ export function SkeletonCard({ className }: { className?: string }) {
     </div>
   );
 }
+
+// ── Skeleton Notification List Component ─────────────────
+export interface SkeletonNotificationListProps {
+  count?: number;
+  compact?: boolean;
+  className?: string;
+}
+
+export function SkeletonNotificationList({
+  count = 6,
+  compact = false,
+  className,
+}: SkeletonNotificationListProps) {
+  if (compact) {
+    return (
+      <div className={cn("divide-y divide-slate-100 dark:divide-zinc-800/70", className)}>
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={`notif-skel-compact-${i}`} className="p-3.5 flex items-start gap-3">
+            <Skeleton className="h-8 w-8 rounded-xl shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Skeleton className={cn("h-4 rounded-full", i % 2 === 0 ? "w-16" : "w-12")} />
+                <Skeleton className="h-3 w-14 rounded" />
+              </div>
+              <Skeleton className={cn("h-3.5 rounded", i % 2 === 0 ? "w-4/5" : "w-3/5")} />
+              <Skeleton className="h-3 w-full rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-slate-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-xs divide-y divide-slate-100 dark:divide-zinc-800/70",
+        className
+      )}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={`notif-skel-${i}`}
+          className="p-4 sm:p-5 flex items-start gap-4"
+        >
+          {/* Category Icon */}
+          <Skeleton className="h-10 w-10 rounded-xl shrink-0 mt-0.5" />
+
+          {/* Body */}
+          <div className="min-w-0 flex-1 space-y-2.5">
+            {/* Badges + Time row */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton
+                className={cn(
+                  "h-5 rounded-full",
+                  i % 3 === 0 ? "w-16" : i % 3 === 1 ? "w-20" : "w-14"
+                )}
+              />
+              {i % 2 === 0 && (
+                <Skeleton className="h-5 w-20 rounded-full" />
+              )}
+              <Skeleton className="h-2 w-2 rounded-full" />
+              <div className="ml-auto flex items-center gap-1.5">
+                <Skeleton className="h-3.5 w-3.5 rounded-full" />
+                <Skeleton className="h-3 w-20 sm:w-28 rounded" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <Skeleton
+              className={cn(
+                "h-4 rounded",
+                i % 3 === 0 ? "w-2/3 sm:w-1/2" : i % 3 === 1 ? "w-3/4 sm:w-2/5" : "w-1/2"
+              )}
+            />
+
+            {/* Message lines */}
+            <div className="space-y-1.5 pt-0.5">
+              <Skeleton className="h-3 w-full max-w-2xl rounded" />
+              <Skeleton
+                className={cn(
+                  "h-3 rounded",
+                  i % 2 === 0 ? "w-4/5 max-w-xl" : "w-3/5 max-w-md"
+                )}
+              />
+            </div>
+
+            {/* Action link placeholder */}
+            {i % 2 === 0 && (
+              <Skeleton className="h-3.5 w-32 rounded pt-0.5" />
+            )}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1.5 shrink-0 pl-2">
+            <Skeleton className="h-8 w-8 rounded-lg" />
+            <Skeleton className="h-8 w-8 rounded-lg" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+

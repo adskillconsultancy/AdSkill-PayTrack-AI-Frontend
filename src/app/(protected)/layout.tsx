@@ -4,14 +4,14 @@
 // Shell: Collapsible Sidebar + Straight Top Header + Curved Main Body Container
 
 import { Button, GlobalOmniSearch } from "@/components/common";
+import { NotificationBellDropdown } from "@/components/layouts/NotificationBellDropdown";
 import { Sidebar } from "@/components/layouts/Sidebar";
-import { cn } from "@/lib/utils";
-import { useSidebarStore } from "@/stores/sidebar.store";
+import { ROUTES } from "@/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
-import { ROUTES } from "@/constants";
+import { cn } from "@/lib/utils";
+import { useSidebarStore } from "@/stores/sidebar.store";
 import {
-  Bell,
   ChevronDown,
   HelpCircle,
   LogOut,
@@ -137,14 +137,6 @@ export default function ProtectedLayout({
                 PayTrack<span className="text-[#F3A712]"> AI</span>
               </span>
             </div>
-
-            {/* When sidebar is open on desktop: show sleek workspace tag without duplicate brand */}
-            {isOpen && (
-              <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-muted/60 border border-border/60 text-xs font-semibold text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#F3A712] animate-pulse" />
-                <span>Enterprise Workspace</span>
-              </div>
-            )}
           </div>
 
           {/* Center Zone: Global Omni-Search (Desktop & Tablet) */}
@@ -166,8 +158,8 @@ export default function ProtectedLayout({
                 {user?.country === "Canada"
                   ? "🇨🇦"
                   : user?.country === "United Kingdom"
-                  ? "🇬🇧"
-                  : "🇺🇸"}
+                    ? "🇬🇧"
+                    : "🇺🇸"}
               </span>
             </div>
 
@@ -179,13 +171,7 @@ export default function ProtectedLayout({
               <Maximize2 className="h-4 w-4" />
             </button>
 
-            <Link
-              href={ROUTES.NOTIFICATIONS}
-              title="Notifications"
-              className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-2xs cursor-pointer">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary ring-2 ring-sidebar" />
-            </Link>
+            <NotificationBellDropdown />
 
             {/* Profile Dropdown */}
             <div className="relative" ref={profileDropdownRef}>
@@ -260,8 +246,8 @@ export default function ProtectedLayout({
                             {user?.country === "Canada"
                               ? "🇨🇦"
                               : user?.country === "United Kingdom"
-                              ? "🇬🇧"
-                              : "🇺🇸"}
+                                ? "🇬🇧"
+                                : "🇺🇸"}
                           </span>
                           <span>{user.country}</span>
                         </span>
@@ -292,7 +278,11 @@ export default function ProtectedLayout({
                       onClick={() => setIsProfileOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-xs sm:text-sm font-medium rounded-xl hover:bg-muted text-foreground transition-colors group">
                       <HelpCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span>{isClientAccount ? "Help & Support" : "Support & Messenger"}</span>
+                      <span>
+                        {isClientAccount
+                          ? "Help & Support"
+                          : "Support & Messenger"}
+                      </span>
                     </Link>
                   </div>
 
