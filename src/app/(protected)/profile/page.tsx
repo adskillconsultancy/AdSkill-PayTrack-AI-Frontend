@@ -21,12 +21,14 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  QrCode,
   Shield,
   ShieldCheck,
   Sparkles,
   User,
   UserCheck,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { Button } from "@/components/common/Button";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -52,11 +54,32 @@ export default function ProfilePage() {
   const [disableMfa, { isLoading: isDisablingMfa }] = useDisableMfaMutation();
 
   const [mfaSecretData, setMfaSecretData] = React.useState<{ secret: string; otpAuthUrl: string; instructions: string } | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = React.useState<string | null>(null);
   const [mfaVerifyCode, setMfaVerifyCode] = React.useState("");
   const [mfaDisablePassword, setMfaDisablePassword] = React.useState("");
   const [mfaSuccessMsg, setMfaSuccessMsg] = React.useState<string | null>(null);
   const [mfaErrorMsg, setMfaErrorMsg] = React.useState<string | null>(null);
   const [showDisableConfirm, setShowDisableConfirm] = React.useState(false);
+
+  // Generate 2FA QR code whenever mfaSecretData is populated
+  React.useEffect(() => {
+    if (mfaSecretData?.otpAuthUrl) {
+      QRCode.toDataURL(mfaSecretData.otpAuthUrl, {
+        width: 220,
+        margin: 2,
+        color: {
+          dark: "#0F172A",
+          light: "#FFFFFF",
+        },
+      })
+        .then((url) => setQrCodeDataUrl(url))
+        .catch((err) => {
+          console.error("Failed to generate QR code data URL:", err);
+        });
+    } else {
+      setQrCodeDataUrl(null);
+    }
+  }, [mfaSecretData]);
 
   const [activeTab, setActiveTab] = React.useState<TabKey>("PROFILE");
   const [copiedField, setCopiedField] = React.useState<string | null>(null);
@@ -672,25 +695,66 @@ export default function ProfilePage() {
                 </div>
               ) : (
                 <div className="p-4 rounded-xl border border-border bg-muted/30 space-y-4">
-                  <div className="space-y-1">
-                    <h4 className="text-xs font-bold text-foreground">Step 1: Save Your Secret Key</h4>
-                    <p className="text-[11px] text-muted-foreground">
-                      Enter this secret key in your authenticator app (Google Authenticator, Authy, etc.):
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <code className="px-3 py-1.5 rounded-lg bg-background border border-border font-mono text-xs font-bold tracking-widest text-primary select-all">
-                        {mfaSecretData.secret}
-                      </code>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleCopy(mfaSecretData.secret, "mfa_secret")}
-                        className="text-xs gap-1"
-                      >
-                        {copiedField === "mfa_secret" ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
-                        {copiedField === "mfa_secret" ? "Copied" : "Copy"}
-                      </Button>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <QrCode className="h-4 w-4 text-primary" />
+                        Step 1: Scan QR Code or Enter Secret Key
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        Scan this QR code with your authenticator app (Google Authenticator, Authy, Microsoft Authenticator):
+                      </p>
+                    </div>
+
+                    {/* QR Code and Quick Scan Info */}
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-3.5 rounded-xl bg-background border border-border">
+                      <div className="flex items-center justify-center p-2 rounded-xl bg-white border border-border/80 shadow-xs shrink-0">
+                        {qrCodeDataUrl ? (
+                          <img
+                            src={qrCodeDataUrl}
+                            alt="2FA QR Code"
+                            className="w-36 h-36 rounded-lg object-contain"
+                          />
+                        ) : (
+                          <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(mfaSecretData.otpAuthUrl)}`}
+                            alt="2FA QR Code"
+                            className="w-36 h-36 rounded-lg object-contain"
+                          />
+                        )}
+                      </div>
+
+                      <div className="space-y-2.5 text-center sm:text-left flex-1 min-w-0">
+                        <div className="space-y-1">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
+                            <Sparkles className="h-3 w-3" /> Instant Scan
+                          </span>
+                          <p className="text-xs font-medium text-foreground">
+                            Open your phone&apos;s Authenticator app, tap <strong>&ldquo;+&rdquo; &gt; &ldquo;Scan a QR code&rdquo;</strong>, and point your camera here.
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-border/60">
+                          <p className="text-[11px] text-muted-foreground mb-1.5">
+                            Prefer manual entry? Use this secret key:
+                          </p>
+                          <div className="flex items-center justify-center sm:justify-start gap-2">
+                            <code className="px-2.5 py-1 rounded-md bg-muted border border-border font-mono text-xs font-bold tracking-widest text-primary select-all">
+                              {mfaSecretData.secret}
+                            </code>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleCopy(mfaSecretData.secret, "mfa_secret")}
+                              className="text-xs gap-1 h-7 px-2"
+                            >
+                              {copiedField === "mfa_secret" ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                              {copiedField === "mfa_secret" ? "Copied" : "Copy"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

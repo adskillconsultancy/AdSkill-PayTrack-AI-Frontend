@@ -141,7 +141,7 @@ export function DashboardVerificationQueue() {
         </div>
       ) : isError ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-4 text-xs text-rose-700">
-          Unable to load verification queue. Please refresh.
+          Unable to load verification queue. Please try again later.
         </div>
       ) : queue.length === 0 ? (
         <div className="py-10 text-center space-y-2.5 rounded-2xl border border-dashed border-border/80 bg-muted/15">

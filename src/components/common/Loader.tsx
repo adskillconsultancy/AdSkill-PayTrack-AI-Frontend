@@ -110,7 +110,7 @@ export function Loader({
           {text || "Connecting to Visa Portal..."}
         </h3>
         <p className="text-xs text-[#64748B] leading-relaxed">
-          {subtext || "Synchronizing case milestones, payment schedules, and verified records."}
+          {subtext || "Loading case milestones, payment schedules, and verified records."}
         </p>
       </div>
 

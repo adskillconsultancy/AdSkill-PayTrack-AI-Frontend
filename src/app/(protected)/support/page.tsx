@@ -30,7 +30,6 @@ import {
   Phone,
   PhoneCall,
   Plus,
-  RefreshCw,
   Search,
   Send,
   Shield,
@@ -593,18 +592,6 @@ export default function SupportPage() {
                       <Mail className="h-4 w-4" />
                     </a>
                   )}
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      refetchTicket();
-                      refetchConversations();
-                    }}
-                    className="p-2 rounded-xl bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border cursor-pointer"
-                    title="Refresh Messages"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </button>
                 </div>
               </div>
 

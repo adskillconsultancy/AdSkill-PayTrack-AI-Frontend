@@ -20,7 +20,7 @@ import { InvoiceEmptyState, ReceiptEmptyState, AccessDeniedState } from "./Empty
 import { CaseSelectorDropdown } from "./CaseSelectorDropdown";
 import {
   FileText, Receipt as ReceiptIcon, Plus, Search,
-  RefreshCw, TrendingUp, CheckCircle2, AlertCircle,
+  TrendingUp, CheckCircle2, AlertCircle,
   Briefcase, X, Loader2, FileBarChart, LayoutGrid,
   Table as TableIcon, ArrowUpDown, ShieldCheck, Download,
   Building, User, Calendar, ExternalLink, Sparkles,
@@ -326,16 +326,8 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => (tab === "invoices" ? refetchInvoices() : refetchReceipts())}
-              className="h-10 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer"
-            >
-              <RefreshCw className={cn("h-3.5 w-3.5", isFetching && "animate-spin")} />
-              <span>Sync</span>
-            </button>
-
-            {canGenerateInvoice && activeCaseId && (
+          {canGenerateInvoice && activeCaseId && (
+            <div className="flex items-center gap-2.5">
               <button
                 onClick={() => setShowGenerateModal(true)}
                 className="h-10 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 text-xs font-black flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
@@ -343,8 +335,8 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
                 <Plus className="h-4 w-4" />
                 <span>Generate Invoice</span>
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

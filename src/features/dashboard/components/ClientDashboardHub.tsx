@@ -25,7 +25,6 @@ import {
   MessageSquare,
   Phone,
   Receipt,
-  RefreshCw,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
@@ -134,15 +133,6 @@ export function ClientDashboardHub() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <button
-            onClick={() => refetch()}
-            disabled={isFetching}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground hover:text-foreground border border-border rounded-xl transition-colors cursor-pointer"
-            title="Refresh dashboard data"
-          >
-            <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
-            <span>Sync</span>
-          </button>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Verified Client

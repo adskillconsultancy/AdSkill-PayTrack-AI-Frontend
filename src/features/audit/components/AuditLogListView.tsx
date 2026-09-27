@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   Shield,
-  RefreshCw,
   AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
@@ -114,17 +113,6 @@ export function AuditLogListView() {
             </p>
           </div>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => refetch()}
-          disabled={isFetching}
-          className="shrink-0 gap-2 cursor-pointer"
-        >
-          <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
       </div>
 
       {/* ─── Stats Strip ─────────────────────────────────────────────────────── */}
