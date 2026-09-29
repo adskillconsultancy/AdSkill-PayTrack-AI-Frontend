@@ -528,7 +528,7 @@ export function CreateClientForm() {
     /[^\d+]/g,
     "",
   );
-  const handoverLoginUrl = "https://ad-skill-pay-track-ai-frontend.vercel.app/login";
+  const handoverLoginUrl = "https://paytrack.adskillconsultancy.com/login";
 
   const handoverMessageText = `Hello ${createdClientName || watchedName || "Client"},
 
@@ -1045,7 +1045,7 @@ Please log in and update your password upon your first visit. If you have any qu
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs font-extrabold text-blue-600 hover:underline mt-1 block truncate">
-                  ad-skill-pay-track...vercel.app/login &rarr;
+                  paytrack.adskillconsultancy.com/login &rarr;
                 </a>
               </div>
 
@@ -1540,7 +1540,7 @@ Please log in and update your password upon your first visit. If you have any qu
                         className="h-11 rounded-xl bg-white border-indigo-200 text-xs font-mono font-bold text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
                       />
                       <p className="text-[10px] text-slate-500">
-                        Default: <code className="font-bold text-slate-700">PassWord@2026!</code>. The client will use this to sign in at <span className="font-semibold text-blue-600">https://ad-skill-pay-track-ai-frontend.vercel.app/login</span>.
+                        Default: <code className="font-bold text-slate-700">PassWord@2026!</code>. The client will use this to sign in at <span className="font-semibold text-blue-600">https://paytrack.adskillconsultancy.com/login</span>.
                       </p>
                     </div>
                   )}

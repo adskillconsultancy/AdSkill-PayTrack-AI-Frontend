@@ -387,7 +387,7 @@ export function InvoiceDetailModal({ invoice, apiBaseUrl, token, onClose }: Prop
                 <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-200">
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-[9px] space-y-1">
                     <p className="font-bold text-blue-800">REMITTANCE OPTIONS</p>
-                    <p className="text-slate-600">• Online Portal: portal.adskillconsultancy.com</p>
+                    <p className="text-slate-600">• Online Portal: paytrack.adskillconsultancy.com</p>
                     <p className="text-slate-600">• Wire: JPMorgan Chase (Account #8492019482)</p>
                   </div>
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
