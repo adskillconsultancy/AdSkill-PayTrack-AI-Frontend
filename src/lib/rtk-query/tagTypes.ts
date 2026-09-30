@@ -23,6 +23,7 @@ export const TAG_TYPES = [
   "CaseNote",
   "Support",
   "AuditLog",
+  "Attendance",
 ] as const;
 
 export type TagType = (typeof TAG_TYPES)[number];

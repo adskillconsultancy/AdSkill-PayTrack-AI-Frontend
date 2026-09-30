@@ -226,6 +226,22 @@ const navSections: NavSection[] = [
     ],
   },
   {
+    sectionTitle: "ATTENDANCE & TIME",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "Attendance Tracker",
+        href: ROUTES.ATTENDANCE,
+        icon: CalendarRange,
+        requiredAnyPermissions: [
+          "attendance:track",
+          "attendance:read-self",
+          "attendance:read-all",
+        ],
+      },
+    ],
+  },
+  {
     sectionTitle: "AUDIT TRAIL",
     portalType: "MANAGEMENT",
     items: [

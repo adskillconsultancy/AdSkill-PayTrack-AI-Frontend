@@ -5,6 +5,7 @@
 
 import { Button, GlobalOmniSearch } from "@/components/common";
 import { NotificationBellDropdown } from "@/components/layouts/NotificationBellDropdown";
+import { HeaderAttendanceWidget } from "@/features/attendance";
 import { Sidebar } from "@/components/layouts/Sidebar";
 import { MobileBottomNav } from "@/components/layouts/MobileBottomNav";
 import { ROUTES } from "@/constants";
@@ -184,6 +185,8 @@ export default function ProtectedLayout({
               className="hidden sm:flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shadow-2xs cursor-pointer">
               <Maximize2 className="h-4 w-4" />
             </button>
+
+            <HeaderAttendanceWidget />
 
             <NotificationBellDropdown />
 
