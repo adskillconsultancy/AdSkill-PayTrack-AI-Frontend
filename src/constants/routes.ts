@@ -38,6 +38,7 @@ export const ROUTES = {
   AUDIT: "/audit",
   INVOICES: "/invoices-receipts",
   ATTENDANCE: "/attendance",
+  STAFF_MANAGEMENT: "/staff-management",
 } as const;
 
 export const PUBLIC_ROUTES = [

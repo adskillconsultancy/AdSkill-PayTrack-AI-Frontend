@@ -146,7 +146,7 @@ export function DailyAiDigestModal({ isOpen, onClose }: DailyAiDigestModalProps)
               <DigestMarkdown content={digest.summaryContent} />
             ) : (
               <div className="py-10 text-center space-y-2">
-                <Sparkles className="h-7 w-7 text-[#D97706] mx-auto opacity-70" />
+                <Calendar className="h-7 w-7 text-[#D97706] mx-auto opacity-70" />
                 <h4 className="text-sm font-bold text-[#0a0a0a]">No shift logs recorded for today yet</h4>
                 <p className="text-xs text-[#64748B] max-w-sm mx-auto">
                   When team members clock in, submit accomplishments on clock-out, or record payments, click "Refresh" to generate an updated executive briefing.

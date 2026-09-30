@@ -226,17 +226,34 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    sectionTitle: "ATTENDANCE & TIME",
+    sectionTitle: "STAFF MANAGEMENT",
     portalType: "MANAGEMENT",
     items: [
       {
-        title: "Attendance Tracker",
-        href: ROUTES.ATTENDANCE,
-        icon: CalendarRange,
+        title: "Staff Management",
+        href: ROUTES.STAFF_MANAGEMENT,
+        icon: Users,
         requiredAnyPermissions: [
           "attendance:track",
           "attendance:read-self",
           "attendance:read-all",
+          "user:read",
+        ],
+        subItems: [
+          {
+            title: "Staff List",
+            href: ROUTES.STAFF_MANAGEMENT,
+            requiredPermission: "user:read",
+          },
+          {
+            title: "Attendance Tracker",
+            href: ROUTES.ATTENDANCE,
+            requiredAnyPermissions: [
+              "attendance:track",
+              "attendance:read-self",
+              "attendance:read-all",
+            ],
+          },
         ],
       },
     ],
