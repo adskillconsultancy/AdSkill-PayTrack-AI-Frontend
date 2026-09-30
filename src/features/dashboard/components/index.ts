@@ -10,3 +10,4 @@ export { DashboardRecentActivity } from "./DashboardRecentActivity";
 export { DashboardRerouteNotice } from "./DashboardRerouteNotice";
 export { ClientDashboardHub } from "./ClientDashboardHub";
 export { StaffDashboardHub } from "./StaffDashboardHub";
+export { DashboardAttendanceWidget } from "./DashboardAttendanceWidget";

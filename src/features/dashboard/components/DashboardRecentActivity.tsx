@@ -15,9 +15,15 @@ import {
   Lock,
 } from "lucide-react";
 
-export function DashboardRecentActivity() {
+import type { DashboardFilterParams } from "@/types/dashboard.types";
+
+interface DashboardRecentActivityProps {
+  filterParams?: DashboardFilterParams;
+}
+
+export function DashboardRecentActivity({ filterParams }: DashboardRecentActivityProps = {}) {
   const { data: response, isLoading, isError } =
-    useGetDashboardRecentActivityQuery({ limit: 6 });
+    useGetDashboardRecentActivityQuery({ limit: 6, ...filterParams });
   const activities = response?.data || [];
 
   const formatTimeAgo = (isoDate: string) => {

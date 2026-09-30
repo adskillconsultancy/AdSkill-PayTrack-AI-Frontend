@@ -3,6 +3,7 @@
 import { usePermissions } from "@/hooks/usePermissions";
 import { useDashboardFilters } from "../hooks/useDashboardFilters";
 import { ClientDashboardHub } from "./ClientDashboardHub";
+import { DashboardAttendanceWidget } from "./DashboardAttendanceWidget";
 import { DashboardCaseDistribution } from "./DashboardCaseDistribution";
 import { DashboardClientGrowth } from "./DashboardClientGrowth";
 import { DashboardHeader } from "./DashboardHeader";
@@ -49,18 +50,21 @@ export function DashboardOverview() {
       <DashboardKPICards filterParams={filterParams} />
 
       {/* 3. Action Center: Pending Payment Verification Queue */}
-      <DashboardVerificationQueue />
+      <DashboardVerificationQueue filterParams={filterParams} />
 
-      {/* 4. Two-Column Analytics Grid: Cashflow Flows vs Client Growth */}
+      {/* 4. Staff Shift & Attendance Operations Hub (Super Admin) */}
+      <DashboardAttendanceWidget filterParams={filterParams} />
+
+      {/* 5. Two-Column Analytics Grid: Cashflow Flows vs Client Growth */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DashboardPaymentAnalytics filterParams={filterParams} />
         <DashboardClientGrowth filterParams={filterParams} />
       </div>
 
-      {/* 5. Bottom Grid: Case Standing vs Recent Audit Stream */}
+      {/* 6. Bottom Grid: Case Standing vs Recent Audit Stream */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DashboardCaseDistribution filterParams={filterParams} />
-        <DashboardRecentActivity />
+        <DashboardRecentActivity filterParams={filterParams} />
       </div>
     </div>
   );

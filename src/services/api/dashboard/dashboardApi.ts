@@ -5,6 +5,7 @@ import { baseApi } from "@/lib/rtk-query/baseApi";
 import type { ApiResponse } from "@/types/api.types";
 import type {
   ClientDashboardSummary,
+  DashboardAttendanceSummary,
   DashboardCaseDistribution,
   DashboardClientGrowth,
   DashboardFilterParams,
@@ -55,7 +56,7 @@ export const dashboardApi = baseApi.injectEndpoints({
     // 4. Pending Payment Verification Queue
     getDashboardVerificationQueue: builder.query<
       ApiResponse<DashboardVerificationQueueItem[]>,
-      { limit?: number } | void
+      (DashboardFilterParams & { limit?: number }) | void
     >({
       query: (params) => ({
         url: "/dashboard/verification-queue",
@@ -81,7 +82,7 @@ export const dashboardApi = baseApi.injectEndpoints({
     // 6. Recent Operational & Financial Audit Trail
     getDashboardRecentActivity: builder.query<
       ApiResponse<DashboardRecentActivityItem[]>,
-      { limit?: number } | void
+      (DashboardFilterParams & { limit?: number }) | void
     >({
       query: (params) => ({
         url: "/dashboard/recent-activity",
@@ -91,7 +92,20 @@ export const dashboardApi = baseApi.injectEndpoints({
       providesTags: ["Dashboard"],
     }),
 
-    // 7. Dedicated Client Dashboard Summary (Specification Section 10)
+    // 7. Staff Attendance & Shift Tracking Summary (Super Admin)
+    getDashboardAttendanceSummary: builder.query<
+      ApiResponse<DashboardAttendanceSummary>,
+      DashboardFilterParams | void
+    >({
+      query: (params) => ({
+        url: "/dashboard/attendance-summary",
+        method: "GET",
+        params: params || undefined,
+      }),
+      providesTags: ["Dashboard", "Attendance"],
+    }),
+
+    // 8. Dedicated Client Dashboard Summary (Specification Section 10)
     getClientDashboardSummary: builder.query<ApiResponse<ClientDashboardSummary>, void>({
       query: () => ({
         url: "/dashboard/client-summary",
@@ -110,5 +124,6 @@ export const {
   useGetDashboardVerificationQueueQuery,
   useGetDashboardCaseDistributionQuery,
   useGetDashboardRecentActivityQuery,
+  useGetDashboardAttendanceSummaryQuery,
   useGetClientDashboardSummaryQuery,
 } = dashboardApi;

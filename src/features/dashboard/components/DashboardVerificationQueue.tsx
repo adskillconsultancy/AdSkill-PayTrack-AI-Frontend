@@ -21,9 +21,17 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/common";
+import type { DashboardFilterParams } from "@/types/dashboard.types";
 
-export function DashboardVerificationQueue() {
-  const { data: response, isLoading, isError } = useGetDashboardVerificationQueueQuery({ limit: 6 });
+interface DashboardVerificationQueueProps {
+  filterParams?: DashboardFilterParams;
+}
+
+export function DashboardVerificationQueue({ filterParams }: DashboardVerificationQueueProps = {}) {
+  const { data: response, isLoading, isError } = useGetDashboardVerificationQueueQuery({
+    limit: 6,
+    ...filterParams,
+  });
   const [verifyPayment, { isLoading: isVerifying }] = useVerifyPaymentMutation();
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; success: boolean; message: string } | null>(null);

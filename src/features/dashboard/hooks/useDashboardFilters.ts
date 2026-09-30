@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { DashboardPeriod, DashboardFilterParams } from "@/types/dashboard.types";
+
+const getLocalDateString = (d: Date) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export function useDashboardFilters(initialPeriod: DashboardPeriod = "30d") {
   const [period, setPeriod] = useState<DashboardPeriod>(initialPeriod);
@@ -22,11 +29,26 @@ export function useDashboardFilters(initialPeriod: DashboardPeriod = "30d") {
     setPeriod("custom");
   }, []);
 
-  const filterParams: DashboardFilterParams = {
-    period,
-    ...(period === "custom" && startDate ? { startDate } : {}),
-    ...(period === "custom" && endDate ? { endDate } : {}),
-  };
+  const filterParams: DashboardFilterParams = useMemo(() => {
+    if (period === "today") {
+      const todayStr = getLocalDateString(new Date());
+      return { period, startDate: todayStr, endDate: todayStr };
+    }
+    if (period === "yesterday") {
+      const yest = new Date();
+      yest.setDate(yest.getDate() - 1);
+      const yestStr = getLocalDateString(yest);
+      return { period, startDate: yestStr, endDate: yestStr };
+    }
+    if (period === "custom") {
+      return {
+        period,
+        ...(startDate ? { startDate } : {}),
+        ...(endDate ? { endDate } : {}),
+      };
+    }
+    return { period };
+  }, [period, startDate, endDate]);
 
   return {
     period,

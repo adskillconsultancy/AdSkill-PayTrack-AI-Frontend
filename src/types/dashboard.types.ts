@@ -1,6 +1,7 @@
 // Dashboard TypeScript Definitions & Response Contracts
 
 export type DashboardPeriod =
+  | "all"
   | "today"
   | "yesterday"
   | "7d"
@@ -23,6 +24,40 @@ export interface DashboardKPIs {
   openCasesCount: number;
   pendingVerificationCount: number;
   revenueGrowthPercentage: number;
+  periodNewClientsCount?: number;
+  periodNewCasesCount?: number;
+  periodTotalHoursLogged?: number;
+  periodStaffOnDutyCount?: number;
+}
+
+export interface DashboardAttendanceSummary {
+  period: DashboardPeriod;
+  startDate: string;
+  endDate: string;
+  currentlyActiveCount: number;
+  totalHoursLogged: number;
+  activeStaffCount: number;
+  totalStaffCount: number;
+  recentRecords: {
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    userRole: string;
+    clockIn: string;
+    clockOut: string | null;
+    totalMinutes: number | null;
+    status: string;
+    currentFocus: string | null;
+  }[];
+  aiDigest: {
+    id: string;
+    date: string;
+    summaryContent: string;
+    totalHoursLogged: number;
+    activeUsersCount: number;
+    paymentsCollected: number;
+  } | null;
 }
 
 export interface PaymentStatusDistribution {

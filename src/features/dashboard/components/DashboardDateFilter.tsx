@@ -16,6 +16,7 @@ interface DashboardDateFilterProps {
 }
 
 const PERIOD_LABELS: Record<DashboardPeriod, string> = {
+  all: "All Time",
   today: "Today",
   yesterday: "Yesterday",
   "7d": "Last 7 Days",
@@ -102,7 +103,7 @@ export function DashboardDateFilter({
           </div>
 
           <div className="py-1 space-y-0.5">
-            {(["today", "yesterday", "7d", "30d", "this_month"] as DashboardPeriod[]).map(
+            {(["all", "today", "yesterday", "7d", "30d", "this_month"] as DashboardPeriod[]).map(
               (p) => {
                 const isSelected = period === p;
                 return (
