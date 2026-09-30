@@ -1,4 +1,4 @@
-﻿// 👥 Users API Endpoints 👥
+// 👥 Users API Endpoints 👥
 // Injected into the baseApi instance using RTK Query
 
 import { baseApi } from "@/lib/rtk-query/baseApi";
@@ -28,6 +28,21 @@ export interface BackendUser {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  _count?: {
+    assignedCases?: number;
+  };
+  assignedCases?: {
+    id: string;
+    caseStatus: string;
+  }[];
+  attendances?: {
+    id: string;
+    workDate: string;
+    clockIn: string;
+    clockOut: string | null;
+    status: string;
+    totalMinutes: number | null;
+  }[];
 }
 
 export interface GetUsersQueryParams {
@@ -36,6 +51,9 @@ export interface GetUsersQueryParams {
   searchTerm?: string;
   roleId?: string;
   roleName?: string;
+  excludeRoleName?: string;
+  hasAssignedCases?: boolean | string;
+  hasActivityOnDate?: boolean | string;
   status?: string;
   country?: string;
   startDate?: string;

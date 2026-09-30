@@ -28,12 +28,16 @@ import {
   useGetMyAttendanceStatusQuery,
 } from "@/services/api/attendance/attendanceApi";
 
+const toDateStr = (d: Date) => d.toISOString().split("T")[0];
+
 export function AttendanceListView() {
   // Query states
   const [searchQuery, setSearchQuery] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<string>("ALL");
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
   const [datePreset, setDatePreset] = React.useState<string>("TODAY");
+  const [customStartDate, setCustomStartDate] = React.useState(toDateStr(new Date()));
+  const [customEndDate, setCustomEndDate] = React.useState(toDateStr(new Date()));
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 10;
 
@@ -47,28 +51,39 @@ export function AttendanceListView() {
   const { data: myStatusResponse, refetch: refetchMyStatus } = useGetMyAttendanceStatusQuery();
   const isClockedIn = !!myStatusResponse?.data?.isClockedIn;
 
-  // Calculate date range from preset
+  // Calculate date range from preset (matching staff-management)
   const dateParams = React.useMemo(() => {
     const now = new Date();
-    const toDateStr = (d: Date) => d.toISOString().split("T")[0];
 
     switch (datePreset) {
       case "TODAY":
-        return { startDate: toDateStr(now), endDate: toDateStr(now) };
+        return { startDate: toDateStr(now), endDate: toDateStr(now), label: "Today" };
+      case "YESTERDAY": {
+        const y = new Date(now);
+        y.setDate(now.getDate() - 1);
+        return { startDate: toDateStr(y), endDate: toDateStr(y), label: "Yesterday" };
+      }
       case "THIS_WEEK": {
         const start = new Date(now);
         start.setDate(now.getDate() - now.getDay());
-        return { startDate: toDateStr(start), endDate: toDateStr(now) };
+        return { startDate: toDateStr(start), endDate: toDateStr(now), label: "This Week" };
       }
       case "THIS_MONTH": {
         const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        return { startDate: toDateStr(start), endDate: toDateStr(now) };
+        return { startDate: toDateStr(start), endDate: toDateStr(now), label: "This Month" };
+      }
+      case "CUSTOM": {
+        return {
+          startDate: customStartDate || toDateStr(now),
+          endDate: customEndDate || customStartDate || toDateStr(now),
+          label: "Custom Day",
+        };
       }
       case "ALL":
       default:
-        return {};
+        return { startDate: undefined, endDate: undefined, label: "All Time" };
     }
-  }, [datePreset]);
+  }, [datePreset, customStartDate, customEndDate]);
 
   // Live Query
   const { data: teamResponse, isLoading, refetch } = useGetTeamAttendanceQuery({
@@ -95,6 +110,8 @@ export function AttendanceListView() {
     setRoleFilter("ALL");
     setStatusFilter("ALL");
     setDatePreset("TODAY");
+    setCustomStartDate(toDateStr(new Date()));
+    setCustomEndDate(toDateStr(new Date()));
     setCurrentPage(1);
   };
 
@@ -164,8 +181,27 @@ export function AttendanceListView() {
     );
   };
 
-  // Columns definition
+  // Columns definition — WORK DATE in 1st position, then all
   const columns: ColumnDef<AttendanceRecord>[] = [
+    {
+      key: "workDate",
+      header: "WORK DATE",
+      cell: (item) => (
+        <div className="flex items-center gap-2.5 text-xs font-bold text-[#0a0a0a]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] shrink-0">
+            <Calendar className="h-4 w-4 text-[#64748B]" />
+          </div>
+          <div>
+            <div className="font-extrabold text-[#0a0a0a] whitespace-nowrap">
+              {formatDate(item.workDate || item.clockIn)}
+            </div>
+            <div className="text-[10px] text-[#94A3B8] font-semibold uppercase">
+              {new Date(item.workDate || item.clockIn).toLocaleDateString("en-US", { weekday: "short" })}
+            </div>
+          </div>
+        </div>
+      ),
+    },
     {
       key: "user",
       header: "TEAM MEMBER",
@@ -185,16 +221,6 @@ export function AttendanceListView() {
               {item.user?.email || "—"}
             </div>
           </div>
-        </div>
-      ),
-    },
-    {
-      key: "workDate",
-      header: "WORK DATE",
-      cell: (item) => (
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#0a0a0a]">
-          <Calendar className="h-3.5 w-3.5 text-[#94A3B8]" />
-          <span>{formatDate(item.workDate || item.clockIn)}</span>
         </div>
       ),
     },
@@ -341,6 +367,17 @@ export function AttendanceListView() {
           setDatePreset(d);
           setCurrentPage(1);
         }}
+        customStartDate={customStartDate}
+        onCustomStartDateChange={(d) => {
+          setCustomStartDate(d);
+          setCurrentPage(1);
+        }}
+        customEndDate={customEndDate}
+        onCustomEndDateChange={(d) => {
+          setCustomEndDate(d);
+          setCurrentPage(1);
+        }}
+        totalRecordsCount={total}
         onResetFilters={handleResetFilters}
         isClockedIn={isClockedIn}
         onClockInClick={() => {
@@ -354,7 +391,19 @@ export function AttendanceListView() {
 
       {/* 5. DATA TABLE WITH BUILT-IN PAGINATION */}
       <DataTable<AttendanceRecord>
-        title="ALL SHIFTS & ATTENDANCE LOGS"
+        title={
+          datePreset === "TODAY"
+            ? "TODAY'S SHIFTS & ATTENDANCE"
+            : datePreset === "YESTERDAY"
+            ? "YESTERDAY'S SHIFTS & ATTENDANCE"
+            : datePreset === "THIS_WEEK"
+            ? "THIS WEEK'S SHIFTS & ATTENDANCE"
+            : datePreset === "THIS_MONTH"
+            ? "THIS MONTH'S SHIFTS & ATTENDANCE"
+            : datePreset === "CUSTOM"
+            ? `SHIFTS (${customStartDate} → ${customEndDate})`
+            : "ALL ATTENDANCE LOGS"
+        }
         data={records}
         columns={columns}
         isLoading={isLoading}
@@ -391,8 +440,18 @@ export function AttendanceListView() {
 
       {/* SHIFT RECORD DETAILS MODAL */}
       {selectedRecord && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="relative w-full max-w-lg rounded-3xl border border-[#EAE6DF] bg-white p-6 sm:p-7 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedRecord(null);
+          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150"
+        >
+          <div
+            className="relative w-full max-w-lg rounded-3xl border border-[#EAE6DF] bg-white p-6 sm:p-7 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-[#EAE6DF]">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0a0a0a]/10 text-[#0a0a0a] font-black text-sm">

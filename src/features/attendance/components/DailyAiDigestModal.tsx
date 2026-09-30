@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import {
   RefreshCw,
   Clock,
@@ -26,8 +27,33 @@ export function DailyAiDigestModal({ isOpen, onClose }: DailyAiDigestModalProps)
     skip: !isOpen,
   });
   const [generateDigest, { isLoading: isGenerating }] = useGenerateDigestMutation();
+  const [mounted, setMounted] = React.useState(false);
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll and listen for Escape key when open
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const digest = digestResponse?.data;
 
@@ -47,9 +73,20 @@ export function DailyAiDigestModal({ isOpen, onClose }: DailyAiDigestModalProps)
     day: "numeric",
   });
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-[#EAE6DF] bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="AI Executive Daily Digest"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+    >
+      <div
+        className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-[#EAE6DF] bg-white shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-5 sm:p-6 pb-4 border-b border-[#EAE6DF] bg-[#FAF8F5]/80 flex items-start justify-between gap-4">
           <div className="flex items-start gap-3.5">
@@ -172,7 +209,8 @@ export function DailyAiDigestModal({ isOpen, onClose }: DailyAiDigestModalProps)
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

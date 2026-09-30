@@ -1,63 +1,68 @@
 "use client";
 
 import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/common/Button";
 import {
   Search,
   SlidersHorizontal,
   X,
   RotateCcw,
-  Check,
-  Clock,
   Calendar,
+  Check,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/common/Button";
-import { useGetAllRolesQuery } from "@/services/api/roles/rolesApi";
 
-interface AttendanceSearchBarProps {
+export type DatePreset = "TODAY" | "YESTERDAY" | "THIS_WEEK" | "THIS_MONTH" | "ALL" | "CUSTOM";
+
+interface StaffSearchBarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   roleFilter: string;
   onRoleFilterChange: (role: string) => void;
   statusFilter: string;
   onStatusFilterChange: (status: string) => void;
-  datePreset: string;
-  onDatePresetChange: (preset: string) => void;
-  customStartDate?: string;
-  onCustomStartDateChange?: (date: string) => void;
-  customEndDate?: string;
-  onCustomEndDateChange?: (date: string) => void;
-  totalRecordsCount?: number;
+  leadFilter: "ALL" | "WITH_LEADS" | "NO_LEADS" | "BUSY";
+  onLeadFilterChange: (lead: "ALL" | "WITH_LEADS" | "NO_LEADS" | "BUSY") => void;
+  datePreset: DatePreset;
+  onDatePresetChange: (preset: DatePreset) => void;
+  customStartDate: string;
+  onCustomStartDateChange: (date: string) => void;
+  customEndDate: string;
+  onCustomEndDateChange: (date: string) => void;
+  sortBy: string;
+  onSortByChange: (sort: string) => void;
   onResetFilters: () => void;
-  onClockInClick?: () => void;
-  isClockedIn?: boolean;
+  roleOptions: { label: string; value: string }[];
+  totalStaffCount?: number;
+  activeOnDateCount?: number;
   className?: string;
 }
 
-export function AttendanceSearchBar({
+export function StaffSearchBar({
   searchQuery,
   onSearchChange,
   roleFilter,
   onRoleFilterChange,
   statusFilter,
   onStatusFilterChange,
+  leadFilter,
+  onLeadFilterChange,
   datePreset,
   onDatePresetChange,
   customStartDate,
   onCustomStartDateChange,
   customEndDate,
   onCustomEndDateChange,
-  totalRecordsCount,
+  sortBy,
+  onSortByChange,
   onResetFilters,
-  onClockInClick,
-  isClockedIn = false,
+  roleOptions,
+  totalStaffCount,
+  activeOnDateCount,
   className,
-}: AttendanceSearchBarProps) {
+}: StaffSearchBarProps) {
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
   const filterRef = React.useRef<HTMLDivElement>(null);
-
-  // PBAC Roles from Database
-  const { data: rolesResponse } = useGetAllRolesQuery();
 
   // Close filter popover on outside click
   React.useEffect(() => {
@@ -73,104 +78,106 @@ export function AttendanceSearchBar({
   const activeFiltersCount =
     (roleFilter !== "ALL" ? 1 : 0) +
     (statusFilter !== "ALL" ? 1 : 0) +
-    (datePreset !== "TODAY" ? 1 : 0);
+    (leadFilter !== "ALL" ? 1 : 0) +
+    (datePreset !== "ALL" ? 1 : 0) +
+    (sortBy !== "Newest First" ? 1 : 0);
 
   const clearAllFilters = () => {
     onResetFilters();
     setIsFilterOpen(false);
   };
 
-  const roleOptions = React.useMemo(() => {
-    const list = [{ label: "All Roles", value: "ALL" }];
-    if (rolesResponse?.data) {
-      rolesResponse.data.forEach((r) => {
-        list.push({ label: r.name, value: r.name });
-      });
-    } else {
-      list.push(
-        { label: "Super Admin", value: "SUPER_ADMIN" },
-        { label: "Manager", value: "MANAGER" },
-        { label: "Consultant", value: "CONSULTANT" }
-      );
-    }
-    return list;
-  }, [rolesResponse]);
-
-  const statusOptions = [
-    { label: "All Statuses", value: "ALL" },
-    { label: "Active (Clocked In)", value: "CLOCKED_IN" },
-    { label: "Completed (Clocked Out)", value: "CLOCKED_OUT" },
-  ];
-
-  const datePresetTabs = [
+  const datePresetTabs: { label: string; value: DatePreset }[] = [
+    { label: "All Time", value: "ALL" },
     { label: "Today", value: "TODAY" },
     { label: "Yesterday", value: "YESTERDAY" },
     { label: "This Week", value: "THIS_WEEK" },
     { label: "This Month", value: "THIS_MONTH" },
-    { label: "All Time", value: "ALL" },
     { label: "Custom Day", value: "CUSTOM" },
+  ];
+
+  const statusOptions = [
+    { label: "All Statuses", value: "ALL" },
+    { label: "Active", value: "ACTIVE" },
+    { label: "Suspended", value: "SUSPENDED" },
+    { label: "Inactive", value: "INACTIVE" },
+  ];
+
+  const leadOptions: { label: string; value: "ALL" | "WITH_LEADS" | "NO_LEADS" | "BUSY" }[] = [
+    { label: "All Staff", value: "ALL" },
+    { label: "With Assigned Leads", value: "WITH_LEADS" },
+    { label: "High Workload (3+ Leads)", value: "BUSY" },
+    { label: "Available (0 Leads)", value: "NO_LEADS" },
+  ];
+
+  const sortOptions = [
+    "Newest First",
+    "Oldest First",
+    "Name (A-Z)",
+    "Name (Z-A)",
+    "Most Leads Handled",
   ];
 
   return (
     <div className={cn("space-y-3", className)}>
-      {/* 1. TOP ROW: SEARCH BAR + FILTERS POPOVER + ACTION BUTTON */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        {/* Search Input Box */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
+        {/* 1. SEARCH INPUT BAR (Exact match to /clients) */}
         <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8]" />
+          <div className="absolute inset-y-0 left-0 pl-4.5 flex items-center pointer-events-none">
+            <Search className="h-4.5 w-4.5 text-[#64748B]" />
+          </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search by team member, email, focus, or notes..."
-            className="w-full h-11 pl-10 pr-9 rounded-xl border border-[#EAE6DF] bg-white text-sm text-[#0a0a0a] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0a0a0a]/10 focus:border-[#0a0a0a] transition-all"
+            placeholder="Search staff by name, email, phone, or ID..."
+            aria-label="Search staff members"
+            className="w-full h-12 pl-11 pr-10 rounded-2xl bg-white border border-[#EAE6DF] text-sm text-[#0a0a0a] placeholder:text-[#64748B]/60 placeholder:font-normal shadow-[0_2px_10px_rgb(0,0,0,0.02)] transition-all focus:outline-none focus:border-[#0a0a0a] focus:ring-2 focus:ring-[#0a0a0a]/10"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => onSearchChange("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-[#F1EFEA] text-[#94A3B8] hover:text-[#0a0a0a] transition-colors cursor-pointer"
+              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#64748B] hover:text-[#0a0a0a] transition-colors cursor-pointer"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {/* Filters and Clock In/Out Actions */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* Filter Popover Button */}
+        {/* 2. ACTIONS: FILTERS POPOVER BUTTON (Exact match to /clients) */}
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           <div className="relative" ref={filterRef}>
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
               className={cn(
-                "h-11 px-4 rounded-xl border text-sm font-bold flex items-center gap-2 transition-all cursor-pointer shadow-2xs",
-                activeFiltersCount > 0
-                  ? "border-[#0a0a0a] bg-[#0a0a0a] text-white shadow-sm"
-                  : "border-[#EAE6DF] bg-white text-[#171717] hover:bg-[#F8F7F4]"
+                "h-12 px-4.5 rounded-2xl border-[#EAE6DF] bg-white text-xs sm:text-sm font-bold text-[#0a0a0a] shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:bg-[#FAF8F5] gap-2 cursor-pointer transition-all",
+                activeFiltersCount > 0 && "border-[#0a0a0a] text-[#0a0a0a]"
               )}
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4 text-[#64748B]" />
               <span>Filters</span>
               {activeFiltersCount > 0 && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[#0a0a0a] text-[11px] font-black">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0a0a0a] text-[10px] font-bold text-white">
                   {activeFiltersCount}
                 </span>
               )}
-            </button>
+            </Button>
 
-            {/* Filter Dropdown Popover (Exact match to /staff-management) */}
+            {/* Filter Popover Content */}
             {isFilterOpen && (
-              <div className="absolute right-0 top-full mt-2 w-84 rounded-2xl border border-[#EAE6DF] bg-white p-4 shadow-xl z-30 space-y-4 animate-in fade-in zoom-in-95 duration-100">
-                <div className="flex items-center justify-between pb-3 border-b border-[#EAE6DF]">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#64748B]">
-                    Filter Attendance
-                  </span>
+              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl border border-[#EAE6DF] bg-white p-4.5 shadow-xl z-40 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="flex items-center justify-between pb-3 border-b border-[#F0ECE6]">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
+                    Filter Workforce & Leads
+                  </h4>
                   {activeFiltersCount > 0 && (
                     <button
                       type="button"
                       onClick={clearAllFilters}
-                      className="flex items-center gap-1 text-[11px] font-bold text-[#DC2626] hover:underline cursor-pointer"
+                      className="flex items-center gap-1 text-[11px] font-bold text-[#D97706] hover:underline cursor-pointer"
                     >
                       <RotateCcw className="h-3 w-3" />
                       <span>Reset</span>
@@ -179,11 +186,11 @@ export function AttendanceSearchBar({
                 </div>
 
                 <div className="divide-y divide-[#F0ECE6] max-h-[420px] overflow-y-auto pr-1">
-                  {/* Shift & Activity Date Preset Section */}
+                  {/* Date Preset Section */}
                   <div className="py-3 space-y-2">
                     <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
                       <span>Shift & Activity Date</span>
-                      <span className="text-[10px] text-[#059669] font-mono lowercase">defaults to today</span>
+                      <span className="text-[10px] text-[#059669] font-mono lowercase">defaults to all time</span>
                     </label>
                     <div className="grid grid-cols-3 gap-1.5">
                       {datePresetTabs.map((preset) => {
@@ -206,9 +213,9 @@ export function AttendanceSearchBar({
                       })}
                     </div>
 
-                    {/* Custom Date Pickers inside Popover */}
+                    {/* Custom Date Pickers */}
                     {datePreset === "CUSTOM" && (
-                      <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-2 mt-2 animate-in fade-in duration-150">
+                      <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-2.5 mt-2 animate-in fade-in duration-150">
                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#0a0a0a]">
                           <Calendar className="h-3.5 w-3.5 text-[#D97706]" />
                           <span>Custom Date Range</span>
@@ -220,8 +227,8 @@ export function AttendanceSearchBar({
                             </label>
                             <input
                               type="date"
-                              value={customStartDate || ""}
-                              onChange={(e) => onCustomStartDateChange?.(e.target.value)}
+                              value={customStartDate}
+                              onChange={(e) => onCustomStartDateChange(e.target.value)}
                               className="w-full h-8 px-2 rounded-lg border border-[#EAE6DF] bg-white text-xs text-[#0a0a0a] font-mono focus:outline-none focus:border-[#0a0a0a]"
                             />
                           </div>
@@ -231,8 +238,8 @@ export function AttendanceSearchBar({
                             </label>
                             <input
                               type="date"
-                              value={customEndDate || ""}
-                              onChange={(e) => onCustomEndDateChange?.(e.target.value)}
+                              value={customEndDate}
+                              onChange={(e) => onCustomEndDateChange(e.target.value)}
                               className="w-full h-8 px-2 rounded-lg border border-[#EAE6DF] bg-white text-xs text-[#0a0a0a] font-mono focus:outline-none focus:border-[#0a0a0a]"
                             />
                           </div>
@@ -241,10 +248,10 @@ export function AttendanceSearchBar({
                     )}
                   </div>
 
-                  {/* Team Member Role Section */}
+                  {/* Role Section */}
                   <div className="py-3 space-y-2">
                     <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
-                      Team Member Role
+                      Staff Role
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {roleOptions.map((opt) => {
@@ -271,7 +278,7 @@ export function AttendanceSearchBar({
                   {/* Status Section */}
                   <div className="py-3 space-y-2">
                     <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
-                      Attendance Status
+                      Account Status
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {statusOptions.map((opt) => {
@@ -294,18 +301,62 @@ export function AttendanceSearchBar({
                       })}
                     </div>
                   </div>
+
+                  {/* Lead Workload Section */}
+                  <div className="py-3 space-y-2">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
+                      Lead Caseload
+                    </label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {leadOptions.map((opt) => {
+                        const isSelected = leadFilter === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => onLeadFilterChange(opt.value)}
+                            className={cn(
+                              "px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer text-left truncate",
+                              isSelected
+                                ? "bg-[#0a0a0a] text-white shadow-2xs font-bold"
+                                : "bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1ECE4] hover:text-[#0a0a0a]"
+                            )}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Sort Section */}
+                  <div className="py-3 space-y-2">
+                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
+                      Sort Order
+                    </label>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => onSortByChange(e.target.value)}
+                      className="w-full h-9 px-3 rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] text-xs font-bold text-[#0a0a0a] focus:outline-none cursor-pointer"
+                    >
+                      {sortOptions.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                {/* Popover Footer */}
-                <div className="pt-2 border-t border-[#EAE6DF] flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-[#64748B]">
+                <div className="pt-3 border-t border-[#F0ECE6] flex items-center justify-between">
+                  <span className="text-[11px] text-[#64748B]">
                     {activeFiltersCount} active {activeFiltersCount === 1 ? "filter" : "filters"}
                   </span>
                   <Button
                     type="button"
                     size="sm"
                     onClick={() => setIsFilterOpen(false)}
-                    className="h-8 px-4 text-xs font-bold"
+                    className="h-8 px-4 rounded-xl text-xs font-bold"
                   >
                     Apply Filters
                   </Button>
@@ -313,28 +364,11 @@ export function AttendanceSearchBar({
               </div>
             )}
           </div>
-
-          {/* Action Button: Clock In / Clock Out */}
-          {onClockInClick && (
-            <Button
-              type="button"
-              onClick={onClockInClick}
-              className={cn(
-                "h-11 px-4.5 rounded-xl font-bold text-sm shadow-xs transition-all gap-2",
-                isClockedIn
-                  ? "bg-[#DC2626] hover:bg-[#B91C1C] text-white"
-                  : "bg-[#0a0a0a] hover:bg-[#171717] text-white"
-              )}
-            >
-              <Clock className="h-4 w-4" />
-              <span>{isClockedIn ? "Clock Out" : "Clock In"}</span>
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* 2. QUICK DATE PRESET PILLS BAR (Exact match to /staff-management) */}
-      <div className="flex flex-wrap items-center justify-between gap-2.5 pt-0.5">
+      {/* 3. QUICK DATE PRESET PILLS BAR */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white border border-[#EAE6DF] shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-x-auto">
           {datePresetTabs.map((preset) => {
             const isSelected = datePreset === preset.value;
@@ -351,14 +385,24 @@ export function AttendanceSearchBar({
                 )}
               >
                 <span>{preset.label}</span>
-                {preset.value === "ALL" && totalRecordsCount !== undefined && (
+                {preset.value === "ALL" && totalStaffCount !== undefined && (
                   <span
                     className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded-full font-mono",
                       isSelected ? "bg-white/20 text-white" : "bg-[#F1ECE4] text-[#64748B]"
                     )}
                   >
-                    {totalRecordsCount}
+                    {totalStaffCount}
+                  </span>
+                )}
+                {isSelected && preset.value !== "ALL" && activeOnDateCount !== undefined && (
+                  <span
+                    className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded-full font-mono",
+                      isSelected ? "bg-white/20 text-white" : "bg-[#F1ECE4] text-[#64748B]"
+                    )}
+                  >
+                    {activeOnDateCount}
                   </span>
                 )}
               </button>
@@ -372,93 +416,20 @@ export function AttendanceSearchBar({
             <span className="text-[11px] font-bold text-[#64748B] pl-2">Date:</span>
             <input
               type="date"
-              value={customStartDate || ""}
-              onChange={(e) => onCustomStartDateChange?.(e.target.value)}
+              value={customStartDate}
+              onChange={(e) => onCustomStartDateChange(e.target.value)}
               className="h-8 px-2.5 rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] text-xs font-mono text-[#0a0a0a] focus:outline-none"
             />
             <span className="text-xs text-[#94A3B8]">to</span>
             <input
               type="date"
-              value={customEndDate || ""}
-              onChange={(e) => onCustomEndDateChange?.(e.target.value)}
+              value={customEndDate}
+              onChange={(e) => onCustomEndDateChange(e.target.value)}
               className="h-8 px-2.5 rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] text-xs font-mono text-[#0a0a0a] focus:outline-none"
             />
           </div>
         )}
       </div>
-
-      {/* 3. ACTIVE FILTER CHIPS (Shows when custom filters or non-default preset applied) */}
-      {(roleFilter !== "ALL" || statusFilter !== "ALL" || datePreset !== "TODAY" || searchQuery) && (
-        <div className="flex flex-wrap items-center gap-2 pt-0.5">
-          <span className="text-[11px] font-bold text-[#94A3B8] uppercase">Active:</span>
-          {datePreset !== "TODAY" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] font-bold text-xs">
-              <Calendar className="h-3 w-3 text-[#64748B]" />
-              <span>
-                Period:{" "}
-                {datePreset === "CUSTOM"
-                  ? `${customStartDate} → ${customEndDate}`
-                  : datePresetTabs.find((o) => o.value === datePreset)?.label || datePreset}
-              </span>
-              <button
-                type="button"
-                onClick={() => onDatePresetChange("TODAY")}
-                className="hover:text-[#DC2626] transition-colors cursor-pointer"
-                title="Reset to Today"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          )}
-          {statusFilter !== "ALL" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] font-bold text-xs">
-              <Clock className="h-3 w-3 text-[#64748B]" />
-              <span>{statusOptions.find((o) => o.value === statusFilter)?.label}</span>
-              <button
-                type="button"
-                onClick={() => onStatusFilterChange("ALL")}
-                className="hover:text-[#DC2626] transition-colors cursor-pointer"
-                title="Clear status filter"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          )}
-          {roleFilter !== "ALL" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] font-bold text-xs">
-              <span>Role: {roleFilter}</span>
-              <button
-                type="button"
-                onClick={() => onRoleFilterChange("ALL")}
-                className="hover:text-[#DC2626] transition-colors cursor-pointer"
-                title="Clear role filter"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          )}
-          {searchQuery && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] font-bold text-xs">
-              <span>&ldquo;{searchQuery}&rdquo;</span>
-              <button
-                type="button"
-                onClick={() => onSearchChange("")}
-                className="hover:text-[#DC2626] transition-colors cursor-pointer"
-                title="Clear search"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={onResetFilters}
-            className="text-xs font-bold text-[#DC2626] hover:underline cursor-pointer ml-1"
-          >
-            Reset All
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { X, LogOut, Sparkles } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useClockOutMutation } from "@/services/api/attendance/attendanceApi";
@@ -13,9 +14,34 @@ interface ClockOutModalProps {
 
 export function ClockOutModal({ isOpen, onClose, onSuccess }: ClockOutModalProps) {
   const [eodNotes, setEodNotes] = React.useState("");
+  const [mounted, setMounted] = React.useState(false);
   const [clockOut, { isLoading }] = useClockOutMutation();
 
-  if (!isOpen) return null;
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll and listen for Escape key when open
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +55,20 @@ export function ClockOutModal({ isOpen, onClose, onSuccess }: ClockOutModalProps
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="relative w-full max-w-lg rounded-3xl border border-[#EAE6DF] bg-white p-6 sm:p-7 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Complete Shift / Clock Out"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+    >
+      <div
+        className="relative w-full max-w-lg rounded-3xl border border-[#EAE6DF] bg-white p-6 sm:p-7 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -46,7 +83,7 @@ export function ClockOutModal({ isOpen, onClose, onSuccess }: ClockOutModalProps
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-[#F1EFEA] text-[#94A3B8] hover:text-[#0a0a0a] transition-colors"
+            className="p-1.5 rounded-full hover:bg-[#F1EFEA] text-[#94A3B8] hover:text-[#0a0a0a] transition-colors cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -94,6 +131,7 @@ export function ClockOutModal({ isOpen, onClose, onSuccess }: ClockOutModalProps
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

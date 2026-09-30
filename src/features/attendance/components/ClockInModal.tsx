@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { X, Clock, Sparkles, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useClockInMutation } from "@/services/api/attendance/attendanceApi";
@@ -24,9 +25,14 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
   const [selectedFocus, setSelectedFocus] = React.useState("");
   const [customFocus, setCustomFocus] = React.useState("");
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
   const [clockIn, { isLoading }] = useClockInMutation();
 
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -40,7 +46,27 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
     }
   }, [isDropdownOpen]);
 
-  if (!isOpen) return null;
+  // Lock body scroll and listen for Escape key when open
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !mounted) return null;
 
   const finalFocus = customFocus.trim() || selectedFocus;
 
@@ -56,9 +82,20 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="relative w-full max-w-md rounded-3xl border border-[#EAE6DF] bg-white p-6 sm:p-7 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200">
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Start Shift / Clock In"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+    >
+      <div
+        className="relative w-full max-w-md rounded-3xl border border-[#EAE6DF] bg-white p-6 sm:p-7 shadow-2xl space-y-5 animate-in zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -73,7 +110,7 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-[#F1EFEA] text-[#94A3B8] hover:text-[#0a0a0a] transition-colors"
+            className="p-1.5 rounded-full hover:bg-[#F1EFEA] text-[#94A3B8] hover:text-[#0a0a0a] transition-colors cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -92,7 +129,7 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
               <button
                 type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full h-11 px-3.5 rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] text-left text-sm text-[#0a0a0a] flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-[#0a0a0a]/10"
+                className="w-full h-11 px-3.5 rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] text-left text-sm text-[#0a0a0a] flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-[#0a0a0a]/10 cursor-pointer"
               >
                 <span className={cn(!selectedFocus && "text-[#94A3B8]")}>
                   {selectedFocus || "Select focus from list..."}
@@ -112,7 +149,7 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
                         setIsDropdownOpen(false);
                       }}
                       className={cn(
-                        "w-full h-9 px-3 rounded-lg text-xs font-bold text-left flex items-center justify-between transition-colors",
+                        "w-full h-9 px-3 rounded-lg text-xs font-bold text-left flex items-center justify-between transition-colors cursor-pointer",
                         selectedFocus === opt
                           ? "bg-[#0a0a0a] text-white"
                           : "hover:bg-[#F8F7F4] text-[#171717]"
@@ -160,6 +197,7 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
