@@ -8,6 +8,7 @@ import {
   useGetMyAttendanceStatusQuery,
   useUpdateFocusMutation,
 } from "@/services/api/attendance/attendanceApi";
+import { usePermissions } from "@/hooks/usePermissions";
 import { ClockInModal } from "./ClockInModal";
 import { ClockOutModal } from "./ClockOutModal";
 
@@ -20,8 +21,12 @@ const QUICK_FOCUS_OPTIONS = [
 ];
 
 export function HeaderAttendanceWidget() {
+  const { isClientAccount, hasPermission } = usePermissions();
+  const canTrackAttendance = !isClientAccount && hasPermission("attendance:track");
+
   const { data: statusResponse, refetch } = useGetMyAttendanceStatusQuery(undefined, {
-    pollingInterval: 30000, // Refresh every 30s
+    pollingInterval: canTrackAttendance ? 30000 : undefined,
+    skip: !canTrackAttendance,
   });
 
   const [isClockInOpen, setIsClockInOpen] = React.useState(false);
@@ -79,6 +84,10 @@ export function HeaderAttendanceWidget() {
       // Ignored
     }
   };
+
+  if (!canTrackAttendance) {
+    return null;
+  }
 
   return (
     <>

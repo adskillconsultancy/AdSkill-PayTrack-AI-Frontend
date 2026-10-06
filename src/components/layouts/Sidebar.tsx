@@ -469,50 +469,85 @@ export function Sidebar() {
     [filteredNavSections],
   );
 
+  // Collect all known navigation hrefs from the currently visible navigation
+  const allKnownHrefs = React.useMemo(() => {
+    const hrefs: string[] = [];
+    filteredNavSections.forEach((section) => {
+      section.items.forEach((item) => {
+        hrefs.push(item.href);
+        item.subItems?.forEach((sub) => {
+          hrefs.push(sub.href);
+        });
+      });
+    });
+    return Array.from(new Set(hrefs));
+  }, [filteredNavSections]);
+
   const currentPathWithQuery = React.useMemo(() => {
     const query = searchParams.toString();
     return query ? `${pathname}?${query}` : pathname;
   }, [pathname, searchParams]);
 
-  const getPathFromHref = React.useCallback((href: string) => {
-    return href.split("?")[0];
-  }, []);
-
-  const isCreatePathForParent = React.useCallback(
-    (parentHref: string) => {
-      if (parentHref === ROUTES.CLIENTS)
-        return pathname === ROUTES.CLIENT_CREATE;
-      if (parentHref === ROUTES.SERVICES)
-        return pathname === ROUTES.SERVICE_CREATE;
-      if (parentHref === ROUTES.USERS) return pathname === ROUTES.USER_CREATE;
-      if (parentHref === ROUTES.ROLES) return pathname === ROUTES.ROLES_CREATE;
-      if (parentHref === ROUTES.PAYMENTS)
-        return pathname === ROUTES.PAYMENT_RECORD;
-      return false;
-    },
-    [pathname],
-  );
-
   const isHrefActive = React.useCallback(
     (href: string) => {
-      const hrefPath = getPathFromHref(href);
-      const hasQuery = href.includes("?");
+      const [hrefBasePath, hrefQuery] = href.split("?");
 
-      if (hasQuery) {
-        return currentPathWithQuery === href;
-      }
-
-      if (pathname === hrefPath) {
+      // 1. If this href specifies query params (e.g. ?tab=receipts, ?tab=matrix, ?action=create)
+      if (hrefQuery) {
+        if (pathname !== hrefBasePath) return false;
+        const expectedParams = new URLSearchParams(hrefQuery);
+        for (const [key, value] of expectedParams.entries()) {
+          if (searchParams.get(key) !== value) {
+            return false;
+          }
+        }
         return true;
       }
 
-      return (
-        hrefPath !== ROUTES.DASHBOARD &&
-        pathname.startsWith(`${hrefPath}/`) &&
-        !isCreatePathForParent(hrefPath)
-      );
+      // 2. If this href has NO query params:
+      // If the current URL has query params, check if any sibling/known href with the SAME base path
+      // matches those query params. If so, that specific item takes precedence and this generic item should NOT be active.
+      if (pathname === hrefBasePath) {
+        const queryMatchesOther = allKnownHrefs.some((otherHref) => {
+          if (otherHref === href) return false;
+          const [otherBase, otherQuery] = otherHref.split("?");
+          if (otherBase !== hrefBasePath || !otherQuery) return false;
+          const otherParams = new URLSearchParams(otherQuery);
+          for (const [key, val] of otherParams.entries()) {
+            if (searchParams.get(key) !== val) return false;
+          }
+          return true;
+        });
+
+        if (queryMatchesOther) {
+          return false;
+        }
+
+        return true;
+      }
+
+      // 3. Sub-route prefix matching (e.g. /clients/[id] matching /clients)
+      if (hrefBasePath === ROUTES.DASHBOARD || hrefBasePath === "/") {
+        return false;
+      }
+
+      if (!pathname.startsWith(`${hrefBasePath}/`)) {
+        return false;
+      }
+
+      // Check if another known href matches pathname with a LONGER / more specific path
+      // e.g. for pathname "/payments/pay-online", /payments/pay-online matches (len 20)
+      // which is longer than /payments (len 9), so /payments yields to /payments/pay-online!
+      const hasMoreSpecificMatch = allKnownHrefs.some((otherHref) => {
+        if (otherHref === href) return false;
+        const otherBase = otherHref.split("?")[0];
+        if (otherBase.length <= hrefBasePath.length) return false;
+        return pathname === otherBase || pathname.startsWith(`${otherBase}/`);
+      });
+
+      return !hasMoreSpecificMatch;
     },
-    [currentPathWithQuery, getPathFromHref, isCreatePathForParent, pathname],
+    [allKnownHrefs, pathname, searchParams],
   );
 
   const isItemActive = React.useCallback(

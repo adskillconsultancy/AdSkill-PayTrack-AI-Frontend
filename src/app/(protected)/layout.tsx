@@ -34,7 +34,8 @@ export default function ProtectedLayout({
   const router = useRouter();
   const { isOpen, setMobileOpen } = useSidebarStore();
   const { user, accessToken, isAuthenticated, logout } = useAuth();
-  const { isClientAccount } = usePermissions();
+  const { isClientAccount, hasPermission } = usePermissions();
+  const canTrackAttendance = !isClientAccount && hasPermission("attendance:track");
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
   const profileDropdownRef = React.useRef<HTMLDivElement>(null);
@@ -186,7 +187,7 @@ export default function ProtectedLayout({
               <Maximize2 className="h-4 w-4" />
             </button>
 
-            <HeaderAttendanceWidget />
+            {canTrackAttendance && <HeaderAttendanceWidget />}
 
             <NotificationBellDropdown />
 
