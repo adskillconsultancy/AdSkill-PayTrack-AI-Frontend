@@ -219,7 +219,10 @@ export default function PayOnlineDirectoryPage() {
       key: "paidAmount",
       header: "Total Paid",
       cell: (item) => {
-        const paid = (item.payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0);
+        // F-21: Only count VERIFIED payments — PENDING/STRIPE_PENDING/FAILED must NOT
+        // reduce the displayed balance. A client with a pending payment would see $0 due
+        // and not retry, while the payment hasn't actually cleared.
+        const paid = (item.payments || []).filter((p) => p.status === "VERIFIED").reduce((acc, p) => acc + Number(p.amount || 0), 0);
         const currency = item.paymentPlans?.[0]?.currency || item.service?.currency || "USD";
         return (
           <div className="space-y-0.5">
@@ -236,7 +239,7 @@ export default function PayOnlineDirectoryPage() {
       header: "Balance Due",
       cell: (item) => {
         const contracted = Number(item.paymentPlans?.[0]?.contractedFee || item.service?.baseFee || 0);
-        const paid = (item.payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0);
+        const paid = (item.payments || []).filter((p) => p.status === "VERIFIED").reduce((acc, p) => acc + Number(p.amount || 0), 0);
         const due = Math.max(0, contracted - paid);
         const currency = item.paymentPlans?.[0]?.currency || item.service?.currency || "USD";
         return (

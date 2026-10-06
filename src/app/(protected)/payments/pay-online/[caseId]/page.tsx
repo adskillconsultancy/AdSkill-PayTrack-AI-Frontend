@@ -176,10 +176,13 @@ export default function CasePayOnlinePage() {
   // Checkout Session Mutation
   const [createCheckoutSession, { isLoading: isRedirecting, error: checkoutError }] =
     useCreateStripeCheckoutSessionMutation();
+  const [isProcessingCheckout, setIsProcessingCheckout] = React.useState(false);
+  const isRedirectingToStripe = isRedirecting || isProcessingCheckout;
 
   const handleProceedToStripe = async () => {
-    if (!caseId) return;
+    if (!caseId || isRedirectingToStripe) return;
 
+    setIsProcessingCheckout(true);
     try {
       const response = await createCheckoutSession({
         caseId,
@@ -188,8 +191,11 @@ export default function CasePayOnlinePage() {
 
       if (response.data?.url) {
         window.location.href = response.data.url;
+      } else {
+        setIsProcessingCheckout(false);
       }
     } catch (err) {
+      setIsProcessingCheckout(false);
       console.error("[STRIPE_CHECKOUT] Redirect error:", err);
     }
   };
@@ -664,14 +670,14 @@ export default function CasePayOnlinePage() {
                 <button
                   type="button"
                   onClick={handleProceedToStripe}
-                  disabled={isRedirecting || caseLoading || isLoadingPlans || selectedAmount <= 0}
+                  disabled={isRedirectingToStripe || caseLoading || isLoadingPlans || selectedAmount <= 0}
                   className={cn(
                     "w-full h-13 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer",
                     "bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-950 font-black",
                     "disabled:opacity-50 disabled:cursor-not-allowed"
                   )}
                 >
-                  {isRedirecting ? (
+                  {isRedirectingToStripe ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
                       <span>Connecting to Stripe...</span>
@@ -711,6 +717,22 @@ export default function CasePayOnlinePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-Page Loading Overlay during Stripe Checkout Redirect */}
+      {isRedirectingToStripe && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs select-none cursor-wait"
+        >
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
+            <p className="text-sm font-semibold text-white tracking-wide">
+              Redirecting to Stripe...
+            </p>
           </div>
         </div>
       )}
