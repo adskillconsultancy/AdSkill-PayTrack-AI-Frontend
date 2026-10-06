@@ -1,6 +1,18 @@
-﻿export type CaseStatus = "INTAKE" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
+export type CaseStatus = "INTAKE" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "CANCELLED";
 export type FinancialStatus = "UNPAID" | "PARTIALLY_PAID" | "PAID" | "OVERDUE";
-export type PaymentStatus = "PENDING" | "VERIFIED" | "REJECTED" | "REFUNDED" | "VOIDED";
+export type PaymentStatus =
+  | "PENDING"
+  | "VERIFIED"
+  | "REJECTED"
+  | "REFUNDED"
+  | "PARTIALLY_REFUNDED"
+  | "VOIDED"
+  | "FAILED"
+  | "CANCELLED"
+  | "STRIPE_PENDING"
+  | "STRIPE_PROCESSING"
+  | "STRIPE_ACTION_REQUIRED";
+
 export type DocumentType = "AGREEMENT" | "INVOICE" | "RECEIPT" | "PAYMENT_PROOF" | "IDENTITY" | "SUPPORTING" | "OTHER";
 export type ScanStatus = "PENDING" | "CLEAN" | "REJECTED";
 
@@ -60,6 +72,8 @@ export interface ClientCase {
   user?: ClientProfile;
   service?: CaseServiceSnapshot;
   assignedConsultant?: { id: string; name: string; email: string } | null;
+  paymentPlans?: PaymentPlan[];
+  payments?: Payment[];
   createdAt: string;
   updatedAt: string;
 }
@@ -120,6 +134,12 @@ export interface Payment {
   paymentMethod: string;
   externalReference?: string | null;
   idempotencyKey?: string | null;
+  stripePaymentIntentId?: string | null;
+  stripeChargeId?: string | null;
+  stripeRefundId?: string | null;
+  stripeMetadata?: any;
+  failureCode?: string | null;
+  failureMessage?: string | null;
   status: PaymentStatus;
   verifiedById?: string | null;
   operationalNotes?: string | null;

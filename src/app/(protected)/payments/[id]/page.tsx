@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -115,6 +115,9 @@ export default function PaymentDetailPage() {
 
   const isVerified = payment.status === "VERIFIED";
   const isPending = payment.status === "PENDING";
+  const isStripe = Boolean(
+    payment.paymentMethod?.startsWith("STRIPE") || payment.stripePaymentIntentId
+  );
   const proofDocs = payment.proofDocuments || [];
 
   return (
@@ -275,6 +278,25 @@ export default function PaymentDetailPage() {
                 </div>
               </div>
             )}
+
+            {payment.stripePaymentIntentId && (
+              <div className="col-span-2 pt-2 border-t border-slate-100">
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                  Stripe Gateway Reference (Payment Intent / Session)
+                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200/60 truncate">
+                    {payment.stripePaymentIntentId}
+                  </span>
+                  <button
+                    onClick={() => handleCopy(payment.stripePaymentIntentId!, "stripeRef")}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer shrink-0"
+                  >
+                    {copiedKey === "stripeRef" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -287,11 +309,20 @@ export default function PaymentDetailPage() {
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <FileCheck className="h-4 w-4 text-emerald-600" />
-                Physical Proof & Bank Wire Slips
+                <FileCheck className={cn("h-4 w-4", isStripe ? "text-indigo-600" : "text-emerald-600")} />
+                {isStripe ? "Digital Clearance Slip & Settlement Proof" : "Physical Proof & Bank Wire Slips"}
               </h3>
-              <span className="text-[11px] font-extrabold text-slate-400">
-                {proofDocs.length} Attachment{proofDocs.length !== 1 ? "s" : ""}
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg",
+                isStripe && proofDocs.length === 0
+                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200/60"
+                  : "text-slate-400"
+              )}>
+                {proofDocs.length > 0
+                  ? `${proofDocs.length} Attachment${proofDocs.length !== 1 ? "s" : ""}`
+                  : isStripe
+                  ? "1 Electronic Voucher"
+                  : "0 Attachments"}
               </span>
             </div>
 
@@ -352,6 +383,128 @@ export default function PaymentDetailPage() {
                     </div>
                   );
                 })}
+              </div>
+            ) : isStripe ? (
+              /* CLEAN CORPORATE LIGHT MODE DIGITAL STRIPE CLEARING VOUCHER (OPTION 1) */
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-slate-50/70 to-indigo-50/40 p-6 sm:p-7 shadow-xs border border-slate-200/90 text-slate-900">
+                {/* Background Watermark & Subtle Lighting */}
+                <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-indigo-500/5 blur-2xl pointer-events-none" />
+                <div className="absolute right-4 top-2 opacity-[0.04] font-mono text-[96px] font-black tracking-widest pointer-events-none select-none text-slate-900">
+                  PAID
+                </div>
+
+                {/* Slip Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 mb-5 relative z-10">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-[#635bff]/10 border border-[#635bff]/25 flex items-center justify-center font-black text-xs text-[#635bff]">
+                      stripe
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                        Direct Electronic Settlement
+                      </span>
+                      <h4 className="text-base font-black text-slate-900 tracking-tight">
+                        Official Digital Payment Slip
+                      </h4>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>AUTHENTICATED</span>
+                  </div>
+                </div>
+
+                {/* Voucher Data Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2 text-xs relative z-10">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      Clearing Channel
+                    </span>
+                    <span className="font-extrabold text-slate-900 text-xs">Stripe Cloud Gateway</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      Settled Value
+                    </span>
+                    <span className="font-mono font-black text-slate-900 text-base">
+                      {formatMoney(payment.amount, payment.currency)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      Security Protocol
+                    </span>
+                    <span className="font-bold text-emerald-700 text-xs flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-emerald-600" /> 256-Bit SSL
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                      Paper Slip
+                    </span>
+                    <span className="font-semibold text-slate-600 text-xs">Not Required (Digital)</span>
+                  </div>
+                </div>
+
+                {/* Transaction Details Line */}
+                <div className="mt-4 pt-4 border-t border-dashed border-slate-200 space-y-2.5 text-xs relative z-10">
+                  <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                    <span className="text-slate-500 font-medium">Gateway Reference:</span>
+                    <span className="font-mono text-indigo-700 font-bold bg-indigo-50/80 border border-indigo-200/70 px-2 py-0.5 rounded truncate max-w-[280px]">
+                      {payment.stripePaymentIntentId || "Direct Electronic Settlement"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500 font-medium">Settled Timestamp:</span>
+                    <span className="text-slate-800 font-semibold">
+                      {formatDate(payment.paymentDate || payment.recordedAt || (payment as any).createdAt)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500 font-medium">Disbursement Status:</span>
+                    <span className="text-emerald-700 font-bold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      Captured &amp; Settled in AdSkill Treasury
+                    </span>
+                  </div>
+                </div>
+
+                {/* Simulated Barcode / Hologram Strip */}
+                <div className="mt-5 pt-4 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3 relative z-10">
+                  <div className="flex items-center gap-2.5">
+                    {/* Cool Barcode Simulation */}
+                    <div className="flex items-center gap-0.5 bg-slate-100/80 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-2xs">
+                      <div className="w-0.5 h-6 bg-slate-800" />
+                      <div className="w-1 h-6 bg-slate-800" />
+                      <div className="w-0.5 h-6 bg-slate-800" />
+                      <div className="w-1.5 h-6 bg-slate-800" />
+                      <div className="w-0.5 h-6 bg-slate-800" />
+                      <div className="w-1 h-6 bg-slate-800" />
+                      <div className="w-0.5 h-6 bg-slate-800" />
+                      <div className="w-1.5 h-6 bg-slate-800" />
+                      <div className="w-0.5 h-6 bg-slate-800" />
+                      <div className="w-1 h-6 bg-slate-800" />
+                      <div className="w-0.5 h-6 bg-slate-800" />
+                      <div className="w-1 h-6 bg-slate-800" />
+                      <div className="w-0.5 h-6 bg-slate-800" />
+                      <div className="w-1.5 h-6 bg-slate-800" />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-slate-500">
+                      AUTH-ID: {(payment.stripePaymentIntentId || payment.id).slice(-10).toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => window.print()}
+                      className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all cursor-pointer"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Print Slip</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
@@ -488,35 +641,78 @@ export default function PaymentDetailPage() {
             </h3>
 
             {isVerified ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                  <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold flex items-center justify-center text-xs">
-                    {(payment.verifiedBy?.name || "A").slice(0, 2).toUpperCase()}
+              isStripe ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100">
+                    <div className="h-9 w-9 rounded-xl bg-indigo-600 text-white font-black flex items-center justify-center text-[10px] shadow-xs tracking-tight">
+                      STRIPE
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <h4 className="text-xs font-extrabold text-slate-900">
+                          Stripe Payment Gateway
+                        </h4>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          Auto-Verified
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 truncate font-mono mt-0.5">
+                        Webhook Engine • 256-Bit SSL HMAC
+                      </p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800">
+                      GATEWAY
+                    </span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-extrabold text-slate-900 truncate">
-                      {payment.verifiedBy?.name || "System Administrator"}
-                    </h4>
-                    <p className="text-[10px] text-slate-500 truncate">
-                      {payment.verifiedBy?.email || "admin@adskillconsultancy.com"}
+
+                  <div className="text-[11px] text-slate-500 space-y-1 pt-1">
+                    <p className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
+                      Status: <strong className="text-slate-800 font-bold">Ledger Credited &amp; Settled</strong>
+                    </p>
+                    <p className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+                      Audit Stamp: <strong className="text-slate-800 font-bold">{formatDate(payment.paymentDate || payment.recordedAt || (payment as any).createdAt)}</strong>
+                    </p>
+                    {payment.stripePaymentIntentId && (
+                      <p className="flex items-center gap-1.5 text-[10px]">
+                        <Shield className="h-3 w-3 text-indigo-500 shrink-0" />
+                        Reference: <span className="font-mono text-slate-700 truncate">{payment.stripePaymentIntentId}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                    <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold flex items-center justify-center text-xs">
+                      {(payment.verifiedBy?.name || "A").slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs font-extrabold text-slate-900 truncate">
+                        {payment.verifiedBy?.name || "Authorized Staff Member"}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 truncate">
+                        {payment.verifiedBy?.email || "Staff Verification"}
+                      </p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">
+                      {payment.verifiedBy?.role?.name || "STAFF"}
+                    </span>
+                  </div>
+
+                  <div className="text-[11px] text-slate-500 space-y-1 pt-1">
+                    <p className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                      Status: <strong className="text-slate-800 font-bold">Ledger Credited &amp; Settled</strong>
+                    </p>
+                    <p className="flex items-center gap-1.5">
+                      <Clock className="h-3 w-3 text-slate-400" />
+                      Audit Stamp: <strong className="text-slate-800 font-bold">{formatDate(payment.paymentDate || payment.recordedAt || (payment as any).createdAt)}</strong>
                     </p>
                   </div>
-                  <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">
-                    {payment.verifiedBy?.role?.name || "SUPER_ADMIN"}
-                  </span>
                 </div>
-
-                <div className="text-[11px] text-slate-500 space-y-1 pt-1">
-                  <p className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    Status: <strong className="text-slate-800 font-bold">Ledger Credited & Settled</strong>
-                  </p>
-                  <p className="flex items-center gap-1.5">
-                    <Clock className="h-3 w-3 text-slate-400" />
-                    Audit Stamp: <strong className="text-slate-800 font-bold">{formatDate(payment.verifiedAt || payment.updatedAt)}</strong>
-                  </p>
-                </div>
-              </div>
+              )
             ) : (
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs space-y-3">
                 <div className="flex items-center gap-2 text-amber-800 font-extrabold">

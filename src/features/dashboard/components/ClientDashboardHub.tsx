@@ -162,7 +162,7 @@ export function ClientDashboardHub() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link href={`${ROUTES.PAYMENTS}?action=pay`}>
+            <Link href={ROUTES.PAYMENT_PAY_ONLINE}>
               <Button
                 type="button"
                 className="gap-2 rounded-2xl bg-[#0a0a0a] text-[#F3A712] hover:bg-[#1f1f1f] dark:bg-[#FAF8F5] dark:text-[#0a0a0a] font-bold text-xs sm:text-sm px-5 py-3 cursor-pointer shadow-md transition-all hover:scale-[1.02]"
@@ -451,7 +451,7 @@ export function ClientDashboardHub() {
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           {milestone.status !== "PAID" ? (
-                            <Link href={`${ROUTES.PAYMENTS}?action=pay&installmentId=${milestone.id}`}>
+                            <Link href={`${ROUTES.PAYMENT_PAY_ONLINE}?installmentId=${milestone.id}`}>
                               <Button
                                 size="sm"
                                 className="h-8 rounded-xl bg-[#0a0a0a] text-[#F3A712] hover:bg-[#1a1a1a] dark:bg-[#FAF8F5] dark:text-[#0a0a0a] font-bold text-xs px-3 cursor-pointer"

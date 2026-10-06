@@ -67,6 +67,9 @@ export function PaymentDetailModal({
 
   const isVerified = payment.status === "VERIFIED";
   const isPending = payment.status === "PENDING";
+  const isStripe = Boolean(
+    payment.paymentMethod?.startsWith("STRIPE") || payment.stripePaymentIntentId
+  );
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -274,6 +277,28 @@ export function PaymentDetailModal({
             </div>
           )}
 
+          {/* Stripe Gateway Reference */}
+          {payment.stripePaymentIntentId && (
+            <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200/80 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-1">
+                  <ShieldCheck className="h-3 w-3 text-indigo-600" />
+                  Stripe Gateway Reference
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(payment.stripePaymentIntentId || "")}
+                  className="text-[10px] font-bold text-indigo-800 hover:text-indigo-950 flex items-center gap-1 cursor-pointer">
+                  {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                  {copied ? "Copied" : "Copy"}
+                </button>
+              </div>
+              <p className="font-mono text-xs font-bold text-slate-900 break-all">
+                {payment.stripePaymentIntentId}
+              </p>
+            </div>
+          )}
+
           {/* Operational Caseworker Notes */}
           {payment.operationalNotes && (
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
@@ -293,30 +318,60 @@ export function PaymentDetailModal({
             </span>
 
             {isVerified ? (
-              <div className="flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
-                    <ShieldCheck className="h-4 w-4" />
+              isStripe ? (
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-black text-[10px]">
+                      STRIPE
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-slate-900 block flex items-center gap-1.5">
+                        Stripe Payment Gateway
+                        <span className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase bg-emerald-100 text-emerald-800">
+                          Auto
+                        </span>
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        api.stripe.com (256-bit SSL)
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-extrabold text-slate-900 block">
-                      {payment.verifiedBy?.name || "Authorized Staff Member"}
-                    </span>
-                    <span className="text-[10px] text-slate-500">
-                      {payment.verifiedBy?.email || "Staff Admin"}
-                    </span>
-                  </div>
-                </div>
 
-                <div className="text-right">
-                  <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase block">
-                    {payment.verifiedBy?.role?.name || "VERIFIED"}
-                  </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
-                    {formatDate(payment.verifiedAt || payment.updatedAt)}
-                  </span>
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 text-[10px] font-extrabold uppercase block">
+                      GATEWAY
+                    </span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      {formatDate(payment.paymentDate || payment.recordedAt || payment.createdAt)}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
+                      <ShieldCheck className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-slate-900 block">
+                        {payment.verifiedBy?.name || "Authorized Staff Member"}
+                      </span>
+                      <span className="text-[10px] text-slate-500">
+                        {payment.verifiedBy?.email || "Staff Admin"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase block">
+                      {payment.verifiedBy?.role?.name || "VERIFIED"}
+                    </span>
+                    <span className="text-[10px] text-slate-400 mt-0.5 block">
+                      {formatDate(payment.paymentDate || payment.recordedAt || payment.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              )
             ) : isPending ? (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-amber-100/60 border border-amber-200">
                 <div className="flex items-center gap-2">

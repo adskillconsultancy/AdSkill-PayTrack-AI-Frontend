@@ -24,7 +24,12 @@ import {
   Check,
   Calendar,
   X,
+  Zap,
+  Clock,
+  Ban,
+  RefreshCw,
 } from "lucide-react";
+
 
 const formatMoney = (amount: number | string, currency = "USD") => {
   return new Intl.NumberFormat("en-US", {
@@ -93,6 +98,14 @@ export default function PaymentsPage() {
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <Link
+            href="/payments/pay-online"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-10 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-black flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer border border-slate-700 w-full sm:w-auto">
+            <Zap className="h-4 w-4" />
+            <span>Pay Online</span>
+          </Link>
           <Link
             href="/payments/record"
             className="h-10 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer w-full sm:w-auto">
@@ -413,15 +426,50 @@ export default function PaymentsPage() {
 
                         {/* Status */}
                         <td className="py-3.5">
-                          {isVerified ? (
+                          {payment.status === "VERIFIED" ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold uppercase">
                               <CheckCircle2 className="h-3 w-3" />
                               Verified
                             </span>
-                          ) : isPending ? (
+                          ) : payment.status === "PENDING" ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-extrabold uppercase">
                               <AlertTriangle className="h-3 w-3" />
-                              Pending
+                              Pending Review
+                            </span>
+                          ) : payment.status === "STRIPE_PENDING" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-extrabold uppercase">
+                              <Clock className="h-3 w-3" />
+                              Card Pending
+                            </span>
+                          ) : payment.status === "STRIPE_ACTION_REQUIRED" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 border border-violet-200 text-[10px] font-extrabold uppercase">
+                              <RefreshCw className="h-3 w-3" />
+                              3DS Required
+                            </span>
+                          ) : payment.status === "STRIPE_PROCESSING" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 text-[10px] font-extrabold uppercase">
+                              <RefreshCw className="h-3 w-3 animate-spin" />
+                              Processing
+                            </span>
+                          ) : payment.status === "FAILED" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 text-[10px] font-extrabold uppercase">
+                              <X className="h-3 w-3" />
+                              Failed
+                            </span>
+                          ) : payment.status === "CANCELLED" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-extrabold uppercase">
+                              <Ban className="h-3 w-3" />
+                              Cancelled
+                            </span>
+                          ) : payment.status === "REFUNDED" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 text-[10px] font-extrabold uppercase">
+                              <RefreshCw className="h-3 w-3" />
+                              Refunded
+                            </span>
+                          ) : payment.status === "PARTIALLY_REFUNDED" ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-50 text-orange-600 border border-orange-200 text-[10px] font-extrabold uppercase">
+                              <RefreshCw className="h-3 w-3" />
+                              Part Refunded
                             </span>
                           ) : (
                             <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">

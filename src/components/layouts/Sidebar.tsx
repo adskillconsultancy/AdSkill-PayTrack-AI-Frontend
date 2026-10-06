@@ -151,6 +151,11 @@ const navSections: NavSection[] = [
             requiredPermission: "payment:read",
           },
           {
+            title: "Pay Online",
+            href: ROUTES.PAYMENT_PAY_ONLINE,
+            requiredPermission: "payment:pay",
+          },
+          {
             title: "Record Payment",
             href: ROUTES.PAYMENT_RECORD,
             requiredPermission: "payment:record",
@@ -313,7 +318,7 @@ const navSections: NavSection[] = [
       },
       {
         title: "Pay Online",
-        href: `${ROUTES.PAYMENTS}?action=pay`,
+        href: ROUTES.PAYMENT_PAY_ONLINE,
         icon: CreditCard,
         requiredPermission: "payment:pay",
       },
