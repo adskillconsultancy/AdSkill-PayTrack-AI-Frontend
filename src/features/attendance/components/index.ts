@@ -6,3 +6,4 @@ export * from "./ClockOutModal";
 export * from "./HeaderAttendanceWidget";
 export * from "./DailyAiDigestCard";
 export * from "./DailyAiDigestModal";
+export * from "./AttendanceActivityModals";

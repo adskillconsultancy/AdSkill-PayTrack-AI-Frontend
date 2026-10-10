@@ -1,14 +1,28 @@
 "use client";
 
-import * as React from "react";
-import { createPortal } from "react-dom";
-import { Clock, LogOut, Sparkles, ChevronDown, X, AlertCircle } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 import {
+  useClockOutMutation,
   useGetMyAttendanceStatusQuery,
   useUpdateFocusMutation,
 } from "@/services/api/attendance/attendanceApi";
-import { usePermissions } from "@/hooks/usePermissions";
+import {
+  ChevronDown,
+  Clock,
+  LogOut,
+  Pause,
+  Play,
+  Settings,
+  X,
+} from "lucide-react";
+import * as React from "react";
+import { createPortal } from "react-dom";
+import {
+  playGentleSound,
+  useAttendanceActivityGuardian,
+} from "../hooks/useAttendanceActivityGuardian";
+import { AttendanceActivityModals } from "./AttendanceActivityModals";
 import { ClockInModal } from "./ClockInModal";
 import { ClockOutModal } from "./ClockOutModal";
 
@@ -22,12 +36,16 @@ const QUICK_FOCUS_OPTIONS = [
 
 export function HeaderAttendanceWidget() {
   const { isClientAccount, hasPermission } = usePermissions();
-  const canTrackAttendance = !isClientAccount && hasPermission("attendance:track");
+  const canTrackAttendance =
+    !isClientAccount && hasPermission("attendance:track");
 
-  const { data: statusResponse, refetch } = useGetMyAttendanceStatusQuery(undefined, {
-    pollingInterval: canTrackAttendance ? 30000 : undefined,
-    skip: !canTrackAttendance,
-  });
+  const { data: statusResponse, refetch } = useGetMyAttendanceStatusQuery(
+    undefined,
+    {
+      pollingInterval: canTrackAttendance ? 30000 : undefined,
+      skip: !canTrackAttendance,
+    },
+  );
 
   const [isClockInOpen, setIsClockInOpen] = React.useState(false);
   const [isClockOutOpen, setIsClockOutOpen] = React.useState(false);
@@ -41,11 +59,34 @@ export function HeaderAttendanceWidget() {
   }, []);
 
   const [updateFocus] = useUpdateFocusMutation();
+  const [clockOut] = useClockOutMutation();
 
   const isClockedIn = !!statusResponse?.data?.isClockedIn;
   const activeSession = statusResponse?.data?.activeSession;
 
-  // Live timer calculation
+  // Auto-Clockout callback passed to guardian
+  const handleAutoClockOut = React.useCallback(
+    async (reason: string) => {
+      try {
+        await clockOut({ eodNotes: reason }).unwrap();
+        refetch();
+      } catch {
+        // Handled
+      }
+    },
+    [clockOut, refetch],
+  );
+
+  // Initialize Tab Away & Inactivity Guardian
+  const activityStore = useAttendanceActivityGuardian({
+    isClockedIn,
+    onAutoClockOut: handleAutoClockOut,
+  });
+
+  const { isPaused, pausedAt, totalPausedSeconds, resume, setSettingsOpen } =
+    activityStore;
+
+  // Live timer calculation accounting for paused / tab-away intervals
   React.useEffect(() => {
     if (!isClockedIn || !activeSession?.clockIn) {
       setElapsedSeconds(0);
@@ -56,14 +97,28 @@ export function HeaderAttendanceWidget() {
 
     const updateTimer = () => {
       const now = Date.now();
-      const diffSec = Math.max(0, Math.floor((now - clockInTime) / 1000));
-      setElapsedSeconds(diffSec);
+      const grossSec = Math.max(0, Math.floor((now - clockInTime) / 1000));
+      const currentPauseSec =
+        isPaused && pausedAt
+          ? Math.max(0, Math.floor((now - pausedAt) / 1000))
+          : 0;
+      const netSec = Math.max(
+        0,
+        grossSec - totalPausedSeconds - currentPauseSec,
+      );
+      setElapsedSeconds(netSec);
     };
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [isClockedIn, activeSession?.clockIn]);
+  }, [
+    isClockedIn,
+    activeSession?.clockIn,
+    isPaused,
+    pausedAt,
+    totalPausedSeconds,
+  ]);
 
   // Format HH:MM:SS
   const formatTimer = (totalSec: number) => {
@@ -98,8 +153,7 @@ export function HeaderAttendanceWidget() {
             type="button"
             onClick={() => setIsClockInOpen(true)}
             className="flex items-center gap-2 h-9 px-3 sm:px-3.5 rounded-xl border border-amber-200/90 dark:border-amber-400/20 bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/20 dark:via-zinc-900 dark:to-amber-950/10 hover:from-amber-100 hover:to-amber-50 text-xs font-bold text-[#0a0a0a] dark:text-amber-100 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
-            title="You are not clocked in. Click to start your shift."
-          >
+            title="You are not clocked in. Click to start your shift.">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
@@ -108,31 +162,53 @@ export function HeaderAttendanceWidget() {
             <span className="hidden sm:inline">Clock In</span>
           </button>
         ) : (
-          // Clocked In -> Live Ticking Counter & Fast Clock Out
-          <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-xl bg-white border border-[#EAE6DF] shadow-2xs">
-            {/* Live Timer Pill */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ECFDF5] text-[#065F46] text-xs font-mono font-bold">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
-              </span>
-              <span>{formatTimer(elapsedSeconds)}</span>
-            </div>
+          // Clocked In -> Live Active or Paused Counter & Fast Clock Out
+          <div className="flex items-center gap-1 sm:gap-1.5 p-1 rounded-xl bg-white dark:bg-zinc-900 border border-[#EAE6DF] dark:border-zinc-800 shadow-2xs">
+            {/* Active vs Paused Timer Pill */}
+            {!isPaused ? (
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#ECFDF5] dark:bg-emerald-950/50 text-[#065F46] dark:text-emerald-300 text-xs font-mono font-bold"
+                title="Active work timer is live. Switches to paused if you leave tab.">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10B981] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#10B981]"></span>
+                </span>
+                <span>{formatTimer(elapsedSeconds)}</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  resume();
+                  if (activityStore.settings.soundAlerts)
+                    playGentleSound("resume");
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 text-xs font-bold transition-all cursor-pointer group animate-pulse"
+                title="Shift is currently paused. Click to resume tracking.">
+                <Pause className="h-3 w-3 text-amber-700 dark:text-amber-400" />
+                <span className="font-mono">{formatTimer(elapsedSeconds)}</span>
+                <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-amber-200/80 dark:bg-amber-800/80 text-[10px] font-black uppercase text-amber-900 dark:text-amber-200">
+                  <Play className="h-2.5 w-2.5 fill-current" />
+                  Resume
+                </span>
+              </button>
+            )}
 
             {/* Current Focus Pill / Switcher */}
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsFocusMenuOpen(!isFocusMenuOpen)}
-                className="hidden lg:flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5] transition-colors max-w-[130px] truncate"
-                title={`Current Focus: ${activeSession?.currentFocus || "None"}. Click to change.`}
-              >
-                <span className="truncate">{activeSession?.currentFocus || "Set Focus"}</span>
+                className="hidden lg:flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-[#64748B] dark:text-[#A1A1AA] hover:text-[#0a0a0a] dark:hover:text-white hover:bg-[#FAF8F5] dark:hover:bg-white/5 transition-colors max-w-[130px] truncate"
+                title={`Current Focus: ${activeSession?.currentFocus || "None"}. Click to change.`}>
+                <span className="truncate">
+                  {activeSession?.currentFocus || "Set Focus"}
+                </span>
                 <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
               </button>
 
               {isFocusMenuOpen && (
-                <div className="absolute left-0 top-full mt-2 w-56 rounded-xl border border-[#EAE6DF] bg-white p-1.5 shadow-xl z-50 space-y-0.5">
+                <div className="absolute left-0 top-full mt-2 w-56 rounded-xl border border-[#EAE6DF] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-1.5 shadow-xl z-50 space-y-0.5">
                   <div className="px-2 py-1 text-[10px] font-black uppercase text-[#94A3B8]">
                     Switch Focus
                   </div>
@@ -142,10 +218,10 @@ export function HeaderAttendanceWidget() {
                       type="button"
                       onClick={() => handleSelectFocus(f)}
                       className={cn(
-                        "w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#FAF8F5] text-[#171717] transition-colors truncate",
-                        activeSession?.currentFocus === f && "bg-[#0a0a0a] text-white hover:bg-[#171717]"
-                      )}
-                    >
+                        "w-full text-left px-2 py-1.5 rounded-lg text-xs font-semibold hover:bg-[#FAF8F5] dark:hover:bg-zinc-800 text-[#171717] dark:text-zinc-200 transition-colors truncate",
+                        activeSession?.currentFocus === f &&
+                          "bg-[#0a0a0a] text-white dark:bg-white dark:text-[#0a0a0a] hover:bg-[#171717]",
+                      )}>
                       {f}
                     </button>
                   ))}
@@ -153,13 +229,21 @@ export function HeaderAttendanceWidget() {
               )}
             </div>
 
+            {/* Guardian Settings Cog */}
+            <button
+              type="button"
+              onClick={() => setSettingsOpen(true)}
+              className="p-1 rounded-md hover:bg-[#F1EFEA] dark:hover:bg-zinc-800 text-[#94A3B8] hover:text-[#0a0a0a] dark:hover:text-white transition-colors cursor-pointer"
+              title="Attendance Guardian Settings (Auto-pause, timeouts, alerts)">
+              <Settings className="h-3.5 w-3.5" />
+            </button>
+
             {/* Clock Out Trigger */}
             <button
               type="button"
               onClick={() => setIsClockOutOpen(true)}
-              className="flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-lg bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#DC2626] text-xs font-bold transition-colors cursor-pointer"
-              title="Clock Out and save today's accomplishments"
-            >
+              className="flex items-center gap-1 h-7 px-2 sm:px-2.5 rounded-lg bg-[#FEF2F2] dark:bg-red-950/40 hover:bg-[#FEE2E2] dark:hover:bg-red-900/40 text-[#DC2626] dark:text-red-400 text-xs font-bold transition-colors cursor-pointer"
+              title="Clock Out and save today's accomplishments">
               <LogOut className="h-3 w-3" />
               <span className="hidden sm:inline">Clock Out</span>
             </button>
@@ -167,7 +251,7 @@ export function HeaderAttendanceWidget() {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Main Clock In / Out Modals */}
       <ClockInModal
         isOpen={isClockInOpen}
         onClose={() => setIsClockInOpen(false)}
@@ -179,46 +263,53 @@ export function HeaderAttendanceWidget() {
         onSuccess={() => refetch()}
       />
 
+      {/* Activity Guardian Modals (Tab Away Return, Idle Warning, Auto Clock-Out Notice, Settings) */}
+      <AttendanceActivityModals
+        onClockOutClick={() => setIsClockOutOpen(true)}
+        onClockInClick={() => setIsClockInOpen(true)}
+      />
+
       {/* Floating "Not Clocked In" Reminder Sign / Pill */}
-      {!isClockedIn && !isDismissed && mounted && createPortal(
-        <div className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className="flex items-center gap-3 pl-3.5 pr-2 py-2 rounded-2xl bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border border-amber-200/80 dark:border-amber-500/20 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.16)] transition-all group">
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-              </span>
-              <div className="flex flex-col pr-1">
-                <span className="text-[11px] font-black text-[#0a0a0a] dark:text-white leading-none">
-                  Shift Not Started
+      {!isClockedIn &&
+        !isDismissed &&
+        mounted &&
+        createPortal(
+          <div className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
+            <div className="flex items-center gap-3 pl-3.5 pr-2 py-2 rounded-2xl bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border border-amber-200/80 dark:border-amber-500/20 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.16)] transition-all group">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
                 </span>
-                <span className="text-[10px] text-[#64748B] dark:text-[#A1A1AA] font-medium leading-tight mt-0.5">
-                  You are not clocked in
-                </span>
+                <div className="flex flex-col pr-1">
+                  <span className="text-[11px] font-black text-[#0a0a0a] dark:text-white leading-none">
+                    Shift Not Started
+                  </span>
+                  <span className="text-[10px] text-[#64748B] dark:text-[#A1A1AA] font-medium leading-tight mt-0.5">
+                    You are not clocked in
+                  </span>
+                </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setIsClockInOpen(true)}
+                className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-[#0a0a0a] hover:bg-[#262626] dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0a0a0a] text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95">
+                <Clock className="h-3.5 w-3.5 text-emerald-400 dark:text-emerald-600" />
+                <span>Clock In Now</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsDismissed(true)}
+                className="h-7 w-7 rounded-lg hover:bg-[#F1EFEA] dark:hover:bg-white/10 text-[#94A3B8] hover:text-[#0a0a0a] dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                title="Dismiss reminder for now">
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setIsClockInOpen(true)}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-[#0a0a0a] hover:bg-[#262626] dark:bg-white dark:hover:bg-zinc-200 text-white dark:text-[#0a0a0a] text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95"
-            >
-              <Clock className="h-3.5 w-3.5 text-emerald-400 dark:text-emerald-600" />
-              <span>Clock In Now</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsDismissed(true)}
-              className="h-7 w-7 rounded-lg hover:bg-[#F1EFEA] dark:hover:bg-white/10 text-[#94A3B8] hover:text-[#0a0a0a] dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
-              title="Dismiss reminder for now"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
