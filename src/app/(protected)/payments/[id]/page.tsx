@@ -91,6 +91,16 @@ export default function PaymentDetailPage() {
     }
   };
 
+  const handlePrintSlip = async () => {
+    if (!payment) return;
+    if (payment.status === "VERIFIED") {
+      await handleDownloadReceipt();
+    } else {
+      setNotice("This transaction is awaiting verification. Printing draft voucher...");
+      window.print();
+    }
+  };
+
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
@@ -221,9 +231,15 @@ export default function PaymentDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.print()}
-            className="text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer gap-2">
-            <Printer className="h-3.5 w-3.5 text-slate-500" />
+            onClick={handlePrintSlip}
+            disabled={isDownloadingReceipt}
+            className="text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer gap-2 disabled:opacity-50"
+            title="Download & Print Official PDF Slip">
+            {isDownloadingReceipt ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />
+            ) : (
+              <Printer className="h-3.5 w-3.5 text-slate-500" />
+            )}
             Print Slip
           </Button>
 
@@ -541,9 +557,15 @@ export default function PaymentDetailPage() {
 
                 <button
                   type="button"
-                  onClick={() => window.print()}
-                  className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all cursor-pointer">
-                  <Printer className="w-3.5 h-3.5 text-slate-500" />
+                  onClick={handlePrintSlip}
+                  disabled={isDownloadingReceipt}
+                  className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all cursor-pointer disabled:opacity-50"
+                  title="Download & Print Official PDF Slip">
+                  {isDownloadingReceipt ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-500" />
+                  ) : (
+                    <Printer className="w-3.5 h-3.5 text-slate-500" />
+                  )}
                   <span>Print Slip</span>
                 </button>
               </div>

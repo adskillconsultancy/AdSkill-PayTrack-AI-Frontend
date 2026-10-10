@@ -25,7 +25,9 @@ import {
   ArrowUpRight,
   Shield,
   Loader2,
+  Printer,
 } from "lucide-react";
+import { downloadAndPrintPaymentReceipt } from "@/lib/documentDownload";
 
 export interface PaymentDetailModalProps {
   payment: Payment | null;
@@ -62,6 +64,29 @@ export function PaymentDetailModal({
   const [verifyPayment, { isLoading: isVerifying }] = useVerifyPaymentMutation();
   const [copied, setCopied] = React.useState(false);
   const [notice, setNotice] = React.useState("");
+  const [isPrinting, setIsPrinting] = React.useState(false);
+
+  const handlePrintSlip = async () => {
+    if (!payment) return;
+    if (payment.status !== "VERIFIED") {
+      setNotice("This transaction is pending verification. Printing voucher...");
+      window.print();
+      return;
+    }
+    setIsPrinting(true);
+    try {
+      await downloadAndPrintPaymentReceipt(
+        payment.id,
+        payment.externalReference || payment.id.slice(0, 8).toUpperCase()
+      );
+      setNotice("Official money receipt generated and downloaded successfully.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to print slip";
+      setNotice(msg);
+    } finally {
+      setIsPrinting(false);
+    }
+  };
 
   if (!payment) return null;
 
@@ -415,6 +440,19 @@ export function PaymentDetailModal({
           </span>
 
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={handlePrintSlip}
+              disabled={isPrinting}
+              className="h-9 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-2xs gap-1.5 cursor-pointer disabled:opacity-50"
+              title="Download & Print Official PDF Slip">
+              {isPrinting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Printer className="h-3.5 w-3.5" />
+              )}
+              <span>Print Slip</span>
+            </Button>
             <Button
               type="button"
               variant="outline"
