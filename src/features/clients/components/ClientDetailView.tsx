@@ -64,8 +64,6 @@ import {
   useCreatePaymentMutation,
   useVerifyPaymentMutation,
 } from "@/services/api/payments/paymentsApi";
-import { useGetCaseInvoicesQuery, useGenerateInvoiceMutation } from "@/services/api/invoices/invoicesApi";
-import { useGetCaseReceiptsQuery } from "@/services/api/receipts/receiptsApi";
 import { useUpdateUserMutation } from "@/services/api/users/usersApi";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { CaseStatus, DocumentType, Payment } from "@/types/client-case.types";
@@ -164,8 +162,6 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const { data: documentsResponse } = useGetCaseDocumentsQuery(clientId, { skip: !clientCase });
   const { data: plansResponse } = useGetCasePaymentPlansQuery(clientId, { skip: !clientCase });
   const { data: paymentsResponse } = useGetCasePaymentsQuery(clientId, { skip: !clientCase });
-  const { data: invoicesResponse } = useGetCaseInvoicesQuery(clientId, { skip: !clientCase });
-  const { data: receiptsResponse } = useGetCaseReceiptsQuery(clientId, { skip: !clientCase });
 
   const [updateCase, updateState] = useUpdateClientCaseMutation();
   const [updateUser, userUpdateState] = useUpdateUserMutation();
@@ -174,7 +170,6 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const [downloadDocument] = useLazyGetDocumentDownloadQuery();
   const [createPayment, paymentState] = useCreatePaymentMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
-  const [generateInvoice, invoiceState] = useGenerateInvoiceMutation();
 
   const [files, setFiles] = React.useState<File[]>([]);
   const [documentType, setDocumentType] = React.useState<DocumentType>("SUPPORTING");
@@ -241,7 +236,6 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const canVerify = hasPermission("payment:verify");
   const canRecordPayment = hasPermission("payment:record");
   const canManageDocuments = hasPermission("document:manage") || hasPermission("document:create");
-  const canGenerateInvoice = hasPermission("invoice:create");
 
   const initials = (profile?.preferredName || profile?.name || "C")
     .split(" ")
@@ -1048,66 +1042,6 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
               {!plan?.installments?.length && (
                 <p className="py-3 text-center text-xs text-slate-400">No installment schedule active.</p>
               )}
-            </div>
-          </Panel>
-
-          {/* INVOICES & RECEIPTS PANEL */}
-          <Panel
-            title="Invoices &amp; Receipts"
-            icon={<FileText className="h-4.5 w-4.5 text-emerald-600" />}
-            action={
-              canGenerateInvoice && (
-                <Button
-                  size="sm"
-                  disabled={invoiceState.isLoading}
-                  onClick={async () => {
-                    try {
-                      await generateInvoice(clientId).unwrap();
-                      setNotice("Invoice generated successfully.");
-                    } catch (error) {
-                      setNotice(errorText(error));
-                    }
-                  }}
-                  className="h-8 gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold border border-slate-200 cursor-pointer">
-                  <Plus className="h-3.5 w-3.5 text-emerald-600" />
-                  Generate Invoice
-                </Button>
-              )
-            }>
-            <div className="space-y-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                  Invoices
-                </span>
-                <div className="space-y-1.5">
-                  {(invoicesResponse?.data || []).map((inv) => (
-                    <div key={inv.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
-                      <span className="font-mono font-bold text-slate-800">{inv.invoiceNumber}</span>
-                      <span className="font-mono font-bold text-slate-900">{money(inv.amount, inv.currency)}</span>
-                    </div>
-                  ))}
-                  {!invoicesResponse?.data?.length && (
-                    <p className="text-xs text-slate-400">No invoices issued yet.</p>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-2 border-t border-slate-100">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                  Official Receipts
-                </span>
-                <div className="space-y-1.5">
-                  {(receiptsResponse?.data || []).map((receipt) => (
-                    <div key={receipt.id} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 text-xs">
-                      <span className="font-mono font-bold text-emerald-700">{receipt.receiptNumber}</span>
-                      <span className="font-mono font-bold text-slate-900">{money(receipt.amount, receipt.currency)}</span>
-                    </div>
-                  ))}
-                  {!receiptsResponse?.data?.length && (
-                    <p className="text-xs text-slate-400">Receipts generated automatically upon verified payments.</p>
-                  )}
-                </div>
-              </div>
             </div>
           </Panel>
 
