@@ -71,7 +71,7 @@ export interface ClientCase {
   assignedConsultantId?: string | null;
   user?: ClientProfile;
   service?: CaseServiceSnapshot;
-  assignedConsultant?: { id: string; name: string; email: string } | null;
+  assignedConsultant?: { id: string; name: string; email: string; phone?: string | null; role?: { id?: string; name: string } } | null;
   paymentPlans?: PaymentPlan[];
   payments?: Payment[];
   createdAt: string;

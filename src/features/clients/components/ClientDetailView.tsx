@@ -11,6 +11,7 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
   Clock,
   CreditCard,
   Download,
@@ -41,6 +42,7 @@ import {
   User,
   UserCheck,
   UserRound,
+  UserX,
   Wallet,
   X,
 } from "lucide-react";
@@ -64,7 +66,7 @@ import {
   useCreatePaymentMutation,
   useVerifyPaymentMutation,
 } from "@/services/api/payments/paymentsApi";
-import { useUpdateUserMutation } from "@/services/api/users/usersApi";
+import { useUpdateUserMutation, useGetUsersQuery } from "@/services/api/users/usersApi";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { CaseStatus, DocumentType, Payment } from "@/types/client-case.types";
 import { cn } from "@/lib/utils";
@@ -156,7 +158,7 @@ const inputDate = (value?: string | null) =>
   value ? new Date(value).toISOString().slice(0, 10) : "";
 
 export function ClientDetailView({ clientId }: { clientId: string }) {
-  const { hasPermission, isClientAccount, isSuperAdmin } = usePermissions();
+  const { hasPermission, isClientAccount, isSuperAdmin, role } = usePermissions();
   const { data: caseResponse, isLoading, isError, refetch } = useGetClientCaseQuery(clientId);
   const clientCase = caseResponse?.data;
   const { data: documentsResponse } = useGetCaseDocumentsQuery(clientId, { skip: !clientCase });
@@ -170,6 +172,57 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const [downloadDocument] = useLazyGetDocumentDownloadQuery();
   const [createPayment, paymentState] = useCreatePaymentMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
+
+  const canAssignCaseworker =
+    !isClientAccount && (isSuperAdmin || (hasPermission("case:update") && role !== "CONSULTANT"));
+
+  const { data: usersResponse, isLoading: isLoadingStaff } = useGetUsersQuery(
+    { excludeRoleName: "CLIENT", limit: 100, status: "ACTIVE" },
+    { skip: !canAssignCaseworker }
+  );
+
+  const staffMembers = React.useMemo(() => {
+    const list = usersResponse?.data || [];
+    return list.filter(
+      (u) =>
+        u.role?.name &&
+        u.role.name !== "CLIENT" &&
+        !u.clientId &&
+        u.status === "ACTIVE"
+    );
+  }, [usersResponse]);
+
+  const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
+  const [staffSearchQuery, setStaffSearchQuery] = React.useState("");
+  const [isAssigningStaff, setIsAssigningStaff] = React.useState(false);
+
+  const filteredStaff = React.useMemo(() => {
+    const q = staffSearchQuery.toLowerCase().trim();
+    if (!q) return staffMembers;
+    return staffMembers.filter(
+      (u) =>
+        u.name?.toLowerCase().includes(q) ||
+        u.preferredName?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.role?.name?.toLowerCase().includes(q)
+    );
+  }, [staffMembers, staffSearchQuery]);
+
+  const handleAssignCaseworker = async (consultantId: string | null) => {
+    setIsAssigningStaff(true);
+    try {
+      await updateCase({
+        id: clientId,
+        body: { assignedConsultantId: consultantId },
+      }).unwrap();
+      setIsAssignModalOpen(false);
+      setNotice(consultantId ? "Caseworker assigned successfully." : "Caseworker unassigned successfully.");
+    } catch (err: unknown) {
+      setNotice(errorText(err));
+    } finally {
+      setIsAssigningStaff(false);
+    }
+  };
 
   const [files, setFiles] = React.useState<File[]>([]);
   const [documentType, setDocumentType] = React.useState<DocumentType>("SUPPORTING");
@@ -339,12 +392,38 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                 <span className="truncate">{clientCase.serviceNameSnapshot}</span>
               </p>
 
-              {/* Status Badges */}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border", statusStyle.bg, statusStyle.text, statusStyle.border)}>
-                  <span className={cn("h-2 w-2 rounded-full", statusStyle.dot)} />
-                  {labels[clientCase.caseStatus]}
-                </span>
+              {/* Status Badges & Quick Status Change */}
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {!isClientAccount && hasPermission("case:update") ? (
+                  <div className="inline-flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-2.5 py-1">
+                    <span className="text-[11px] font-bold text-slate-600">Case Status:</span>
+                    <div className="relative inline-flex items-center">
+                      <select
+                        value={clientCase.caseStatus}
+                        disabled={updateState.isLoading}
+                        onChange={(e) => changeStatus(e.target.value as CaseStatus)}
+                        className={cn(
+                          "appearance-none rounded-lg pl-5 pr-6 py-0.5 text-xs font-bold border transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500",
+                          statusStyle.bg,
+                          statusStyle.text,
+                          statusStyle.border
+                        )}>
+                        {Object.entries(labels).map(([value, label]) => (
+                          <option key={value} value={value} className="bg-white text-slate-900 font-semibold">
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                      <span className={cn("pointer-events-none absolute left-2 h-1.5 w-1.5 rounded-full", statusStyle.dot)} />
+                      <ChevronDown className="pointer-events-none absolute right-1.5 h-3 w-3 opacity-60" />
+                    </div>
+                  </div>
+                ) : (
+                  <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold border", statusStyle.bg, statusStyle.text, statusStyle.border)}>
+                    <span className={cn("h-2 w-2 rounded-full", statusStyle.dot)} />
+                    {labels[clientCase.caseStatus]}
+                  </span>
+                )}
 
                 <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 border border-slate-200">
                   {clientCase.financialStatus.replaceAll("_", " ")}
@@ -538,6 +617,8 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                 busy={updateState.isLoading}
                 onCancel={() => setEditing(null)}
                 isSuperAdmin={isSuperAdmin}
+                staffMembers={staffMembers}
+                canAssignCaseworker={canAssignCaseworker}
                 onSave={async (body) => {
                   try {
                     await updateCase({ id: clientId, body }).unwrap();
@@ -552,31 +633,27 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
               <>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Info label="Destination Authority" value={`${flag} ${clientCase.destinationCountry || "Not set"}`} />
-                  <Info label="Assigned Consultant" value={clientCase.assignedConsultant?.name || "Not assigned"} />
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Consultant</span>
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <span className="text-xs font-bold text-slate-900 truncate">
+                        {clientCase.assignedConsultant?.name || "Not assigned"}
+                      </span>
+                      {canAssignCaseworker && (
+                        <button
+                          type="button"
+                          onClick={() => setIsAssignModalOpen(true)}
+                          className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline cursor-pointer shrink-0">
+                          {clientCase.assignedConsultant ? "Change" : "Assign"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <Info label="Agreement Date" value={date(clientCase.agreementDate)} />
                   <Info label="Service Start Date" value={date(clientCase.serviceStartDate)} />
                   <Info label="Case Opened" value={date(clientCase.createdAt)} />
                   <Info label="Last Activity" value={date(clientCase.updatedAt)} />
                 </div>
-
-
-
-                {!isClientAccount && (
-                  <div className="mt-4 flex flex-wrap items-center gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200">
-                    <label className="text-xs font-bold text-slate-700">Update Active Case Status:</label>
-                    <select
-                      value={clientCase.caseStatus}
-                      disabled={updateState.isLoading || !hasPermission("case:update")}
-                      onChange={(e) => changeStatus(e.target.value as CaseStatus)}
-                      className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer">
-                      {Object.entries(labels).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
               </>
             )}
           </Panel>
@@ -1046,20 +1123,93 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
           </Panel>
 
           {/* ASSIGNED CASEWORKER PANEL */}
-          <Panel title="Assigned Caseworker" icon={<ShieldCheck className="h-4.5 w-4.5 text-blue-600" />}>
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
-              <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-800 font-extrabold flex items-center justify-center text-sm">
-                {(clientCase.assignedConsultant?.name || "C").slice(0, 2).toUpperCase()}
+          <Panel
+            title="Assigned Caseworker"
+            icon={<ShieldCheck className="h-4.5 w-4.5 text-blue-600" />}
+            action={
+              canAssignCaseworker && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsAssignModalOpen(true)}
+                  className="h-8 gap-1.5 rounded-xl border-slate-200 text-slate-800 text-xs font-bold hover:bg-slate-100 cursor-pointer">
+                  <UserCheck className="h-3.5 w-3.5 text-blue-600" />
+                  {clientCase.assignedConsultant ? "Change" : "Assign"}
+                </Button>
+              )
+            }>
+            {clientCase.assignedConsultant ? (
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div className="h-10 w-10 shrink-0 rounded-xl bg-blue-100 text-blue-800 font-extrabold flex items-center justify-center text-sm shadow-2xs">
+                    {(clientCase.assignedConsultant.name || "C").slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="text-xs font-extrabold text-slate-900 truncate">
+                        {clientCase.assignedConsultant.name}
+                      </h4>
+                      {clientCase.assignedConsultant.role?.name && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 uppercase">
+                          {clientCase.assignedConsultant.role.name.replaceAll("_", " ")}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      {clientCase.assignedConsultant.email}
+                    </p>
+                    {clientCase.assignedConsultant.phone && (
+                      <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                        {clientCase.assignedConsultant.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {canAssignCaseworker && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsAssignModalOpen(true)}
+                      className="flex-1 h-8 text-xs font-bold text-slate-700 border-slate-200 hover:bg-slate-100 cursor-pointer">
+                      Reassign
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isAssigningStaff}
+                      onClick={() => handleAssignCaseworker(null)}
+                      className="h-8 px-2.5 text-xs font-bold text-rose-600 hover:text-rose-700 border-rose-200 hover:bg-rose-50 cursor-pointer"
+                      title="Unassign Caseworker">
+                      <UserX className="h-3.5 w-3.5 mr-1" />
+                      Unassign
+                    </Button>
+                  </div>
+                )}
               </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-xs font-extrabold text-slate-900 truncate">
-                  {clientCase.assignedConsultant?.name || "Unassigned Caseworker"}
-                </h4>
-                <p className="text-[11px] text-slate-500 truncate">
-                  {clientCase.assignedConsultant?.email || "Assign a caseworker to oversee application milestones"}
-                </p>
+            ) : (
+              <div className="p-4 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
+                <div className="h-9 w-9 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                  <UserRound className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Unassigned Caseworker</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Assign a caseworker or consultant to oversee application milestones.
+                  </p>
+                </div>
+                {canAssignCaseworker && (
+                  <Button
+                    size="sm"
+                    onClick={() => setIsAssignModalOpen(true)}
+                    className="h-8 gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs cursor-pointer mt-1">
+                    <UserCheck className="h-3.5 w-3.5" />
+                    Assign Caseworker
+                  </Button>
+                )}
               </div>
-            </div>
+            )}
           </Panel>
         </aside>
       </div>
@@ -1069,6 +1219,173 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
         payment={selectedPaymentSlip}
         onClose={() => setSelectedPaymentSlip(null)}
       />
+
+      {/* ASSIGN CASEWORKER MODAL */}
+      {isAssignModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="relative w-full max-w-lg rounded-3xl bg-white shadow-2xl border border-slate-100 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-blue-600" />
+                  Assign Case Consultant / Caseworker
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Select an active staff member to oversee this client case.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAssignModalOpen(false);
+                  setStaffSearchQuery("");
+                }}
+                className="h-8 w-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Search Input Bar */}
+            <div className="p-4 border-b border-slate-100 bg-slate-50">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={staffSearchQuery}
+                  onChange={(e) => setStaffSearchQuery(e.target.value)}
+                  placeholder="Search staff by name, email, or role..."
+                  autoFocus
+                  className="w-full h-10 pl-10 pr-9 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+                {staffSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setStaffSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center justify-between mt-2 px-1 text-[11px] text-slate-500">
+                <span>{filteredStaff.length} staff member{filteredStaff.length === 1 ? "" : "s"} found</span>
+                {clientCase.assignedConsultant && (
+                  <button
+                    type="button"
+                    disabled={isAssigningStaff}
+                    onClick={() => handleAssignCaseworker(null)}
+                    className="font-bold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer disabled:opacity-50">
+                    Unassign current caseworker
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Staff List */}
+            <div className="overflow-y-auto p-4 space-y-2 flex-1 max-h-[380px]">
+              {isLoadingStaff ? (
+                <div className="py-12 text-center text-xs text-slate-400">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-blue-600" />
+                  Loading available staff members...
+                </div>
+              ) : filteredStaff.length === 0 ? (
+                <div className="py-12 text-center">
+                  <UserRound className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-bold text-slate-700">No staff members found</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Try searching with another name, email, or role.
+                  </p>
+                </div>
+              ) : (
+                filteredStaff.map((staff) => {
+                  const isCurrent = clientCase.assignedConsultant?.id === staff.id;
+                  const initials = (staff.preferredName || staff.name || "S")
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((p) => p[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase();
+
+                  return (
+                    <div
+                      key={staff.id}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-2xl border transition-all",
+                        isCurrent
+                          ? "bg-blue-50/70 border-blue-200"
+                          : "bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/80"
+                      )}>
+                      <div className="flex items-center gap-3 min-w-0 pr-3">
+                        <div
+                          className={cn(
+                            "h-10 w-10 shrink-0 rounded-xl font-extrabold flex items-center justify-center text-xs shadow-2xs",
+                            isCurrent
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-100 text-slate-700"
+                          )}>
+                          {initials}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="text-xs font-extrabold text-slate-900 truncate">
+                              {staff.name}
+                            </h4>
+                            {staff.role?.name && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 uppercase">
+                                {staff.role.name.replaceAll("_", " ")}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                            {staff.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        size="sm"
+                        disabled={isAssigningStaff}
+                        onClick={() => handleAssignCaseworker(staff.id)}
+                        className={cn(
+                          "h-8 px-3.5 text-xs font-bold rounded-xl cursor-pointer shrink-0 transition-all",
+                          isCurrent
+                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        )}>
+                        {isAssigningStaff ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : isCurrent ? (
+                          <span className="flex items-center gap-1">
+                            <Check className="h-3.5 w-3.5" />
+                            Assigned
+                          </span>
+                        ) : (
+                          "Assign"
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsAssignModalOpen(false);
+                  setStaffSearchQuery("");
+                }}
+                className="h-9 px-4 rounded-xl border-slate-200 text-slate-700 font-bold text-xs cursor-pointer">
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1221,12 +1538,16 @@ function CaseForm({
   busy,
   onCancel,
   onSave,
+  staffMembers = [],
+  canAssignCaseworker = false,
 }: {
   item: import("@/types/client-case.types").ClientCase;
   busy: boolean;
   onCancel: () => void;
   onSave: (body: import("@/types/client-case.types").UpdateClientCaseInput) => Promise<void>;
   isSuperAdmin?: boolean;
+  staffMembers?: import("@/services/api/users/usersApi").BackendUser[];
+  canAssignCaseworker?: boolean;
 }) {
   const [form, setForm] = React.useState({
     destinationCountry: item.destinationCountry || "",
@@ -1234,6 +1555,7 @@ function CaseForm({
     caseSubcategory: item.caseSubcategory || "",
     agreementDate: inputDate(item.agreementDate),
     serviceStartDate: inputDate(item.serviceStartDate),
+    assignedConsultantId: item.assignedConsultantId || item.assignedConsultant?.id || "",
   });
 
   const set = (key: keyof typeof form, value: string) => setForm((current) => ({ ...current, [key]: value }));
@@ -1247,6 +1569,7 @@ function CaseForm({
           ...form,
           agreementDate: form.agreementDate || undefined,
           serviceStartDate: form.serviceStartDate || undefined,
+          assignedConsultantId: form.assignedConsultantId || null,
         });
       }}>
       <EditInput label="Destination Country" value={form.destinationCountry} onChange={(value) => set("destinationCountry", value)} />
@@ -1254,6 +1577,23 @@ function CaseForm({
       <EditInput label="Subcategory / Stream" value={form.caseSubcategory} onChange={(value) => set("caseSubcategory", value)} />
       <EditInput label="Agreement Date" type="date" value={form.agreementDate} onChange={(value) => set("agreementDate", value)} />
       <EditInput label="Service Start Date" type="date" value={form.serviceStartDate} onChange={(value) => set("serviceStartDate", value)} />
+
+      {canAssignCaseworker && (
+        <div className="space-y-1 block sm:col-span-2">
+          <label className="text-xs font-bold text-slate-700">Assigned Case Consultant</label>
+          <select
+            value={form.assignedConsultantId}
+            onChange={(e) => set("assignedConsultantId", e.target.value)}
+            className="w-full h-10 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer">
+            <option value="">-- Unassigned Caseworker --</option>
+            {staffMembers.map((staff) => (
+              <option key={staff.id} value={staff.id}>
+                {staff.name} {staff.role?.name ? `(${staff.role.name.replaceAll("_", " ")})` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="flex gap-2 sm:col-span-2 pt-2 border-t border-slate-200">
         <Button
