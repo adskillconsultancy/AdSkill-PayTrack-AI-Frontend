@@ -1,25 +1,28 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { Button } from "@/components/common/Button";
+import { SkeletonDetailView } from "@/components/common/Skeleton";
+import { usePermissions } from "@/hooks/usePermissions";
+import {
+  cn,
+  formatCurrencyWithCode,
+  formatExplicitDateTime,
+} from "@/lib/utils";
+import {
+  useGetPaymentQuery,
+  useVerifyPaymentMutation,
+} from "@/services/api/payments/paymentsApi";
 import {
   AlertCircle,
   ArrowLeft,
   ArrowUpRight,
-  Banknote,
-  Building,
-  Calendar,
   Check,
   CheckCircle2,
   Clock,
   Copy,
-  CreditCard,
   Download,
-  ExternalLink,
   FileCheck,
   FileText,
-  Hash,
   Loader2,
   Lock,
   Printer,
@@ -28,13 +31,7 @@ import {
   Shield,
   ShieldCheck,
   User,
-  Wallet,
 } from "lucide-react";
-import { Button } from "@/components/common/Button";
-import { SkeletonDetailView } from "@/components/common/Skeleton";
-import { useGetPaymentQuery, useVerifyPaymentMutation } from "@/services/api/payments/paymentsApi";
-import { usePermissions } from "@/hooks/usePermissions";
-import { cn, formatExplicitDateTime, formatCurrencyWithCode } from "@/lib/utils";
 
 const formatMoney = (amount: number | string, currency = "USD") =>
   formatCurrencyWithCode(amount, currency);
@@ -58,13 +55,19 @@ export default function PaymentDetailPage() {
   const { hasPermission } = usePermissions();
   const canVerify = hasPermission("payment:verify");
 
-  const { data: response, isLoading, isError, refetch } = useGetPaymentQuery(paymentId, {
+  const {
+    data: response,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetPaymentQuery(paymentId, {
     skip: !paymentId,
     refetchOnMountOrArgChange: true,
   });
   const payment = response?.data;
 
-  const [verifyPayment, { isLoading: isVerifying }] = useVerifyPaymentMutation();
+  const [verifyPayment, { isLoading: isVerifying }] =
+    useVerifyPaymentMutation();
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string>("");
 
@@ -95,15 +98,25 @@ export default function PaymentDetailPage() {
       <div className="min-h-screen py-24 max-w-xl mx-auto text-center px-4">
         <div className="rounded-3xl border border-slate-200 bg-white p-10 shadow-xs">
           <AlertCircle className="h-10 w-10 text-rose-500 mx-auto mb-3" />
-          <h2 className="text-base font-extrabold text-slate-900">Payment Not Found</h2>
+          <h2 className="text-base font-extrabold text-slate-900">
+            Payment Not Found
+          </h2>
           <p className="text-xs text-slate-500 mt-1">
-            The requested payment transaction could not be located or has been archived.
+            The requested payment transaction could not be located or has been
+            archived.
           </p>
           <div className="mt-6 flex justify-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => router.push("/payments")} className="text-xs font-bold rounded-xl cursor-pointer">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/payments")}
+              className="text-xs font-bold rounded-xl cursor-pointer">
               Back to Ledger
             </Button>
-            <Button size="sm" onClick={() => refetch()} className="text-xs font-bold rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-600 cursor-pointer gap-2">
+            <Button
+              size="sm"
+              onClick={() => refetch()}
+              className="text-xs font-bold rounded-xl bg-amber-500 text-slate-950 hover:bg-amber-600 cursor-pointer gap-2">
               <RefreshCw className="h-3.5 w-3.5" />
               Retry
             </Button>
@@ -116,7 +129,8 @@ export default function PaymentDetailPage() {
   const isVerified = payment.status === "VERIFIED";
   const isPending = payment.status === "PENDING";
   const isStripe = Boolean(
-    payment.paymentMethod?.startsWith("STRIPE") || payment.stripePaymentIntentId
+    payment.paymentMethod?.startsWith("STRIPE") ||
+    payment.stripePaymentIntentId,
   );
   const proofDocs = payment.proofDocuments || [];
 
@@ -129,13 +143,14 @@ export default function PaymentDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => router.push("/payments")}
-            className="h-9 w-9 p-0 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer"
-          >
+            className="h-9 w-9 p-0 rounded-xl border-slate-200 text-slate-600 hover:bg-slate-100 cursor-pointer">
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
             <div className="flex items-center gap-2">
-              <Link href="/payments" className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
+              <Link
+                href="/payments"
+                className="text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors">
                 Payments Ledger
               </Link>
               <span className="text-slate-300">/</span>
@@ -150,9 +165,8 @@ export default function PaymentDetailPage() {
                   "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold",
                   isVerified
                     ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    : "bg-amber-50 text-amber-700 border border-amber-200"
-                )}
-              >
+                    : "bg-amber-50 text-amber-700 border border-amber-200",
+                )}>
                 {isVerified ? (
                   <>
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
@@ -174,8 +188,7 @@ export default function PaymentDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => window.print()}
-            className="text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer gap-2"
-          >
+            className="text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer gap-2">
             <Printer className="h-3.5 w-3.5 text-slate-400" />
             Print Slip
           </Button>
@@ -185,8 +198,7 @@ export default function PaymentDetailPage() {
               size="sm"
               onClick={handleVerify}
               disabled={isVerifying}
-              className="text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer gap-2"
-            >
+              className="text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer gap-2">
               {isVerifying ? (
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
@@ -206,7 +218,9 @@ export default function PaymentDetailPage() {
       {notice && (
         <div className="mb-6 rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-xs font-extrabold text-emerald-800 flex items-center justify-between">
           <span>{notice}</span>
-          <button onClick={() => setNotice("")} className="text-emerald-600 hover:text-emerald-800 font-black cursor-pointer">
+          <button
+            onClick={() => setNotice("")}
+            className="text-emerald-600 hover:text-emerald-800 font-black cursor-pointer">
             ✕
           </button>
         </div>
@@ -228,8 +242,14 @@ export default function PaymentDetailPage() {
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-2">
-              Settled via <span className="font-extrabold text-slate-900">{payment.paymentMethod.replace(/_/g, " ")}</span> on{" "}
-              <span className="font-bold text-slate-800">{formatDate(payment.paymentDate)}</span>
+              Settled via{" "}
+              <span className="font-extrabold text-slate-900">
+                {payment.paymentMethod.replace(/_/g, " ")}
+              </span>{" "}
+              on{" "}
+              <span className="font-bold text-slate-800">
+                {formatDate(payment.paymentDate)}
+              </span>
             </p>
           </div>
 
@@ -244,9 +264,12 @@ export default function PaymentDetailPage() {
                 </span>
                 <button
                   onClick={() => handleCopy(payment.id, "paymentId")}
-                  className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer"
-                >
-                  {copiedKey === "paymentId" ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
+                  className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer">
+                  {copiedKey === "paymentId" ? (
+                    <Check className="h-3 w-3 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
                 </button>
               </div>
             </div>
@@ -270,10 +293,15 @@ export default function PaymentDetailPage() {
                     {payment.externalReference}
                   </span>
                   <button
-                    onClick={() => handleCopy(payment.externalReference!, "extRef")}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer"
-                  >
-                    {copiedKey === "extRef" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    onClick={() =>
+                      handleCopy(payment.externalReference!, "extRef")
+                    }
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer">
+                    {copiedKey === "extRef" ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -289,10 +317,15 @@ export default function PaymentDetailPage() {
                     {payment.stripePaymentIntentId}
                   </span>
                   <button
-                    onClick={() => handleCopy(payment.stripePaymentIntentId!, "stripeRef")}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer shrink-0"
-                  >
-                    {copiedKey === "stripeRef" ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                    onClick={() =>
+                      handleCopy(payment.stripePaymentIntentId!, "stripeRef")
+                    }
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer shrink-0">
+                    {copiedKey === "stripeRef" ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -309,32 +342,43 @@ export default function PaymentDetailPage() {
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <FileCheck className={cn("h-4 w-4", isStripe ? "text-indigo-600" : "text-emerald-600")} />
-                {isStripe ? "Digital Clearance Slip & Settlement Proof" : "Physical Proof & Bank Wire Slips"}
+                <FileCheck
+                  className={cn(
+                    "h-4 w-4",
+                    isStripe ? "text-indigo-600" : "text-emerald-600",
+                  )}
+                />
+                {isStripe
+                  ? "Digital Clearance Slip & Settlement Proof"
+                  : "Physical Proof & Bank Wire Slips"}
               </h3>
-              <span className={cn(
-                "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg",
-                isStripe && proofDocs.length === 0
-                  ? "bg-indigo-50 text-indigo-700 border border-indigo-200/60"
-                  : "text-slate-400"
-              )}>
+              <span
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg",
+                  isStripe && proofDocs.length === 0
+                    ? "bg-indigo-50 text-indigo-700 border border-indigo-200/60"
+                    : "text-slate-400",
+                )}>
                 {proofDocs.length > 0
                   ? `${proofDocs.length} Attachment${proofDocs.length !== 1 ? "s" : ""}`
                   : isStripe
-                  ? "1 Electronic Voucher"
-                  : "0 Attachments"}
+                    ? "1 Electronic Voucher"
+                    : "0 Attachments"}
               </span>
             </div>
 
             {proofDocs.length > 0 ? (
               <div className="space-y-4">
                 {proofDocs.map((doc) => {
-                  const isImage = doc.mimeType?.startsWith("image/") || ["png", "jpg", "jpeg", "webp"].some((ext) => doc.originalName.toLowerCase().endsWith(ext));
+                  const isImage =
+                    doc.mimeType?.startsWith("image/") ||
+                    ["png", "jpg", "jpeg", "webp"].some((ext) =>
+                      doc.originalName.toLowerCase().endsWith(ext),
+                    );
                   return (
                     <div
                       key={doc.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 hover:border-slate-300 transition-all space-y-3"
-                    >
+                      className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 hover:border-slate-300 transition-all space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-800 font-extrabold flex items-center justify-center text-xs shrink-0">
@@ -345,10 +389,14 @@ export default function PaymentDetailPage() {
                               {doc.originalName}
                             </h4>
                             <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
-                              R2: <span className="text-slate-600">{doc.storedName}</span>
+                              R2:{" "}
+                              <span className="text-slate-600">
+                                {doc.storedName}
+                              </span>
                             </p>
                             <span className="text-[10px] text-slate-400 font-medium">
-                              {formatFileSize(doc.size)} • Uploaded {formatDate(doc.createdAt)}
+                              {formatFileSize(doc.size)} • Uploaded{" "}
+                              {formatDate(doc.createdAt)}
                             </span>
                           </div>
                         </div>
@@ -358,20 +406,24 @@ export default function PaymentDetailPage() {
                             href={doc.signedDownloadUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl px-3 py-1.5 transition-colors shrink-0 cursor-pointer"
-                          >
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl px-3 py-1.5 transition-colors shrink-0 cursor-pointer">
                             <Download className="h-3.5 w-3.5" />
                             Download Slip
                           </a>
                         ) : (
-                          <span className="text-xs text-slate-400">R2 Private</span>
+                          <span className="text-xs text-slate-400">
+                            R2 Private
+                          </span>
                         )}
                       </div>
 
                       {/* Inline Image Preview if Image */}
                       {isImage && doc.signedDownloadUrl && (
                         <div className="pt-2 border-t border-slate-200/60">
-                          <a href={doc.signedDownloadUrl} target="_blank" rel="noopener noreferrer">
+                          <a
+                            href={doc.signedDownloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer">
                             <img
                               src={doc.signedDownloadUrl}
                               alt="Bank Slip Preview"
@@ -420,7 +472,9 @@ export default function PaymentDetailPage() {
                     <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
                       Clearing Channel
                     </span>
-                    <span className="font-extrabold text-slate-900 text-xs">Stripe Cloud Gateway</span>
+                    <span className="font-extrabold text-slate-900 text-xs">
+                      Stripe Cloud Gateway
+                    </span>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
@@ -435,33 +489,47 @@ export default function PaymentDetailPage() {
                       Security Protocol
                     </span>
                     <span className="font-bold text-emerald-700 text-xs flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-emerald-600" /> 256-Bit SSL
+                      <Lock className="w-3.5 h-3.5 text-emerald-600" /> 256-Bit
+                      SSL
                     </span>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
                       Paper Slip
                     </span>
-                    <span className="font-semibold text-slate-600 text-xs">Not Required (Digital)</span>
+                    <span className="font-semibold text-slate-600 text-xs">
+                      Not Required (Digital)
+                    </span>
                   </div>
                 </div>
 
                 {/* Transaction Details Line */}
                 <div className="mt-4 pt-4 border-t border-dashed border-slate-200 space-y-2.5 text-xs relative z-10">
                   <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
-                    <span className="text-slate-500 font-medium">Gateway Reference:</span>
+                    <span className="text-slate-500 font-medium">
+                      Gateway Reference:
+                    </span>
                     <span className="font-mono text-indigo-700 font-bold bg-indigo-50/80 border border-indigo-200/70 px-2 py-0.5 rounded truncate max-w-[280px]">
-                      {payment.stripePaymentIntentId || "Direct Electronic Settlement"}
+                      {payment.stripePaymentIntentId ||
+                        "Direct Electronic Settlement"}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-medium">Settled Timestamp:</span>
+                    <span className="text-slate-500 font-medium">
+                      Settled Timestamp:
+                    </span>
                     <span className="text-slate-800 font-semibold">
-                      {formatDate(payment.paymentDate || payment.recordedAt || (payment as any).createdAt)}
+                      {formatDate(
+                        payment.paymentDate ||
+                          payment.recordedAt ||
+                          (payment as any).createdAt,
+                      )}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-medium">Disbursement Status:</span>
+                    <span className="text-slate-500 font-medium">
+                      Disbursement Status:
+                    </span>
                     <span className="text-emerald-700 font-bold flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       Captured &amp; Settled in AdSkill Treasury
@@ -490,7 +558,10 @@ export default function PaymentDetailPage() {
                       <div className="w-1.5 h-6 bg-slate-800" />
                     </div>
                     <span className="text-[10px] font-mono font-bold text-slate-500">
-                      AUTH-ID: {(payment.stripePaymentIntentId || payment.id).slice(-10).toUpperCase()}
+                      AUTH-ID:{" "}
+                      {(payment.stripePaymentIntentId || payment.id)
+                        .slice(-10)
+                        .toUpperCase()}
                     </span>
                   </div>
 
@@ -498,8 +569,7 @@ export default function PaymentDetailPage() {
                     <button
                       type="button"
                       onClick={() => window.print()}
-                      className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all cursor-pointer"
-                    >
+                      className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all cursor-pointer">
                       <Printer className="w-3.5 h-3.5 text-slate-500" />
                       <span>Print Slip</span>
                     </button>
@@ -509,9 +579,12 @@ export default function PaymentDetailPage() {
             ) : (
               <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
                 <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs font-bold text-slate-600">No physical bank slip attached</p>
+                <p className="text-xs font-bold text-slate-600">
+                  No physical bank slip attached
+                </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  This payment was recorded directly via staff ledger without uploaded attachments.
+                  This payment was recorded directly via staff ledger without
+                  uploaded attachments.
                 </p>
               </div>
             )}
@@ -533,7 +606,8 @@ export default function PaymentDetailPage() {
                     </span>
                     <div>
                       <h4 className="text-xs font-black text-slate-900">
-                        {payment.installment.title || `Milestone #${payment.installment.sequenceNumber}`}
+                        {payment.installment.title ||
+                          `Milestone #${payment.installment.sequenceNumber}`}
                       </h4>
                       <p className="text-[10px] text-slate-400 font-medium">
                         Due Date: {formatDate(payment.installment.dueDate)}
@@ -547,9 +621,12 @@ export default function PaymentDetailPage() {
               </div>
             ) : (
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
-                <span className="font-extrabold text-slate-800 block">General Account Credit / Retainer</span>
+                <span className="font-extrabold text-slate-800 block">
+                  General Account Credit / Retainer
+                </span>
                 <span className="text-[11px] text-slate-500 mt-0.5 block">
-                  This transaction was credited directly against the total case balance without tying to a specific milestone.
+                  This transaction was credited directly against the total case
+                  balance without tying to a specific milestone.
                 </span>
               </div>
             )}
@@ -587,7 +664,10 @@ export default function PaymentDetailPage() {
                       {payment.case.user?.name}
                     </h4>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      Client ID: <span className="font-bold text-slate-800">{payment.case.user?.clientId || "N/A"}</span>
+                      Client ID:{" "}
+                      <span className="font-bold text-slate-800">
+                        {payment.case.user?.clientId || "N/A"}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -595,41 +675,56 @@ export default function PaymentDetailPage() {
                 <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400 font-medium">Email:</span>
-                    <span className="font-bold text-slate-800">{payment.case.user?.email}</span>
+                    <span className="font-bold text-slate-800">
+                      {payment.case.user?.email}
+                    </span>
                   </div>
                   {payment.case.user?.phone && (
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400 font-medium">Phone:</span>
-                      <span className="font-bold text-slate-800">{payment.case.user.phone}</span>
+                      <span className="font-bold text-slate-800">
+                        {payment.case.user.phone}
+                      </span>
                     </div>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Case Code:</span>
-                    <span className="font-mono font-bold text-slate-900">{payment.case.caseCode}</span>
+                    <span className="text-slate-400 font-medium">
+                      Case Code:
+                    </span>
+                    <span className="font-mono font-bold text-slate-900">
+                      {payment.case.caseCode}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Service Program:</span>
+                    <span className="text-slate-400 font-medium">
+                      Service Program:
+                    </span>
                     <span className="font-bold text-slate-800 truncate max-w-[180px] text-right">
                       {payment.case.service?.name}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Destination:</span>
-                    <span className="font-bold text-slate-800">{payment.case.destinationCountry || "Global"}</span>
+                    <span className="text-slate-400 font-medium">
+                      Destination:
+                    </span>
+                    <span className="font-bold text-slate-800">
+                      {payment.case.destinationCountry || "Global"}
+                    </span>
                   </div>
                 </div>
 
                 <Button
                   variant="outline"
                   onClick={() => router.push(`/clients/${payment.caseId}`)}
-                  className="w-full text-xs font-bold rounded-xl border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer gap-2 mt-2"
-                >
+                  className="w-full text-xs font-bold rounded-xl border-slate-200 text-slate-800 hover:bg-slate-50 cursor-pointer gap-2 mt-2">
                   <ArrowUpRight className="h-3.5 w-3.5 text-slate-400" />
                   Open Full Case Workspace
                 </Button>
               </div>
             ) : (
-              <p className="text-xs text-slate-400">Case particulars unavailable</p>
+              <p className="text-xs text-slate-400">
+                Case particulars unavailable
+              </p>
             )}
           </div>
 
@@ -668,16 +763,29 @@ export default function PaymentDetailPage() {
                   <div className="text-[11px] text-slate-500 space-y-1 pt-1">
                     <p className="flex items-center gap-1.5">
                       <CheckCircle2 className="h-3 w-3 text-emerald-600 shrink-0" />
-                      Status: <strong className="text-slate-800 font-bold">Ledger Credited &amp; Settled</strong>
+                      Status:{" "}
+                      <strong className="text-slate-800 font-bold">
+                        Ledger Credited &amp; Settled
+                      </strong>
                     </p>
                     <p className="flex items-center gap-1.5">
                       <Clock className="h-3 w-3 text-slate-400 shrink-0" />
-                      Audit Stamp: <strong className="text-slate-800 font-bold">{formatDate(payment.paymentDate || payment.recordedAt || (payment as any).createdAt)}</strong>
+                      Audit Stamp:{" "}
+                      <strong className="text-slate-800 font-bold">
+                        {formatDate(
+                          payment.paymentDate ||
+                            payment.recordedAt ||
+                            (payment as any).createdAt,
+                        )}
+                      </strong>
                     </p>
                     {payment.stripePaymentIntentId && (
                       <p className="flex items-center gap-1.5 text-[10px]">
                         <Shield className="h-3 w-3 text-indigo-500 shrink-0" />
-                        Reference: <span className="font-mono text-slate-700 truncate">{payment.stripePaymentIntentId}</span>
+                        Reference:{" "}
+                        <span className="font-mono text-slate-700 truncate">
+                          {payment.stripePaymentIntentId}
+                        </span>
                       </p>
                     )}
                   </div>
@@ -686,7 +794,9 @@ export default function PaymentDetailPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/50 border border-emerald-100">
                     <div className="h-9 w-9 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold flex items-center justify-center text-xs">
-                      {(payment.verifiedBy?.name || "A").slice(0, 2).toUpperCase()}
+                      {(payment.verifiedBy?.name || "A")
+                        .slice(0, 2)
+                        .toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <h4 className="text-xs font-extrabold text-slate-900 truncate">
@@ -704,11 +814,21 @@ export default function PaymentDetailPage() {
                   <div className="text-[11px] text-slate-500 space-y-1 pt-1">
                     <p className="flex items-center gap-1.5">
                       <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                      Status: <strong className="text-slate-800 font-bold">Ledger Credited &amp; Settled</strong>
+                      Status:{" "}
+                      <strong className="text-slate-800 font-bold">
+                        Ledger Credited &amp; Settled
+                      </strong>
                     </p>
                     <p className="flex items-center gap-1.5">
                       <Clock className="h-3 w-3 text-slate-400" />
-                      Audit Stamp: <strong className="text-slate-800 font-bold">{formatDate(payment.paymentDate || payment.recordedAt || (payment as any).createdAt)}</strong>
+                      Audit Stamp:{" "}
+                      <strong className="text-slate-800 font-bold">
+                        {formatDate(
+                          payment.paymentDate ||
+                            payment.recordedAt ||
+                            (payment as any).createdAt,
+                        )}
+                      </strong>
                     </p>
                   </div>
                 </div>
@@ -720,15 +840,16 @@ export default function PaymentDetailPage() {
                   Awaiting Staff Verification
                 </div>
                 <p className="text-[11px] text-amber-700 leading-relaxed font-medium">
-                  This transaction has not yet been approved. Once verified by a manager or super admin, it will immediately credit the client's case standing.
+                  This transaction has not yet been approved. Once verified by a
+                  manager or super admin, it will immediately credit the
+                  client's case standing.
                 </p>
                 {canVerify && (
                   <Button
                     size="sm"
                     onClick={handleVerify}
                     disabled={isVerifying}
-                    className="w-full text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer gap-2"
-                  >
+                    className="w-full text-xs font-black rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer gap-2">
                     {isVerifying ? "Verifying..." : "Verify & Credit Now"}
                   </Button>
                 )}
