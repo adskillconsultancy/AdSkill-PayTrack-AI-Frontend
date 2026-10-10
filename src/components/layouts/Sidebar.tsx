@@ -162,24 +162,6 @@ const navSections: NavSection[] = [
           },
         ],
       },
-      {
-        title: "Invoices & Receipts",
-        href: ROUTES.INVOICES,
-        icon: FileText,
-        requiredAnyPermissions: ["invoice:read", "receipt:read"],
-        subItems: [
-          {
-            title: "Invoices",
-            href: ROUTES.INVOICES,
-            requiredPermission: "invoice:read",
-          },
-          {
-            title: "Payment Receipts",
-            href: `${ROUTES.INVOICES}?tab=receipts`,
-            requiredPermission: "receipt:read",
-          },
-        ],
-      },
     ],
   },
   {
@@ -327,19 +309,6 @@ const navSections: NavSection[] = [
         href: ROUTES.PAYMENT_RECORD,
         icon: Receipt,
         requiredAnyPermissions: ["payment:pay", "payment:read"],
-      },
-      {
-        title: "Invoices & Receipts",
-        href: ROUTES.INVOICES,
-        icon: FileText,
-        requiredAnyPermissions: ["invoice:read", "receipt:read"],
-        subItems: [
-          { title: "Invoices", href: ROUTES.INVOICES },
-          {
-            title: "Payment Receipts",
-            href: `${ROUTES.INVOICES}?tab=receipts`,
-          },
-        ],
       },
       {
         title: "My Profile",

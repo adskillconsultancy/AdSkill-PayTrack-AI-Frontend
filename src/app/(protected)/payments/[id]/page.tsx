@@ -3,6 +3,7 @@
 import { Button } from "@/components/common/Button";
 import { SkeletonDetailView } from "@/components/common/Skeleton";
 import { usePermissions } from "@/hooks/usePermissions";
+import { downloadAndPrintPaymentReceipt } from "@/lib/documentDownload";
 import {
   cn,
   formatCurrencyWithCode,
@@ -22,15 +23,13 @@ import {
   Copy,
   Download,
   FileCheck,
-  FileText,
   Loader2,
-  Lock,
   Printer,
   Receipt,
   RefreshCw,
   Shield,
   ShieldCheck,
-  User,
+  User
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -73,6 +72,24 @@ export default function PaymentDetailPage() {
     useVerifyPaymentMutation();
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string>("");
+  const [isDownloadingReceipt, setIsDownloadingReceipt] = React.useState(false);
+
+  const handleDownloadReceipt = async () => {
+    if (!payment) return;
+    setIsDownloadingReceipt(true);
+    try {
+      await downloadAndPrintPaymentReceipt(
+        payment.id,
+        payment.externalReference || payment.id.slice(0, 8).toUpperCase()
+      );
+      setNotice("Official money receipt generated and downloaded successfully.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to download receipt";
+      setNotice(msg);
+    } finally {
+      setIsDownloadingReceipt(false);
+    }
+  };
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -140,7 +157,7 @@ export default function PaymentDetailPage() {
   return (
     <div className="min-h-screen pb-24">
       {/* TOP NAVIGATION & BREADCRUMB */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
@@ -190,9 +207,23 @@ export default function PaymentDetailPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={handleDownloadReceipt}
+            disabled={isDownloadingReceipt}
+            className="text-xs font-bold rounded-xl border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 cursor-pointer gap-2 disabled:opacity-50">
+            {isDownloadingReceipt ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-700" />
+            ) : (
+              <Receipt className="h-3.5 w-3.5 text-amber-700" />
+            )}
+            {isDownloadingReceipt ? "Generating..." : "Download Official Receipt"}
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => window.print()}
             className="text-xs font-bold rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer gap-2">
-            <Printer className="h-3.5 w-3.5 text-slate-400" />
+            <Printer className="h-3.5 w-3.5 text-slate-500" />
             Print Slip
           </Button>
 
@@ -230,7 +261,7 @@ export default function PaymentDetailPage() {
       )}
 
       {/* EXECUTIVE SUMMARY BANNER */}
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs mb-8">
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs mb-8 print:hidden">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
           <div className="md:col-span-7">
             <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1">
@@ -339,38 +370,199 @@ export default function PaymentDetailPage() {
 
       {/* 2-COLUMN DOSSIER GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* LEFT COLUMN: Proof Documents & Milestone Allocation */}
+        {/* LEFT COLUMN: Official Settlement Slip Voucher & Documents */}
         <div className="lg:col-span-7 space-y-6">
-          {/* PAYMENT PROOF & BANK SLIP ARCHIVE */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <FileCheck
-                  className={cn(
-                    "h-4 w-4",
-                    isStripe ? "text-indigo-600" : "text-emerald-600",
-                  )}
-                />
-                {isStripe
-                  ? "Digital Clearance Slip & Settlement Proof"
-                  : "Physical Proof & Bank Wire Slips"}
-              </h3>
-              <span
+          {/* UNIVERSAL OFFICIAL PAYMENT SETTLEMENT SLIP & RECEIPT VOUCHER */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-slate-50/70 to-amber-50/20 p-6 sm:p-8 shadow-xs border border-slate-200/90 text-slate-900 print-slip-sheet">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-5 border-b border-slate-200/80 mb-6">
+              <div className="flex items-center gap-3.5">
+                <div className="h-11 w-11 rounded-2xl bg-[#0b192c] text-white flex items-center justify-center font-black text-sm tracking-tighter shadow-xs">
+                  ASK
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-black uppercase tracking-wider text-slate-400 block">
+                    AdSkill Consultancy • Financial Treasury
+                  </span>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                    Official Payment Settlement Slip
+                  </h3>
+                </div>
+              </div>
+              <div
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg",
-                  isStripe && proofDocs.length === 0
-                    ? "bg-indigo-50 text-indigo-700 border border-indigo-200/60"
-                    : "text-slate-400",
+                  "flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold shadow-2xs border",
+                  isVerified
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200",
                 )}>
-                {proofDocs.length > 0
-                  ? `${proofDocs.length} Attachment${proofDocs.length !== 1 ? "s" : ""}`
-                  : isStripe
-                    ? "1 Electronic Voucher"
-                    : "0 Attachments"}
-              </span>
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>{isVerified ? "AUTHENTICATED & VERIFIED" : "PENDING AUDIT"}</span>
+              </div>
             </div>
 
-            {proofDocs.length > 0 ? (
+            {/* Client & Service Info Strip */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-3 px-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 text-xs mb-6">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                  Client Name
+                </span>
+                <span className="font-extrabold text-slate-900 text-xs truncate block">
+                  {payment.case?.user?.name || "Client"}
+                </span>
+                <span className="text-[10px] font-mono text-slate-500">
+                  ID: {payment.case?.user?.clientId || "N/A"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                  Case Reference
+                </span>
+                <span className="font-mono font-bold text-slate-900 text-xs truncate block">
+                  {payment.case?.caseCode || "N/A"}
+                </span>
+                <span className="text-[10px] text-slate-500 truncate block">
+                  {payment.case?.service?.name || "Legal Consulting"}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                  Clearing Channel
+                </span>
+                <span className="font-extrabold text-slate-900 text-xs block">
+                  {isStripe ? "Stripe Gateway" : payment.paymentMethod.replace(/_/g, " ")}
+                </span>
+                <span className="text-[10px] text-slate-500 block truncate">
+                  {payment.externalReference || (isStripe ? "Electronic Settlement" : "Office Clearance")}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">
+                  Settled Value
+                </span>
+                <span className="font-mono font-black text-slate-900 text-base leading-tight block">
+                  {formatMoney(payment.amount, payment.currency)}
+                </span>
+                <span className="text-[10px] font-bold text-emerald-700 block">
+                  {payment.currency} • Remitted
+                </span>
+              </div>
+            </div>
+
+            {/* Transaction Particulars Grid */}
+            <div className="space-y-3 py-1 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] py-1 border-b border-dashed border-slate-200">
+                <span className="text-slate-500 font-medium">Internal Transaction Reference:</span>
+                <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                  {payment.id}
+                </span>
+              </div>
+
+              {payment.externalReference && (
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] py-1 border-b border-dashed border-slate-200">
+                  <span className="text-slate-500 font-medium">Bank Wire / Confirmation #:</span>
+                  <span className="font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
+                    {payment.externalReference}
+                  </span>
+                </div>
+              )}
+
+              {payment.installment && (
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] py-1 border-b border-dashed border-slate-200">
+                  <span className="text-slate-500 font-medium">Milestone Allocation:</span>
+                  <span className="font-bold text-slate-800">
+                    Milestone #{payment.installment.sequenceNumber} ({payment.installment.title || "Contracted Step"})
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-[11px] py-1 border-b border-dashed border-slate-200">
+                <span className="text-slate-500 font-medium">Settlement Timestamp:</span>
+                <span className="text-slate-800 font-bold">
+                  {formatDate(payment.paymentDate || payment.recordedAt || (payment as any).createdAt)}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] py-1">
+                <span className="text-slate-500 font-medium">Verification Stamp:</span>
+                <span className="text-slate-800 font-bold">
+                  {isStripe
+                    ? "Stripe Webhook HMAC Engine (256-Bit SSL)"
+                    : payment.verifiedBy?.name
+                    ? `Verified by ${payment.verifiedBy.name} (${payment.verifiedBy.role?.name || "Staff"})`
+                    : "Authorized AdSkill Treasury"}
+                </span>
+              </div>
+            </div>
+
+            {/* Simulated Barcode, Auth ID & Slip Action Buttons */}
+            <div className="mt-6 pt-5 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                {/* Barcode Graphic */}
+                <div className="flex items-center gap-0.5 bg-slate-100/90 border border-slate-200 px-3 py-1.5 rounded-lg shadow-2xs">
+                  <div className="w-0.5 h-6 bg-slate-800" />
+                  <div className="w-1 h-6 bg-slate-800" />
+                  <div className="w-0.5 h-6 bg-slate-800" />
+                  <div className="w-1.5 h-6 bg-slate-800" />
+                  <div className="w-0.5 h-6 bg-slate-800" />
+                  <div className="w-1 h-6 bg-slate-800" />
+                  <div className="w-0.5 h-6 bg-slate-800" />
+                  <div className="w-1.5 h-6 bg-slate-800" />
+                  <div className="w-0.5 h-6 bg-slate-800" />
+                  <div className="w-1 h-6 bg-slate-800" />
+                  <div className="w-0.5 h-6 bg-slate-800" />
+                  <div className="w-1.5 h-6 bg-slate-800" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-bold text-slate-500 block">
+                    AUTH: {(payment.externalReference || payment.stripePaymentIntentId || payment.id).slice(-12).toUpperCase()}
+                  </span>
+                  <span className="text-[9px] text-slate-400 block">
+                    ADSKILL IMMUTABLE AUDIT TRAIL
+                  </span>
+                </div>
+              </div>
+
+              {/* Buttons inside slip: Print Slip & Download Official Receipt */}
+              <div className="flex items-center gap-2 print:hidden">
+                <button
+                  type="button"
+                  onClick={handleDownloadReceipt}
+                  disabled={isDownloadingReceipt}
+                  className="text-xs font-bold text-amber-900 hover:text-amber-950 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200/80 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+                  title="Download official PDF receipt">
+                  {isDownloadingReceipt ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-700" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5 text-amber-700" />
+                  )}
+                  <span>{isDownloadingReceipt ? "Generating..." : "Download Receipt"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all cursor-pointer">
+                  <Printer className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Print Slip</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* PHYSICAL PROOF & BANK ATTACHMENTS (IF ANY) */}
+          {proofDocs.length > 0 && (
+            <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs print:hidden">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                  <FileCheck className="h-4 w-4 text-emerald-600" />
+                  Uploaded Proof Documents & Physical Slips
+                </h3>
+                <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg text-slate-400">
+                  {proofDocs.length} Attachment{proofDocs.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+
               <div className="space-y-4">
                 {proofDocs.map((doc) => {
                   const isImage =
@@ -391,15 +583,8 @@ export default function PaymentDetailPage() {
                             <h4 className="text-xs font-black text-slate-900 truncate">
                               {doc.originalName}
                             </h4>
-                            <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
-                              R2:{" "}
-                              <span className="text-slate-600">
-                                {doc.storedName}
-                              </span>
-                            </p>
                             <span className="text-[10px] text-slate-400 font-medium">
-                              {formatFileSize(doc.size)} • Uploaded{" "}
-                              {formatDate(doc.createdAt)}
+                              {formatFileSize(doc.size)} • Uploaded {formatDate(doc.createdAt)}
                             </span>
                           </div>
                         </div>
@@ -411,16 +596,11 @@ export default function PaymentDetailPage() {
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl px-3 py-1.5 transition-colors shrink-0 cursor-pointer">
                             <Download className="h-3.5 w-3.5" />
-                            Download Slip
+                            Download
                           </a>
-                        ) : (
-                          <span className="text-xs text-slate-400">
-                            R2 Private
-                          </span>
-                        )}
+                        ) : null}
                       </div>
 
-                      {/* Inline Image Preview if Image */}
                       {isImage && doc.signedDownloadUrl && (
                         <div className="pt-2 border-t border-slate-200/60">
                           <a
@@ -439,162 +619,11 @@ export default function PaymentDetailPage() {
                   );
                 })}
               </div>
-            ) : isStripe ? (
-              /* CLEAN CORPORATE LIGHT MODE DIGITAL STRIPE CLEARING VOUCHER (OPTION 1) */
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-slate-50/70 to-indigo-50/40 p-6 sm:p-7 shadow-xs border border-slate-200/90 text-slate-900">
-                {/* Background Watermark & Subtle Lighting */}
-                <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-indigo-500/5 blur-2xl pointer-events-none" />
-                <div className="absolute right-4 top-2 opacity-[0.04] font-mono text-[96px] font-black tracking-widest pointer-events-none select-none text-slate-900">
-                  PAID
-                </div>
-
-                {/* Slip Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 mb-5 relative z-10">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-[#635bff]/10 border border-[#635bff]/25 flex items-center justify-center font-black text-xs text-[#635bff]">
-                      stripe
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
-                        Direct Electronic Settlement
-                      </span>
-                      <h4 className="text-base font-black text-slate-900 tracking-tight">
-                        Official Digital Payment Slip
-                      </h4>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-extrabold shadow-2xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>AUTHENTICATED</span>
-                  </div>
-                </div>
-
-                {/* Voucher Data Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-2 text-xs relative z-10">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                      Clearing Channel
-                    </span>
-                    <span className="font-extrabold text-slate-900 text-xs">
-                      Stripe Cloud Gateway
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                      Settled Value
-                    </span>
-                    <span className="font-mono font-black text-slate-900 text-base">
-                      {formatMoney(payment.amount, payment.currency)}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                      Security Protocol
-                    </span>
-                    <span className="font-bold text-emerald-700 text-xs flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-emerald-600" /> 256-Bit
-                      SSL
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                      Paper Slip
-                    </span>
-                    <span className="font-semibold text-slate-600 text-xs">
-                      Not Required (Digital)
-                    </span>
-                  </div>
-                </div>
-
-                {/* Transaction Details Line */}
-                <div className="mt-4 pt-4 border-t border-dashed border-slate-200 space-y-2.5 text-xs relative z-10">
-                  <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
-                    <span className="text-slate-500 font-medium">
-                      Gateway Reference:
-                    </span>
-                    <span className="font-mono text-indigo-700 font-bold bg-indigo-50/80 border border-indigo-200/70 px-2 py-0.5 rounded truncate max-w-[280px]">
-                      {payment.stripePaymentIntentId ||
-                        "Direct Electronic Settlement"}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-medium">
-                      Settled Timestamp:
-                    </span>
-                    <span className="text-slate-800 font-semibold">
-                      {formatDate(
-                        payment.paymentDate ||
-                          payment.recordedAt ||
-                          (payment as any).createdAt,
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500 font-medium">
-                      Disbursement Status:
-                    </span>
-                    <span className="text-emerald-700 font-bold flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      Captured &amp; Settled in AdSkill Treasury
-                    </span>
-                  </div>
-                </div>
-
-                {/* Simulated Barcode / Hologram Strip */}
-                <div className="mt-5 pt-4 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-3 relative z-10">
-                  <div className="flex items-center gap-2.5">
-                    {/* Cool Barcode Simulation */}
-                    <div className="flex items-center gap-0.5 bg-slate-100/80 border border-slate-200 px-2.5 py-1.5 rounded-lg shadow-2xs">
-                      <div className="w-0.5 h-6 bg-slate-800" />
-                      <div className="w-1 h-6 bg-slate-800" />
-                      <div className="w-0.5 h-6 bg-slate-800" />
-                      <div className="w-1.5 h-6 bg-slate-800" />
-                      <div className="w-0.5 h-6 bg-slate-800" />
-                      <div className="w-1 h-6 bg-slate-800" />
-                      <div className="w-0.5 h-6 bg-slate-800" />
-                      <div className="w-1.5 h-6 bg-slate-800" />
-                      <div className="w-0.5 h-6 bg-slate-800" />
-                      <div className="w-1 h-6 bg-slate-800" />
-                      <div className="w-0.5 h-6 bg-slate-800" />
-                      <div className="w-1 h-6 bg-slate-800" />
-                      <div className="w-0.5 h-6 bg-slate-800" />
-                      <div className="w-1.5 h-6 bg-slate-800" />
-                    </div>
-                    <span className="text-[10px] font-mono font-bold text-slate-500">
-                      AUTH-ID:{" "}
-                      {(payment.stripePaymentIntentId || payment.id)
-                        .slice(-10)
-                        .toUpperCase()}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => window.print()}
-                      className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs hover:border-slate-300 transition-all cursor-pointer">
-                      <Printer className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Print Slip</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-                <p className="text-xs font-bold text-slate-600">
-                  No physical bank slip attached
-                </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  This payment was recorded directly via staff ledger without
-                  uploaded attachments.
-                </p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* MILESTONE & CASE ALLOCATION */}
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs">
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs print:hidden">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2 pb-4 border-b border-slate-100 mb-4">
               <Receipt className="h-4 w-4 text-amber-500" />
               Contracted Milestone Allocation
@@ -648,7 +677,7 @@ export default function PaymentDetailPage() {
         </div>
 
         {/* RIGHT COLUMN: Client Dossier & Verifier Audit */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-6 print:hidden">
           {/* CLIENT DOSSIER CARD */}
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-2 pb-4 border-b border-slate-100 mb-4">

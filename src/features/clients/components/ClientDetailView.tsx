@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -28,6 +28,7 @@ import {
   Pencil,
   Phone,
   Plus,
+  Printer,
   Receipt,
   RefreshCw,
   Search,
@@ -69,6 +70,7 @@ import { useUpdateUserMutation } from "@/services/api/users/usersApi";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { CaseStatus, DocumentType, Payment } from "@/types/client-case.types";
 import { cn } from "@/lib/utils";
+import { downloadAndPrintCaseInvoice } from "@/lib/documentDownload";
 
 const labels: Record<CaseStatus, string> = {
   INTAKE: "Intake",
@@ -187,6 +189,21 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const [selectedPaymentSlip, setSelectedPaymentSlip] = React.useState<Payment | null>(null);
   const [notice, setNotice] = React.useState("");
   const [editing, setEditing] = React.useState<"profile" | "case" | null>(null);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = React.useState(false);
+
+  const handleDownloadInvoice = async () => {
+    if (!clientCase) return;
+    setIsDownloadingInvoice(true);
+    try {
+      await downloadAndPrintCaseInvoice(clientCase.id, clientCase.caseCode);
+      setNotice("Official invoice generated and downloaded successfully.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to download invoice";
+      setNotice(msg);
+    } finally {
+      setIsDownloadingInvoice(false);
+    }
+  };
 
   React.useEffect(() => {
     if (plansResponse?.data?.[0]?.currency) setPaymentCurrency(plansResponse.data[0].currency);
@@ -346,8 +363,22 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
             </div>
           </div>
 
-          {/* Direct Communication Action Links */}
+          {/* Direct Communication & Document Action Links */}
           <div className="flex flex-wrap items-center gap-2 self-start lg:self-center">
+            <button
+              type="button"
+              onClick={handleDownloadInvoice}
+              disabled={isDownloadingInvoice}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 px-4 text-xs font-bold text-amber-900 shadow-2xs transition-all cursor-pointer disabled:opacity-50"
+              title="Download & Print Official Invoice PDF">
+              {isDownloadingInvoice ? (
+                <Loader2 className="h-4 w-4 animate-spin text-amber-700" />
+              ) : (
+                <Printer className="h-4 w-4 text-amber-700" />
+              )}
+              <span>{isDownloadingInvoice ? "Generating..." : "Download & Print Invoice"}</span>
+            </button>
+
             {profile?.email && (
               <a
                 href={`mailto:${profile.email}`}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -9,7 +9,8 @@ import { DataTable, ColumnDef } from "@/components/common/DataTable";
 import { useGetAllCasesQuery } from "@/services/api/clients/clientCasesApi";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { ClientCase, CaseStatus } from "@/types/client-case.types";
-import { FileText, ChevronRight, Eye, Copy, RefreshCw, ShieldCheck } from "lucide-react";
+import { FileText, ChevronRight, Eye, Copy, RefreshCw, ShieldCheck, Printer, Loader2 } from "lucide-react";
+import { downloadAndPrintCaseInvoice } from "@/lib/documentDownload";
 import { ClientMetricCards } from "./ClientMetricCards";
 import { ClientSearchBar } from "./ClientSearchBar";
 
@@ -53,7 +54,20 @@ export function ClientListView({
   const [destinationFilter, setDestinationFilter] = React.useState("ALL");
   const [selectedSort, setSelectedSort] = React.useState("Newest First");
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [downloadingCaseId, setDownloadingCaseId] = React.useState<string | null>(null);
   const pageSize = 10;
+
+  const handleDownloadInvoice = async (caseId: string, caseCode: string) => {
+    setDownloadingCaseId(caseId);
+    try {
+      await downloadAndPrintCaseInvoice(caseId, caseCode);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to download invoice";
+      alert(msg);
+    } finally {
+      setDownloadingCaseId(null);
+    }
+  };
 
   const rawCases = data?.data ?? [];
   // Defense-in-depth: If role is CONSULTANT, ensure cases are strictly scoped to this consultant
@@ -94,7 +108,43 @@ export function ClientListView({
     { key: "service", header: "SERVICE", cell: (item) => <div><div className="text-sm font-bold">{item.serviceNameSnapshot}</div><div className="text-xs text-[#64748B]">{item.serviceCodeSnapshot}</div></div> },
     { key: "created", header: "CREATED", cell: (item) => <span className="text-sm font-semibold">{formatDate(item.createdAt)}</span> },
     { key: "status", header: "STATUS", cell: (item) => <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${statusClass[item.caseStatus]}`}>{statusLabel[item.caseStatus]}</span> },
-    { key: "actions", header: "ACTIONS", align: "right", cell: (item) => <div className="flex justify-end gap-2"><button type="button" onClick={() => navigator.clipboard?.writeText(item.caseCode)} className="rounded-full bg-[#FAF8F5] p-2 hover:bg-[#F1ECE4] cursor-pointer transition-colors" title="Copy case code"><Copy className="h-4 w-4" /></button><Link href={`/clients/${item.id}`} className="rounded-full bg-[#FAF8F5] p-2 hover:bg-[#F1ECE4] cursor-pointer transition-colors" title="View case details"><Eye className="h-4 w-4" /></Link></div> },
+    {
+      key: "actions",
+      header: "ACTIONS",
+      align: "right",
+      cell: (item) => (
+        <div className="flex justify-end items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => handleDownloadInvoice(item.id, item.caseCode)}
+            disabled={downloadingCaseId === item.id}
+            className="rounded-full bg-[#FAF8F5] p-2 hover:bg-amber-100 hover:text-amber-900 text-slate-700 cursor-pointer transition-colors disabled:opacity-50"
+            title="Download & Print Official Invoice"
+          >
+            {downloadingCaseId === item.id ? (
+              <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
+            ) : (
+              <Printer className="h-4 w-4" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard?.writeText(item.caseCode)}
+            className="rounded-full bg-[#FAF8F5] p-2 hover:bg-[#F1ECE4] cursor-pointer transition-colors"
+            title="Copy case code"
+          >
+            <Copy className="h-4 w-4" />
+          </button>
+          <Link
+            href={`/clients/${item.id}`}
+            className="rounded-full bg-[#FAF8F5] p-2 hover:bg-[#F1ECE4] cursor-pointer transition-colors"
+            title="View case details"
+          >
+            <Eye className="h-4 w-4" />
+          </Link>
+        </div>
+      ),
+    },
   ];
 
   return <div className="space-y-6">

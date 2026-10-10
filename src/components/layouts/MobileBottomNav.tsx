@@ -12,6 +12,7 @@ import {
   FileText,
   MessageSquare,
   Menu,
+  User,
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -46,9 +47,9 @@ export function MobileBottomNav() {
           icon: Wallet,
         },
         {
-          label: "Invoices",
-          href: ROUTES.INVOICES,
-          icon: FileText,
+          label: "Profile",
+          href: ROUTES.PROFILE,
+          icon: User,
         },
         {
           label: "Support",

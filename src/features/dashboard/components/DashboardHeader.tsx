@@ -118,17 +118,7 @@ export function DashboardHeader({
               </Button>
             </Link>
 
-            <Link href={ROUTES.INVOICES}>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="gap-1.5 text-xs font-bold h-9 px-3.5 rounded-xl cursor-pointer border-border hover:bg-muted transition-all hover:scale-[1.02]"
-              >
-                <FileText className="h-3.5 w-3.5 text-blue-500" />
-                <span>Invoices & Receipts</span>
-              </Button>
-            </Link>
+
 
             <Link href={ROUTES.REPORTS}>
               <Button
