@@ -41,6 +41,7 @@ export const ROUTES = {
   ATTENDANCE: "/attendance",
   STAFF_MANAGEMENT: "/staff-management",
   LEADS: "/leads",
+  LEADS_FOLLOW_UP: "/leads/follow-up",
   LEAD_DETAIL: (id: string) => `/leads/${id}`,
 } as const;
 

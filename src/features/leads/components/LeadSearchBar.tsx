@@ -1,15 +1,18 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   Search,
   SlidersHorizontal,
   Plus,
   X,
   RotateCcw,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
+import { useGetFollowUpQueueQuery } from "@/services/api/leads/leadsApi";
 import type { LeadStatus } from "../types";
 
 interface LeadSearchBarProps {
@@ -74,6 +77,13 @@ export function LeadSearchBar({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const { data: followUpQueueResponse } = useGetFollowUpQueueQuery(
+    { page: 1, limit: 1 },
+    { pollingInterval: 30000 },
+  );
+  const followUpCount = followUpQueueResponse?.data?.counts?.total ?? 0;
+  const overdueCount = followUpQueueResponse?.data?.counts?.overdue ?? 0;
 
   const activeFiltersCount =
     (statusFilter !== "ALL" ? 1 : 0) +
@@ -222,6 +232,23 @@ export function LeadSearchBar({
             </div>
           )}
         </div>
+
+        {/* Follow-Up Queue Link Button */}
+        <Link href="/leads/follow-up">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 px-4 rounded-2xl border-[#EAE6DF] bg-white hover:bg-[#FAF8F5] text-xs sm:text-sm font-bold gap-2 cursor-pointer shadow-xs text-[#0a0a0a]">
+            <Clock className="h-4 w-4 text-amber-600" />
+            <span className="hidden sm:inline">Follow-Up Queue</span>
+            <span className="sm:hidden">Queue</span>
+            {followUpCount > 0 && (
+              <span className="flex h-5 min-w-[20px] px-1.5 items-center justify-center rounded-full text-[10px] font-bold text-white bg-amber-500 shadow-2xs">
+                {followUpCount > 99 ? "99+" : followUpCount}
+              </span>
+            )}
+          </Button>
+        </Link>
 
         {/* Create Lead Primary Button (Matching New Client button) */}
         <Button

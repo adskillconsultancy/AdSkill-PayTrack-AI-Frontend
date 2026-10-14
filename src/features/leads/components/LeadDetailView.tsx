@@ -47,6 +47,14 @@ import type {
 } from "../types";
 import { cn, formatExplicitDate, formatExplicitDateTime } from "@/lib/utils";
 
+const getPresetIsoString = (daysAhead: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(10, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 interface LeadDetailViewProps {
   leadId: string;
 }
@@ -141,65 +149,59 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
     }
   };
 
-  // Controlled fields for Lead Status & Assigned Staff with explicit Save Changes button
-  const [leadStatusValue, setLeadStatusValue] =
-    React.useState<LeadStatus>("NEW");
+  // Controlled field for Assigned Staff
   const [assignedStaffId, setAssignedStaffId] = React.useState<string>("");
-  const [isSavingLeadDetails, setIsSavingLeadDetails] = React.useState(false);
+  const [isSavingStaff, setIsSavingStaff] = React.useState(false);
 
   React.useEffect(() => {
     if (lead) {
-      setLeadStatusValue(lead.status);
       setAssignedStaffId(lead.assignedToId || "");
     }
-  }, [lead?.status, lead?.assignedToId]);
+  }, [lead?.assignedToId]);
 
-  const hasLeadDetailsChanged =
-    Boolean(lead) &&
-    (leadStatusValue !== lead?.status ||
-      assignedStaffId !== (lead?.assignedToId || ""));
+  const hasStaffChanged =
+    Boolean(lead) && assignedStaffId !== (lead?.assignedToId || "");
 
-  const handleSaveLeadDetails = async () => {
-    if (!lead || !hasLeadDetailsChanged) return;
+  const handleSaveStaffAssignment = async () => {
+    if (!lead || !hasStaffChanged) return;
 
     const assignedStaffName =
       staffList.find((s) => s.id === assignedStaffId)?.name ||
       (assignedStaffId ? "Selected Staff" : "Unassigned");
 
     const isConfirmed = await confirm({
-      title: "Confirm Lead Update",
-      message: `Save changes for "${lead.fullName}"?\n\n• New Status: ${statusLabel[leadStatusValue] || leadStatusValue}\n• Assigned Staff: ${assignedStaffName}`,
-      confirmText: "Yes, Save Changes",
+      title: "Confirm Staff Assignment",
+      message: `Assign lead "${lead.fullName}" to ${assignedStaffName}?`,
+      confirmText: "Yes, Assign Staff",
       cancelText: "Cancel",
       variant: "info",
     });
     if (!isConfirmed) return;
 
-    setIsSavingLeadDetails(true);
+    setIsSavingStaff(true);
 
     try {
       await updateLead({
         id: leadId,
         data: {
-          status: leadStatusValue,
           assignedToId: assignedStaffId || null,
         },
       }).unwrap();
 
       await alert({
-        title: "Lead Updated Successfully",
-        message: `Lead status and caseworker assignment have been saved.`,
+        title: "Staff Assigned Successfully",
+        message: `Lead has been assigned to ${assignedStaffName}.`,
         variant: "success",
       });
     } catch (err: any) {
       await alert({
-        title: "Update Failed",
+        title: "Assignment Failed",
         message:
-          err?.data?.message || err?.message || "Failed to update lead details",
+          err?.data?.message || err?.message || "Failed to update staff assignment",
         variant: "danger",
       });
     } finally {
-      setIsSavingLeadDetails(false);
+      setIsSavingStaff(false);
     }
   };
 
@@ -517,73 +519,57 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   </span>
                 </div>
               )}
+
+              {/* Next Scheduled Follow-Up */}
+              <div className="flex items-center justify-between pt-1 border-t border-[#F0ECE6]">
+                <span className="text-xs font-semibold text-[#64748B] flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-primary" /> Next Follow-Up
+                </span>
+                <span
+                  className={cn(
+                    "text-xs font-bold",
+                    lead.nextFollowUpDate
+                      ? "text-[#0a0a0a]"
+                      : "text-muted-foreground italic",
+                  )}>
+                  {lead.nextFollowUpDate
+                    ? formatExplicitDateTime(lead.nextFollowUpDate)
+                    : "None scheduled"}
+                </span>
+              </div>
             </div>
 
-            {/* Status & Assignee Controls with Explicit Save Changes Button */}
-            <div className="pt-3 border-t border-[#F0ECE6] space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] block mb-1">
-                    Change Status
-                  </label>
-                  <select
-                    value={leadStatusValue}
-                    disabled={isSavingLeadDetails || isUpdatingLead}
-                    onChange={(e) =>
-                      setLeadStatusValue(e.target.value as LeadStatus)
-                    }
-                    className="w-full h-10 px-2.5 rounded-xl border border-[#EAE6DF] bg-white text-xs font-bold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]">
-                    <option value="NEW">New Lead</option>
-                    <option value="CONTACTED">Contacted</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="FOLLOW_UP">Follow-Up Needed</option>
-                    <option value="QUALIFIED">Qualified</option>
-                    <option value="CONVERTED">Converted</option>
-                    <option value="LOST">Lost</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] block mb-1">
-                    Assign Staff
-                  </label>
-                  <select
-                    value={assignedStaffId}
-                    disabled={isSavingLeadDetails || isUpdatingLead}
-                    onChange={(e) => setAssignedStaffId(e.target.value)}
-                    className="w-full h-10 px-2.5 rounded-xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]">
-                    <option value="">-- Unassigned --</option>
-                    {staffList.map((st) => (
-                      <option key={st.id} value={st.id}>
-                        {st.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            {/* Assigned Staff Member */}
+            <div className="pt-3 border-t border-[#F0ECE6] space-y-2">
+              <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] block">
+                Assigned Staff Member
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={assignedStaffId}
+                  disabled={isSavingStaff || isUpdatingLead}
+                  onChange={(e) => setAssignedStaffId(e.target.value)}
+                  className="flex-1 h-10 px-3 rounded-xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]">
+                  <option value="">-- Unassigned --</option>
+                  {staffList.map((st) => (
+                    <option key={st.id} value={st.id}>
+                      {st.name}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!hasStaffChanged || isSavingStaff || isUpdatingLead}
+                  onClick={handleSaveStaffAssignment}
+                  className="h-10 px-4 rounded-xl bg-[#0a0a0a] hover:bg-black text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                  {isSavingStaff || isUpdatingLead ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    "Assign Staff"
+                  )}
+                </Button>
               </div>
-
-              <Button
-                type="button"
-                size="sm"
-                disabled={
-                  !hasLeadDetailsChanged ||
-                  isSavingLeadDetails ||
-                  isUpdatingLead
-                }
-                onClick={handleSaveLeadDetails}
-                className="w-full h-10 rounded-xl bg-[#0a0a0a] hover:bg-black text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                {isSavingLeadDetails || isUpdatingLead ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                    Saving Changes...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-1.5 text-white" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
             </div>
           </div>
 
@@ -698,15 +684,66 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
               {/* Next Follow-Up Date & Status Transition */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5">
-                    Next Follow-Up Date
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={nextFollowUp}
-                    onChange={(e) => setNextFollowUp(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-[#EAE6DF] bg-white text-xs text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
-                  />
+                  <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                    <label className="text-xs font-bold text-[#0a0a0a] flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-primary" />
+                      Next Follow-Up Date
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setNextFollowUp(getPresetIsoString(1))}
+                        className="rounded-md border border-[#EAE6DF] bg-[#FAF8F5] hover:bg-[#F1ECE4] px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 cursor-pointer">
+                        +1d
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNextFollowUp(getPresetIsoString(3))}
+                        className="rounded-md border border-amber-200 bg-amber-50 hover:bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 cursor-pointer">
+                        +3d
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNextFollowUp(getPresetIsoString(7))}
+                        className="rounded-md border border-[#EAE6DF] bg-[#FAF8F5] hover:bg-[#F1ECE4] px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 cursor-pointer">
+                        +7d
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const input = document.getElementById(
+                            "detail-record-followup-input",
+                          ) as HTMLInputElement;
+                          if (input) {
+                            input.focus();
+                            input.showPicker?.();
+                          }
+                        }}
+                        className="rounded-md border border-primary/30 bg-primary/10 hover:bg-primary hover:text-white px-1.5 py-0.5 text-[10px] font-bold text-primary cursor-pointer transition-colors flex items-center gap-1">
+                        <Calendar className="h-2.5 w-2.5" />
+                        Custom Date
+                      </button>
+                      {nextFollowUp && (
+                        <button
+                          type="button"
+                          onClick={() => setNextFollowUp("")}
+                          className="text-[10px] text-muted-foreground hover:text-red-600 cursor-pointer ml-0.5">
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="relative flex items-center">
+                    <Calendar className="absolute left-3 h-4 w-4 text-[#64748B] pointer-events-none" />
+                    <input
+                      id="detail-record-followup-input"
+                      type="datetime-local"
+                      value={nextFollowUp}
+                      onClick={(e) => (e.target as any).showPicker?.()}
+                      onChange={(e) => setNextFollowUp(e.target.value)}
+                      className="w-full h-10 pl-9 pr-3 rounded-xl border border-[#EAE6DF] bg-white text-xs font-medium text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a] cursor-pointer hover:border-slate-400 transition-colors"
+                    />
+                  </div>
                 </div>
 
                 <div>

@@ -1,12 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { X, UserPlus, Sparkles, Building, Phone, Mail, MapPin, Globe, Share2, UserCheck, Shield } from "lucide-react";
+import { X, UserPlus, Sparkles, Building, Phone, Mail, MapPin, Globe, Share2, UserCheck, Shield, Calendar } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useCreateLeadMutation } from "@/services/api/leads/leadsApi";
 import type { LeadStatus } from "../types";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfirm } from "@/hooks/useConfirm";
+
+const getPresetIsoString = (daysAhead: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(10, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 interface CreateLeadModalProps {
   isOpen: boolean;
@@ -37,6 +45,7 @@ export function CreateLeadModal({
     referralName: "",
     status: "NEW" as LeadStatus,
     assignedToId: "",
+    nextFollowUpDate: getPresetIsoString(3),
   });
 
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -83,6 +92,7 @@ export function CreateLeadModal({
         referralName: formData.referralName.trim() || undefined,
         status: formData.status,
         assignedToId: formData.assignedToId || undefined,
+        nextFollowUpDate: formData.nextFollowUpDate ? new Date(formData.nextFollowUpDate).toISOString() : undefined,
       }).unwrap();
 
       const createdName = formData.fullName.trim();
@@ -98,6 +108,7 @@ export function CreateLeadModal({
         referralName: "",
         status: "NEW",
         assignedToId: "",
+        nextFollowUpDate: getPresetIsoString(3),
       });
       onSuccess?.();
       onClose();
@@ -329,6 +340,98 @@ export function CreateLeadModal({
                 <option value="LOST">Lost</option>
               </select>
             </div>
+          </div>
+
+          {/* Row 6: Automated Follow-Up Reminder & Quick Presets */}
+          <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-primary" />
+                Next Follow-Up Reminder
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  (Auto-reminds assigned staff)
+                </span>
+              </label>
+
+              {/* Quick Preset Buttons */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      nextFollowUpDate: getPresetIsoString(1),
+                    })
+                  }
+                  className="rounded-lg border border-border/80 bg-background hover:bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors cursor-pointer">
+                  +1 Day
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      nextFollowUpDate: getPresetIsoString(3),
+                    })
+                  }
+                  className="rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary/20 px-2 py-0.5 text-[11px] font-semibold text-primary transition-colors cursor-pointer">
+                  +3 Days (Default)
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      nextFollowUpDate: getPresetIsoString(7),
+                    })
+                  }
+                  className="rounded-lg border border-border/80 bg-background hover:bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground transition-colors cursor-pointer">
+                  +7 Days
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const input = document.getElementById(
+                      "create-lead-followup-input",
+                    ) as HTMLInputElement;
+                    if (input) {
+                      input.focus();
+                      input.showPicker?.();
+                    }
+                  }}
+                  className="rounded-lg border border-primary/40 bg-primary/10 hover:bg-primary hover:text-white px-2 py-0.5 text-[11px] font-bold text-primary transition-colors cursor-pointer flex items-center gap-1">
+                  <Calendar className="h-2.5 w-2.5" />
+                  Custom Date
+                </button>
+                {formData.nextFollowUpDate && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, nextFollowUpDate: "" })
+                    }
+                    className="rounded-lg border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground hover:text-destructive cursor-pointer">
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="relative flex items-center">
+              <Calendar className="absolute left-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <input
+                id="create-lead-followup-input"
+                type="datetime-local"
+                value={formData.nextFollowUpDate}
+                onClick={(e) => (e.target as any).showPicker?.()}
+                onChange={(e) =>
+                  setFormData({ ...formData, nextFollowUpDate: e.target.value })
+                }
+                className="w-full rounded-xl border border-border/80 bg-background pl-10 pr-3.5 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-hidden cursor-pointer hover:border-primary/50 transition-colors"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Staff will receive an automatic in-app notification and lead will appear in the Follow-Up Queue.
+            </p>
           </div>
 
           {/* Action Buttons */}

@@ -7,6 +7,7 @@ import { DashboardAttendanceWidget } from "./DashboardAttendanceWidget";
 import { DashboardCaseDistribution } from "./DashboardCaseDistribution";
 import { DashboardClientGrowth } from "./DashboardClientGrowth";
 import { DashboardHeader } from "./DashboardHeader";
+import { DashboardFollowUpAlert } from "./DashboardFollowUpAlert";
 import { DashboardKPICards } from "./DashboardKPICards";
 import { DashboardPaymentAnalytics } from "./DashboardPaymentAnalytics";
 import { DashboardRecentActivity } from "./DashboardRecentActivity";
@@ -46,7 +47,10 @@ export function DashboardOverview() {
         onCustomDatesChange={setCustomDates}
       />
 
-      {/* 2. Primary Executive KPIs (Revenue, Pending, Receivables, Clients) */}
+      {/* 2. Priority Follow-Up Reminder Alert Banner (Overdue / Due Today) */}
+      <DashboardFollowUpAlert />
+
+      {/* 3. Primary Executive KPIs (Revenue, Pending, Receivables, Clients) */}
       <DashboardKPICards filterParams={filterParams} />
 
       {/* 3. Action Center: Pending Payment Verification Queue */}

@@ -35,6 +35,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/hooks/useConfirm";
 
+const getPresetIsoString = (daysAhead: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(10, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 interface LeadActivityDrawerProps {
   leadId: string | null;
   isOpen: boolean;
@@ -508,15 +516,65 @@ export function LeadActivityDrawer({
                   {/* Next Follow-Up Date & Status Transition */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <label className="text-xs font-semibold text-foreground block mb-1">
-                        Next Follow-Up Date
-                      </label>
-                      <input
-                        type="datetime-local"
-                        value={nextFollowUp}
-                        onChange={(e) => setNextFollowUp(e.target.value)}
-                        className="w-full rounded-lg border border-border/80 bg-background px-2.5 py-1.5 text-xs text-foreground focus:border-primary"
-                      />
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-semibold text-foreground">
+                          Next Follow-Up
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setNextFollowUp(getPresetIsoString(1))}
+                            className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted hover:bg-muted/80 text-foreground cursor-pointer">
+                            +1d
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNextFollowUp(getPresetIsoString(3))}
+                            className="rounded px-1.5 py-0.5 text-[10px] font-semibold bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer">
+                            +3d
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setNextFollowUp(getPresetIsoString(7))}
+                            className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted hover:bg-muted/80 text-foreground cursor-pointer">
+                            +7d
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const input = document.getElementById(
+                                "drawer-followup-input",
+                              ) as HTMLInputElement;
+                              if (input) {
+                                input.focus();
+                                input.showPicker?.();
+                              }
+                            }}
+                            className="rounded px-1.5 py-0.5 text-[10px] font-bold bg-primary/10 text-primary hover:bg-primary hover:text-white cursor-pointer transition-colors flex items-center gap-0.5">
+                            <Calendar className="h-2.5 w-2.5" />
+                            Custom
+                          </button>
+                          {nextFollowUp && (
+                            <button
+                              type="button"
+                              onClick={() => setNextFollowUp("")}
+                              className="text-[10px] text-muted-foreground hover:text-destructive cursor-pointer">
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="relative flex items-center">
+                        <Calendar className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                          id="drawer-followup-input"
+                          type="datetime-local"
+                          value={nextFollowUp}
+                          onClick={(e) => (e.target as any).showPicker?.()}
+                          onChange={(e) => setNextFollowUp(e.target.value)}
+                          className="w-full rounded-lg border border-border/80 bg-background pl-8 pr-2.5 py-1.5 text-xs text-foreground focus:border-primary cursor-pointer hover:border-primary/50 transition-colors"
+                        />
+                      </div>
                     </div>
 
                     <div>

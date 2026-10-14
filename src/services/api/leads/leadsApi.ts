@@ -5,8 +5,11 @@ import { baseApi } from "@/lib/rtk-query/baseApi";
 import type { ApiResponse } from "@/types/api.types";
 import type {
   BackendLead,
+  CompleteFollowUpPayload,
   CreateLeadActivityPayload,
   CreateLeadPayload,
+  FollowUpQueueResponse,
+  GetFollowUpQueryParams,
   GetLeadsQueryParams,
   LeadActivity,
   LeadSummaryStats,
@@ -40,6 +43,32 @@ export const leadsApi = baseApi.injectEndpoints({
           : [{ type: "Lead", id: "LIST" }],
     }),
 
+    getFollowUpQueue: builder.query<ApiResponse<FollowUpQueueResponse>, GetFollowUpQueryParams | void>({
+      query: (params) => {
+        const queryParams = new URLSearchParams();
+        if (params) {
+          Object.entries(params).forEach(([key, val]) => {
+            if (val !== undefined && val !== null && val !== "" && val !== "ALL") {
+              queryParams.append(key, String(val));
+            }
+          });
+        }
+        const qs = queryParams.toString();
+        return {
+          url: qs ? `/leads/follow-ups?${qs}` : "/leads/follow-ups",
+          method: "GET",
+        };
+      },
+      providesTags: (result) =>
+        result?.data?.items
+          ? [
+              ...result.data.items.map(({ id }) => ({ type: "Lead" as const, id })),
+              { type: "Lead", id: "FOLLOW_UPS" },
+              { type: "Lead", id: "LIST" },
+            ]
+          : [{ type: "Lead", id: "FOLLOW_UPS" }],
+    }),
+
     getLeadSummaryStats: builder.query<ApiResponse<LeadSummaryStats>, void>({
       query: () => ({
         url: "/leads/stats",
@@ -61,6 +90,7 @@ export const leadsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [
         { type: "Lead", id: "LIST" },
+        { type: "Lead", id: "FOLLOW_UPS" },
         { type: "Lead", id: "STATS" },
       ],
     }),
@@ -77,6 +107,7 @@ export const leadsApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Lead", id },
         { type: "Lead", id: "LIST" },
+        { type: "Lead", id: "FOLLOW_UPS" },
         { type: "Lead", id: "STATS" },
       ],
     }),
@@ -93,6 +124,24 @@ export const leadsApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { leadId }) => [
         { type: "Lead", id: leadId },
         { type: "Lead", id: "LIST" },
+        { type: "Lead", id: "FOLLOW_UPS" },
+        { type: "Lead", id: "STATS" },
+      ],
+    }),
+
+    completeFollowUp: builder.mutation<
+      ApiResponse<{ lead: BackendLead; activity: LeadActivity }>,
+      { leadId: string; data: CompleteFollowUpPayload }
+    >({
+      query: ({ leadId, data }) => ({
+        url: `/leads/${leadId}/complete-follow-up`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { leadId }) => [
+        { type: "Lead", id: leadId },
+        { type: "Lead", id: "LIST" },
+        { type: "Lead", id: "FOLLOW_UPS" },
         { type: "Lead", id: "STATS" },
       ],
     }),
@@ -105,6 +154,7 @@ export const leadsApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, id) => [
         { type: "Lead", id },
         { type: "Lead", id: "LIST" },
+        { type: "Lead", id: "FOLLOW_UPS" },
         { type: "Lead", id: "STATS" },
       ],
     }),
@@ -114,10 +164,12 @@ export const leadsApi = baseApi.injectEndpoints({
 
 export const {
   useGetLeadsQuery,
+  useGetFollowUpQueueQuery,
   useGetLeadSummaryStatsQuery,
   useGetLeadByIdQuery,
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useAddLeadActivityMutation,
+  useCompleteFollowUpMutation,
   useDeleteLeadMutation,
 } = leadsApi;

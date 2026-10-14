@@ -14,8 +14,10 @@ import {
   ShieldCheck,
   ChevronRight,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/common";
+import { DashboardFollowUpAlert } from "./DashboardFollowUpAlert";
 
 export function StaffDashboardHub() {
   const { user } = useAuth();
@@ -25,6 +27,16 @@ export function StaffDashboardHub() {
 
   const quickActions = [
     {
+      title: "Follow-Up Queue & Leads",
+      subtitle: "Review scheduled prospective client calls, preset follow-up reminders, and log call outcomes.",
+      href: ROUTES.LEADS_FOLLOW_UP,
+      icon: Calendar,
+      badge: "CRM Queue",
+      badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+      buttonText: "Open Queue",
+      highlight: true,
+    },
+    {
       title: "Client Case Directory",
       subtitle: "Access and manage all active client files, case intakes, and status notes.",
       href: ROUTES.CLIENTS,
@@ -32,7 +44,7 @@ export function StaffDashboardHub() {
       badge: "Assigned Files",
       badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
       buttonText: "Open Directory",
-      highlight: true,
+      highlight: false,
     },
     {
       title: "Payments & Invoices",
@@ -126,6 +138,9 @@ export function StaffDashboardHub() {
           </div>
         </div>
       </div>
+
+      {/* Priority Follow-Up Reminder Alert Banner */}
+      <DashboardFollowUpAlert />
 
       {/* 3. QUICK ACTIONS GRID */}
       <div className="space-y-3">

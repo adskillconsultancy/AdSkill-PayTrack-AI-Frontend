@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { LeadSummaryStats } from "../types";
 import {
@@ -110,34 +111,49 @@ export function LeadMetricCards({
         "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5",
         className,
       )}>
-      {cards.map((card) => (
-        <div
-          key={card.id}
-          className="group relative flex items-center justify-between p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#EAE6DF] bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all duration-200">
-          {/* Left Info Stack */}
-          <div className="space-y-1.5">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
-              {card.label}
-            </span>
-            <div className="text-2xl sm:text-3xl font-black tracking-tight text-[#0a0a0a]">
-              {card.value}
+      {cards.map((card) => {
+        const isFollowUp = card.id === "FOLLOW_UP";
+        const cardContent = (
+          <div
+            className={cn(
+              "group relative flex items-center justify-between p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#EAE6DF] bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all duration-200",
+              isFollowUp && "hover:border-amber-400 hover:shadow-md cursor-pointer",
+            )}>
+            {/* Left Info Stack */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">
+                {card.label}
+              </span>
+              <div className="text-2xl sm:text-3xl font-black tracking-tight text-[#0a0a0a]">
+                {card.value}
+              </div>
+              <div
+                className={cn(
+                  "flex items-center gap-1.5 text-xs font-bold pt-0.5",
+                  card.indicatorColor,
+                )}>
+                {card.indicatorIcon}
+                <span>{card.statusText}</span>
+              </div>
             </div>
-            <div
-              className={cn(
-                "flex items-center gap-1.5 text-xs font-bold pt-0.5",
-                card.indicatorColor,
-              )}>
-              {card.indicatorIcon}
-              <span>{card.statusText}</span>
-            </div>
-          </div>
 
-          {/* Right Large Circular Icon */}
-          <div className="transition-transform duration-200 group-hover:scale-105">
-            {card.icon}
+            {/* Right Large Circular Icon */}
+            <div className="transition-transform duration-200 group-hover:scale-105">
+              {card.icon}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+
+        if (isFollowUp) {
+          return (
+            <Link key={card.id} href="/leads/follow-up" className="block">
+              {cardContent}
+            </Link>
+          );
+        }
+
+        return <div key={card.id}>{cardContent}</div>;
+      })}
     </div>
   );
 }

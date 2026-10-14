@@ -13,11 +13,31 @@ import {
   UserCheck,
   Shield,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useUpdateLeadMutation } from "@/services/api/leads/leadsApi";
 import { useConfirm } from "@/hooks/useConfirm";
 import type { BackendLead, LeadStatus } from "../types";
+
+const getPresetIsoString = (daysAhead: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(10, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const formatInitialDate = (isoStr?: string | null) => {
+  if (!isoStr) return "";
+  try {
+    const d = new Date(isoStr);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return "";
+  }
+};
 
 interface EditLeadModalProps {
   isOpen: boolean;
@@ -49,6 +69,7 @@ export function EditLeadModal({
     referralName: "",
     status: "NEW" as LeadStatus,
     assignedToId: "",
+    nextFollowUpDate: "",
   });
 
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -66,6 +87,7 @@ export function EditLeadModal({
         referralName: lead.referralName || "",
         status: lead.status || "NEW",
         assignedToId: lead.assignedToId || "",
+        nextFollowUpDate: formatInitialDate(lead.nextFollowUpDate),
       });
       setErrorMessage(null);
     }
@@ -117,6 +139,9 @@ export function EditLeadModal({
             : null,
           status: formData.status,
           assignedToId: formData.assignedToId ? formData.assignedToId : null,
+          nextFollowUpDate: formData.nextFollowUpDate
+            ? new Date(formData.nextFollowUpDate).toISOString()
+            : null,
         },
       }).unwrap();
 
@@ -354,6 +379,98 @@ export function EditLeadModal({
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Next Follow-Up Reminder & Quick Presets */}
+            <div className="rounded-2xl border border-[#EAE6DF] bg-[#FAF8F5] p-4 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-xs font-bold text-[#0a0a0a] flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                  <span>Next Follow-Up Reminder</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">
+                    (Auto-notifies assigned staff)
+                  </span>
+                </label>
+
+                {/* Quick Preset Buttons */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        nextFollowUpDate: getPresetIsoString(1),
+                      })
+                    }
+                    className="rounded-lg border border-[#EAE6DF] bg-white hover:bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 transition-colors cursor-pointer">
+                    +1 Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        nextFollowUpDate: getPresetIsoString(3),
+                      })
+                    }
+                    className="rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 transition-colors cursor-pointer">
+                    +3 Days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        nextFollowUpDate: getPresetIsoString(7),
+                      })
+                    }
+                    className="rounded-lg border border-[#EAE6DF] bg-white hover:bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 transition-colors cursor-pointer">
+                    +7 Days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const input = document.getElementById(
+                        "edit-lead-followup-input",
+                      ) as HTMLInputElement;
+                      if (input) {
+                        input.focus();
+                        input.showPicker?.();
+                      }
+                    }}
+                    className="rounded-lg border border-blue-300 bg-blue-50 hover:bg-blue-600 hover:text-white px-2 py-0.5 text-[11px] font-bold text-blue-700 transition-colors cursor-pointer flex items-center gap-1">
+                    <Calendar className="h-2.5 w-2.5" />
+                    Custom Date
+                  </button>
+                  {formData.nextFollowUpDate && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData({ ...formData, nextFollowUpDate: "" })
+                      }
+                      className="rounded-lg border border-[#EAE6DF] px-2 py-0.5 text-[10px] text-muted-foreground hover:text-red-600 cursor-pointer">
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="relative flex items-center">
+                <Calendar className="absolute left-3.5 h-4 w-4 text-[#64748B] pointer-events-none" />
+                <input
+                  id="edit-lead-followup-input"
+                  type="datetime-local"
+                  value={formData.nextFollowUpDate}
+                  onClick={(e) => (e.target as any).showPicker?.()}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nextFollowUpDate: e.target.value })
+                  }
+                  className="w-full h-10 pl-10 pr-3.5 rounded-xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a] transition-colors cursor-pointer hover:border-slate-400"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Rescheduling will automatically update the lead in your Follow-Up Queue.
+              </p>
             </div>
           </div>
 

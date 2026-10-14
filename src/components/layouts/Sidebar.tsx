@@ -32,6 +32,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useGetUnreadCountQuery } from "@/services/api/notifications/notificationsApi";
+import { useGetFollowUpQueueQuery } from "@/services/api/leads/leadsApi";
 
 interface NavSubItem {
   title: string;
@@ -100,6 +101,10 @@ const navSections: NavSection[] = [
           {
             title: "Lead List",
             href: ROUTES.LEADS,
+          },
+          {
+            title: "Follow-Up Queue",
+            href: ROUTES.LEADS_FOLLOW_UP,
           },
         ],
       },
@@ -356,6 +361,16 @@ export function Sidebar() {
     pollingInterval: 30000,
   });
   const unreadCount = unreadData?.data?.unreadCount || 0;
+
+  const { data: followUpQueueData } = useGetFollowUpQueueQuery(
+    { page: 1, limit: 1 },
+    {
+      skip: !user || isClientAccount,
+      pollingInterval: 30000,
+    },
+  );
+  const followUpCount = followUpQueueData?.data?.counts?.total || 0;
+  const overdueFollowUpCount = followUpQueueData?.data?.counts?.overdue || 0;
 
   const [expandedItems, setExpandedItems] = React.useState<
     Record<string, boolean>
@@ -712,6 +727,12 @@ export function Sidebar() {
                               </span>
                             </span>
 
+                            {item.title === "Leads" && followUpCount > 0 && (
+                              <span className="mr-2 flex h-4.5 min-w-[18px] px-1.5 items-center justify-center rounded-full text-[10px] font-bold text-white bg-amber-500 shadow-2xs shrink-0">
+                                {followUpCount > 99 ? "99+" : followUpCount}
+                              </span>
+                            )}
+
                             <ChevronDown
                               className={cn(
                                 "h-3.5 w-3.5 shrink-0 text-[#525252] transition-transform duration-200 group-hover:text-[#0a0a0a]",
@@ -761,12 +782,20 @@ export function Sidebar() {
                                   href={sub.href}
                                   onClick={closeMobileSidebar}
                                   className={cn(
-                                    "block rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
+                                    "flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors",
                                     isSubActive
                                       ? "text-[#0a0a0a] font-bold bg-[#FAF8F5]"
                                       : "text-[#262626] hover:text-[#0a0a0a] hover:bg-[#FAF8F5]",
                                   )}>
-                                  {sub.title}
+                                  <span>{sub.title}</span>
+                                  {sub.href === ROUTES.LEADS_FOLLOW_UP &&
+                                    followUpCount > 0 && (
+                                      <span className="flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full text-[9px] font-bold text-white bg-amber-500 shadow-2xs">
+                                        {followUpCount > 99
+                                          ? "99+"
+                                          : followUpCount}
+                                      </span>
+                                    )}
                                 </Link>
                               );
                             })}
@@ -819,6 +848,11 @@ export function Sidebar() {
                   {item.href === ROUTES.NOTIFICATIONS && unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-[14px] px-0.5 items-center justify-center rounded-full bg-rose-600 text-[8px] font-bold text-white ring-1 ring-background animate-in zoom-in-75">
                       {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                  {item.title === "Leads" && followUpCount > 0 && (
+                    <span className="absolute -top-1 -right-1.5 flex h-3.5 min-w-[14px] px-0.5 items-center justify-center rounded-full text-[8px] font-bold text-white bg-amber-500 ring-1 ring-background animate-in zoom-in-75">
+                      {followUpCount > 99 ? "99+" : followUpCount}
                     </span>
                   )}
                   <span className="sr-only">{item.title}</span>

@@ -15,7 +15,8 @@ export type LeadActivityType =
   | "EMAIL"
   | "MEETING"
   | "NOTE"
-  | "STATUS_CHANGE";
+  | "STATUS_CHANGE"
+  | "FOLLOW_UP_COMPLETED";
 
 export type CallOutcome =
   | "ANSWERED"
@@ -32,6 +33,7 @@ export interface LeadActivity {
   callOutcome?: CallOutcome | null;
   notes?: string | null;
   nextFollowUp?: string | null;
+  isFollowUpDone?: boolean;
   performedById?: string | null;
   performedByName?: string | null;
   performedBy?: {
@@ -77,6 +79,10 @@ export interface BackendLead {
     email: string;
   } | null;
   createdByName?: string | null;
+  nextFollowUpDate?: string | null;
+  lastFollowUpAt?: string | null;
+  isFollowUpDone?: boolean;
+  followUpNotifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -104,6 +110,7 @@ export interface CreateLeadPayload {
   status?: LeadStatus;
   assignedToId?: string;
   createdByName?: string;
+  nextFollowUpDate?: string | null;
 }
 
 export interface UpdateLeadPayload {
@@ -116,6 +123,8 @@ export interface UpdateLeadPayload {
   referralName?: string | null;
   status?: LeadStatus;
   assignedToId?: string | null;
+  nextFollowUpDate?: string | null;
+  isFollowUpDone?: boolean;
 }
 
 export interface CreateLeadActivityPayload {
@@ -126,6 +135,7 @@ export interface CreateLeadActivityPayload {
   statusUpdate?: LeadStatus | null;
   performedById?: string | null;
   performedByName?: string | null;
+  isFollowUpDone?: boolean;
 }
 
 export interface GetLeadsQueryParams {
@@ -138,4 +148,38 @@ export interface GetLeadsQueryParams {
   country?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+}
+
+export type FollowUpUrgency = "OVERDUE" | "TODAY" | "UPCOMING" | "COMPLETED" | "ALL";
+
+export interface FollowUpQueueLead extends BackendLead {
+  urgency: "OVERDUE" | "TODAY" | "UPCOMING" | "COMPLETED";
+  lastActivity?: LeadActivity | null;
+}
+
+export interface FollowUpQueueCounts {
+  overdue: number;
+  today: number;
+  upcoming: number;
+  completed?: number;
+  total: number;
+}
+
+export interface FollowUpQueueResponse {
+  items: FollowUpQueueLead[];
+  counts: FollowUpQueueCounts;
+}
+
+export interface GetFollowUpQueryParams {
+  page?: number;
+  limit?: number;
+  urgency?: FollowUpUrgency;
+  assignedToId?: string;
+  search?: string;
+}
+
+export interface CompleteFollowUpPayload {
+  notes?: string;
+  outcome?: string;
+  nextFollowUpDate?: string | null;
 }
