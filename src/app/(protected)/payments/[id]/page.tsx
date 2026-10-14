@@ -1,3 +1,9 @@
+"use client";
+
+import { Button } from "@/components/common/Button";
+import { SkeletonDetailView } from "@/components/common/Skeleton";
+import { usePermissions } from "@/hooks/usePermissions";
+import { downloadAndPrintPaymentReceipt } from "@/lib/documentDownload";
 import {
   cn,
   formatCurrencyWithCode,
