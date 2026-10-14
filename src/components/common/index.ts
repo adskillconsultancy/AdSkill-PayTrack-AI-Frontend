@@ -49,3 +49,4 @@ export type {
 
 
 export { GlobalOmniSearch } from "./GlobalOmniSearch";
+export { ConfirmationModal } from "./ConfirmationModal";

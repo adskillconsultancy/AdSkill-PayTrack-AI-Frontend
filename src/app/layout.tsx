@@ -31,6 +31,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { ConfirmationModal } from "@/components/common/ConfirmationModal";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -45,7 +47,10 @@ export default function RootLayout({
         suppressHydrationWarning
         className="font-sans antialiased text-foreground bg-background">
         <ThemeProvider>
-          <QueryProvider>{children}</QueryProvider>
+          <QueryProvider>
+            {children}
+            <ConfirmationModal />
+          </QueryProvider>
         </ThemeProvider>
         <Analytics />
       </body>

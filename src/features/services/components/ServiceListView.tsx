@@ -11,6 +11,7 @@ import {
   useDeleteServiceMutation,
   useUpdateServiceMutation,
 } from "@/services/api/services/servicesApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { BackendService, BackendServiceCategory, ServiceSummaryStats } from "../types";
 import { ServiceMetricCards } from "./ServiceMetricCards";
 import { ServiceSearchBar } from "./ServiceSearchBar";
@@ -44,6 +45,7 @@ export function ServiceListView({
   categoryLabel = "OFFICIAL SERVICE DIRECTORY",
 }: ServiceListViewProps) {
   const router = useRouter();
+  const { confirm, alert } = useConfirm();
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
@@ -136,7 +138,15 @@ export function ServiceListView({
     e.stopPropagation();
     const s = services.find((item) => item.id === id);
     const serviceName = s ? `"${s.name}" (${s.code})` : "this service";
-    if (!window.confirm(`Are you sure you want to deactivate and remove ${serviceName}?`)) return;
+
+    const isConfirmed = await confirm({
+      title: "Deactivate & Remove Service",
+      message: `Are you sure you want to deactivate and remove ${serviceName}? This service will no longer be available for client cases.`,
+      confirmText: "Yes, Remove Service",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
 
     try {
       await deleteServiceMutation(id).unwrap();
@@ -145,7 +155,11 @@ export function ServiceListView({
         typeof err === "object" && err !== null && "data" in err
           ? (err as { data?: { message?: string } }).data?.message || "Failed to delete service"
           : "Failed to delete service";
-      alert(msg);
+      await alert({
+        title: "Delete Error",
+        message: msg,
+        variant: "danger",
+      });
     }
     setActiveMenuId(null);
   };
@@ -157,6 +171,14 @@ export function ServiceListView({
     if (!current) return;
     const nextIsActive = !current.isActive;
 
+    const isConfirmed = await confirm({
+      title: nextIsActive ? "Activate Service" : "Deactivate Service",
+      message: `Are you sure you want to ${nextIsActive ? "activate" : "deactivate"} "${current.name}"?`,
+      confirmText: nextIsActive ? "Activate" : "Deactivate",
+      variant: nextIsActive ? "info" : "warning",
+    });
+    if (!isConfirmed) return;
+
     try {
       await updateServiceMutation({ id, data: { isActive: nextIsActive } }).unwrap();
     } catch (err: unknown) {
@@ -164,7 +186,11 @@ export function ServiceListView({
         typeof err === "object" && err !== null && "data" in err
           ? (err as { data?: { message?: string } }).data?.message || "Failed to update service status"
           : "Failed to update service status";
-      alert(msg);
+      await alert({
+        title: "Status Update Error",
+        message: msg,
+        variant: "danger",
+      });
     }
     setActiveMenuId(null);
   };

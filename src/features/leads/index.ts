@@ -5,3 +5,5 @@ export * from "./components/CreateLeadModal";
 export * from "./components/LeadActivityDrawer";
 export * from "./components/LeadMetricCards";
 export * from "./components/LeadSearchBar";
+export * from "./components/EditLeadModal";
+export * from "./components/LeadDetailSkeleton";

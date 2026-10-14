@@ -27,9 +27,11 @@ import {
   useUpdateUserMutation,
   useDeleteUserMutation,
 } from "@/services/api/users/usersApi";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function UserListView() {
   const router = useRouter();
+  const { confirm, alert } = useConfirm();
 
   // Query states
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -192,6 +194,16 @@ export function UserListView() {
 
   // Handle status toggle
   const handleToggleStatus = async (item: UserItem, newStatus: "ACTIVE" | "SUSPENDED") => {
+    const isActivating = newStatus === "ACTIVE";
+    const isConfirmed = await confirm({
+      title: isActivating ? "Reactivate User Account" : "Suspend User Account",
+      message: `Are you sure you want to ${isActivating ? "reactivate" : "suspend"} account access for "${item.name}"?`,
+      confirmText: isActivating ? "Reactivate" : "Suspend",
+      cancelText: "Cancel",
+      variant: isActivating ? "info" : "warning",
+    });
+    if (!isConfirmed) return;
+
     try {
       await updateUser({
         id: item.id,
@@ -201,20 +213,36 @@ export function UserListView() {
       refetch();
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string } };
-      alert(apiErr?.data?.message || "Failed to update user status");
+      await alert({
+        title: "Status Update Error",
+        message: apiErr?.data?.message || "Failed to update user status",
+        variant: "danger",
+      });
     }
   };
 
   // Handle soft delete
   const handleDeleteUser = async (item: UserItem) => {
-    if (!confirm(`Are you sure you want to soft delete "${item.name}"?`)) return;
+    const isConfirmed = await confirm({
+      title: "Delete User Account",
+      message: `Are you sure you want to remove "${item.name}"? This user will no longer be able to log in.`,
+      confirmText: "Yes, Delete User",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
+
     try {
       await deleteUser(item.id).unwrap();
       setActiveMenuId(null);
       refetch();
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string } };
-      alert(apiErr?.data?.message || "Failed to delete user");
+      await alert({
+        title: "Delete Error",
+        message: apiErr?.data?.message || "Failed to delete user",
+        variant: "danger",
+      });
     }
   };
 

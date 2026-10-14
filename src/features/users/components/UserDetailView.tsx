@@ -36,6 +36,7 @@ import {
   useGetUserPermissionsQuery,
   useUpdateUserMutation,
 } from "@/services/api/users/usersApi";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface UserDetailViewProps {
   userId: string;
@@ -43,6 +44,7 @@ interface UserDetailViewProps {
 
 export function UserDetailView({ userId }: UserDetailViewProps) {
   const router = useRouter();
+  const { confirm, alert } = useConfirm();
   const [copied, setCopied] = React.useState(false);
   const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
 
@@ -73,12 +75,18 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
   const handleToggleStatus = async () => {
     if (!user) return;
     const newStatus = user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-    const confirmMsg =
-      newStatus === "SUSPENDED"
-        ? `Are you sure you want to suspend account for "${user.name}"?`
-        : `Reactivate account for "${user.name}"?`;
+    const isSuspending = newStatus === "SUSPENDED";
 
-    if (!confirm(confirmMsg)) return;
+    const isConfirmed = await confirm({
+      title: isSuspending ? "Suspend User Account" : "Reactivate User Account",
+      message: isSuspending
+        ? `Are you sure you want to suspend access for "${user.name}"? They will be logged out and unable to access the system.`
+        : `Reactivate account access for "${user.name}"?`,
+      confirmText: isSuspending ? "Yes, Suspend User" : "Yes, Reactivate",
+      cancelText: "Cancel",
+      variant: isSuspending ? "warning" : "info",
+    });
+    if (!isConfirmed) return;
 
     try {
       await updateUser({
@@ -90,7 +98,11 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
       refetchUser();
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string } };
-      alert(apiErr?.data?.message || "Failed to update status");
+      await alert({
+        title: "Status Update Error",
+        message: apiErr?.data?.message || "Failed to update status",
+        variant: "danger",
+      });
     }
   };
 
@@ -403,7 +415,13 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => alert(`Password reset link dispatched to ${user.email}`)}
+              onClick={() =>
+                alert({
+                  title: "Password Reset Dispatched",
+                  message: `A secure password reset verification link has been dispatched to ${user.email}.`,
+                  variant: "success",
+                })
+              }
               className="h-10 px-4 rounded-xl text-xs font-bold gap-2 cursor-pointer shadow-2xs"
             >
               <KeyRound className="h-3.5 w-3.5 text-[#F3A712]" />

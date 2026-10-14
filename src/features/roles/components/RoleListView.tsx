@@ -15,8 +15,10 @@ import { RoleDirectory } from "./RoleDirectory";
 import { RoleMatrixView } from "./RoleMatrixView";
 import { CreateRoleModal } from "./CreateRoleModal";
 import { EditRolePermissionsModal } from "./EditRolePermissionsModal";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export function RoleListView() {
+  const { confirm, alert } = useConfirm();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") === "matrix" ? "matrix" : "roles";
   const initialAction = searchParams.get("action");
@@ -53,17 +55,33 @@ export function RoleListView() {
   // Delete Custom Role
   const handleDeleteRole = async (role: RoleItem) => {
     if (role.isSystemRole) {
-      alert("System roles (SUPER_ADMIN, MANAGER, etc.) cannot be deleted.");
+      await alert({
+        title: "Action Not Allowed",
+        message: "System roles (SUPER_ADMIN, MANAGER, etc.) cannot be deleted as they are required for security operations.",
+        variant: "warning",
+      });
       return;
     }
-    if (!confirm(`Are you sure you want to delete role "${role.name}"?`)) return;
+
+    const isConfirmed = await confirm({
+      title: "Delete Role",
+      message: `Are you sure you want to delete role "${role.name}"? Users assigned to this role will lose their assigned permission presets.`,
+      confirmText: "Yes, Delete Role",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
 
     try {
       await deleteRole(role.id).unwrap();
       refetchRoles();
     } catch (err: unknown) {
       const errorObj = err as { data?: { message?: string } };
-      alert(errorObj?.data?.message || "Failed to delete role");
+      await alert({
+        title: "Delete Error",
+        message: errorObj?.data?.message || "Failed to delete role",
+        variant: "danger",
+      });
     }
   };
 

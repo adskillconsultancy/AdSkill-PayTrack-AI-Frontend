@@ -23,6 +23,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/hooks/useConfirm";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 export interface CaseNotesTimelineProps {
@@ -37,6 +38,7 @@ export function CaseNotesTimeline({
   isSuperAdmin = false,
 }: CaseNotesTimelineProps) {
   const { user } = useAuth();
+  const { confirm } = useConfirm();
   const { data: notesResponse, isLoading, isFetching } = useGetCaseNotesQuery(caseId);
   const notes = notesResponse?.data || [];
 
@@ -97,7 +99,15 @@ export function CaseNotesTimeline({
   };
 
   const handleDelete = async (noteId: string) => {
-    if (!confirm("Are you sure you want to remove this note from the timeline?")) return;
+    const isConfirmed = await confirm({
+      title: "Remove Case Note",
+      message: "Are you sure you want to remove this note from the timeline? This action cannot be undone.",
+      confirmText: "Yes, Remove Note",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
+
     setDeletingId(noteId);
     try {
       await deleteNote({ id: noteId, caseId }).unwrap();

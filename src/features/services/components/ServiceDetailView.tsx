@@ -40,6 +40,7 @@ import {
   useDeleteServiceMutation,
   useUpdateServiceMutation,
 } from "@/services/api/services/servicesApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { BackendService, BackendServiceCategory } from "../types";
 
 interface ServiceDetailViewProps {
@@ -90,6 +91,7 @@ const formatDate = (value?: string) => {
 
 export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
   const router = useRouter();
+  const { confirm, alert } = useConfirm();
   const [copiedSku, setCopiedSku] = React.useState(false);
   const [copiedLink, setCopiedLink] = React.useState(false);
   const [statusMessage, setStatusMessage] = React.useState<string | null>(null);
@@ -158,11 +160,17 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
   const handleToggleStatus = async () => {
     if (!service) return;
     const newStatus = !service.isActive;
-    const confirmMsg = newStatus
-      ? `Reactivate service offering "${service.name}" (${service.code})?`
-      : `Deactivate service offering "${service.name}" (${service.code})? It will no longer be available for client intake.`;
 
-    if (!window.confirm(confirmMsg)) return;
+    const isConfirmed = await confirm({
+      title: newStatus ? "Reactivate Service Offering" : "Deactivate Service Offering",
+      message: newStatus
+        ? `Are you sure you want to reactivate service "${service.name}" (${service.code})? It will become available for client cases.`
+        : `Are you sure you want to deactivate service "${service.name}" (${service.code})? It will no longer be available for new client intake.`,
+      confirmText: newStatus ? "Yes, Reactivate" : "Yes, Deactivate",
+      cancelText: "Cancel",
+      variant: newStatus ? "info" : "warning",
+    });
+    if (!isConfirmed) return;
 
     try {
       await updateServiceMutation({
@@ -178,19 +186,24 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
           ? (err as { data?: { message?: string } }).data?.message ||
             "Failed to update service status"
           : "Failed to update service status";
-      alert(msg);
+      await alert({
+        title: "Status Update Error",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 
   const handleDelete = async () => {
     if (!service) return;
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${service.name}" (${service.code}) from the active catalog?`,
-      )
-    ) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: "Delete Service Offering",
+      message: `Are you sure you want to permanently delete "${service.name}" (${service.code}) from the catalog? This action cannot be undone.`,
+      confirmText: "Yes, Delete Service",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
 
     try {
       await deleteServiceMutation(service.id).unwrap();
@@ -201,7 +214,11 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
           ? (err as { data?: { message?: string } }).data?.message ||
             "Failed to delete service offering"
           : "Failed to delete service offering";
-      alert(msg);
+      await alert({
+        title: "Delete Error",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 

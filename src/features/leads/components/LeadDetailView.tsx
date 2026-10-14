@@ -37,6 +37,7 @@ import {
 import { useGetUsersQuery } from "@/services/api/users/usersApi";
 import { useGetServicesQuery } from "@/services/api/services/servicesApi";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/hooks/useConfirm";
 import { LeadDetailSkeleton } from "./LeadDetailSkeleton";
 import { EditLeadModal } from "./EditLeadModal";
 import type {
@@ -73,6 +74,7 @@ const statusLabel: Record<LeadStatus, string> = {
 export function LeadDetailView({ leadId }: LeadDetailViewProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { confirm, alert } = useConfirm();
 
   // 1. Fetch full lead details with activities
   const {
@@ -192,18 +194,24 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
 
   const handleDelete = async () => {
     if (!lead) return;
-    if (
-      !window.confirm(
-        `Are you sure you want to permanently remove lead "${lead.fullName}"?`,
-      )
-    ) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: "Delete Prospective Lead",
+      message: `Are you sure you want to permanently remove lead "${lead.fullName}"? All interaction logs and CRM history will be erased.`,
+      confirmText: "Yes, Delete Lead",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
+
     try {
       await deleteLead(leadId).unwrap();
       router.push("/leads");
     } catch (err: any) {
-      alert(err?.data?.message || "Failed to delete lead");
+      await alert({
+        title: "Delete Error",
+        message: err?.data?.message || "Failed to delete lead",
+        variant: "danger",
+      });
     }
   };
 

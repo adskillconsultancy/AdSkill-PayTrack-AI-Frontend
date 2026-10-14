@@ -18,6 +18,7 @@ import { LeadMetricCards } from "./LeadMetricCards";
 import { LeadSearchBar } from "./LeadSearchBar";
 import { CreateLeadModal } from "./CreateLeadModal";
 import { LeadActivityDrawer } from "./LeadActivityDrawer";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   Phone,
   MessageSquare,
@@ -62,6 +63,7 @@ export function LeadListView({
   parentBreadcrumb = "CRM & Pipeline",
 }: LeadListViewProps) {
   const router = useRouter();
+  const { confirm, alert } = useConfirm();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<LeadStatus | "ALL">("ALL");
@@ -164,13 +166,23 @@ export function LeadListView({
   };
 
   const handleDeleteLead = async (id: string, name: string) => {
-    if (!window.confirm(`Are you sure you want to delete lead "${name}"?`)) {
-      return;
-    }
+    const isConfirmed = await confirm({
+      title: "Delete Prospective Lead",
+      message: `Are you sure you want to delete lead "${name}"? This action cannot be undone.`,
+      confirmText: "Yes, Delete Lead",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
+
     try {
       await deleteLeadMutation(id).unwrap();
     } catch (err: any) {
-      alert(err?.data?.message || "Failed to delete lead");
+      await alert({
+        title: "Delete Error",
+        message: err?.data?.message || "Failed to delete lead",
+        variant: "danger",
+      });
     }
   };
 
