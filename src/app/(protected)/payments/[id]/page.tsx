@@ -1,9 +1,3 @@
-"use client";
-
-import { Button } from "@/components/common/Button";
-import { SkeletonDetailView } from "@/components/common/Skeleton";
-import { usePermissions } from "@/hooks/usePermissions";
-import { downloadAndPrintPaymentReceipt } from "@/lib/documentDownload";
 import {
   cn,
   formatCurrencyWithCode,
@@ -29,7 +23,7 @@ import {
   RefreshCw,
   Shield,
   ShieldCheck,
-  User
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -80,11 +74,14 @@ export default function PaymentDetailPage() {
     try {
       await downloadAndPrintPaymentReceipt(
         payment.id,
-        payment.externalReference || payment.id.slice(0, 8).toUpperCase()
+        payment.externalReference || payment.id.slice(0, 8).toUpperCase(),
       );
-      setNotice("Official money receipt generated and downloaded successfully.");
+      setNotice(
+        "Official money receipt generated and downloaded successfully.",
+      );
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to download receipt";
+      const msg =
+        err instanceof Error ? err.message : "Failed to download receipt";
       setNotice(msg);
     } finally {
       setIsDownloadingReceipt(false);
@@ -96,7 +93,9 @@ export default function PaymentDetailPage() {
     if (payment.status === "VERIFIED") {
       await handleDownloadReceipt();
     } else {
-      setNotice("This transaction is awaiting verification. Printing draft voucher...");
+      setNotice(
+        "This transaction is awaiting verification. Printing draft voucher...",
+      );
       window.print();
     }
   };
@@ -225,7 +224,9 @@ export default function PaymentDetailPage() {
             ) : (
               <Receipt className="h-3.5 w-3.5 text-amber-700" />
             )}
-            {isDownloadingReceipt ? "Generating..." : "Download Official Receipt"}
+            {isDownloadingReceipt
+              ? "Generating..."
+              : "Download Official Receipt"}
           </Button>
 
           <Button
@@ -413,7 +414,9 @@ export default function PaymentDetailPage() {
                     : "bg-amber-50 text-amber-700 border-amber-200",
                 )}>
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{isVerified ? "AUTHENTICATED & VERIFIED" : "PENDING AUDIT"}</span>
+                <span>
+                  {isVerified ? "AUTHENTICATED & VERIFIED" : "PENDING AUDIT"}
+                </span>
               </div>
             </div>
 
@@ -446,10 +449,13 @@ export default function PaymentDetailPage() {
                   Clearing Channel
                 </span>
                 <span className="font-extrabold text-slate-900 text-xs block">
-                  {isStripe ? "Stripe Gateway" : payment.paymentMethod.replace(/_/g, " ")}
+                  {isStripe
+                    ? "Stripe Gateway"
+                    : payment.paymentMethod.replace(/_/g, " ")}
                 </span>
                 <span className="text-[10px] text-slate-500 block truncate">
-                  {payment.externalReference || (isStripe ? "Electronic Settlement" : "Office Clearance")}
+                  {payment.externalReference ||
+                    (isStripe ? "Electronic Settlement" : "Office Clearance")}
                 </span>
               </div>
               <div>
@@ -468,7 +474,9 @@ export default function PaymentDetailPage() {
             {/* Transaction Particulars Grid */}
             <div className="space-y-3 py-1 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] py-1 border-b border-dashed border-slate-200">
-                <span className="text-slate-500 font-medium">Internal Transaction Reference:</span>
+                <span className="text-slate-500 font-medium">
+                  Internal Transaction Reference:
+                </span>
                 <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
                   {payment.id}
                 </span>
@@ -476,7 +484,9 @@ export default function PaymentDetailPage() {
 
               {payment.externalReference && (
                 <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] py-1 border-b border-dashed border-slate-200">
-                  <span className="text-slate-500 font-medium">Bank Wire / Confirmation #:</span>
+                  <span className="text-slate-500 font-medium">
+                    Bank Wire / Confirmation #:
+                  </span>
                   <span className="font-mono font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200/60">
                     {payment.externalReference}
                   </span>
@@ -485,28 +495,39 @@ export default function PaymentDetailPage() {
 
               {payment.installment && (
                 <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] py-1 border-b border-dashed border-slate-200">
-                  <span className="text-slate-500 font-medium">Milestone Allocation:</span>
+                  <span className="text-slate-500 font-medium">
+                    Milestone Allocation:
+                  </span>
                   <span className="font-bold text-slate-800">
-                    Milestone #{payment.installment.sequenceNumber} ({payment.installment.title || "Contracted Step"})
+                    Milestone #{payment.installment.sequenceNumber} (
+                    {payment.installment.title || "Contracted Step"})
                   </span>
                 </div>
               )}
 
               <div className="flex items-center justify-between text-[11px] py-1 border-b border-dashed border-slate-200">
-                <span className="text-slate-500 font-medium">Settlement Timestamp:</span>
+                <span className="text-slate-500 font-medium">
+                  Settlement Timestamp:
+                </span>
                 <span className="text-slate-800 font-bold">
-                  {formatDate(payment.paymentDate || payment.recordedAt || (payment as any).createdAt)}
+                  {formatDate(
+                    payment.paymentDate ||
+                      payment.recordedAt ||
+                      (payment as any).createdAt,
+                  )}
                 </span>
               </div>
 
               <div className="flex items-center justify-between text-[11px] py-1">
-                <span className="text-slate-500 font-medium">Verification Stamp:</span>
+                <span className="text-slate-500 font-medium">
+                  Verification Stamp:
+                </span>
                 <span className="text-slate-800 font-bold">
                   {isStripe
                     ? "Stripe Webhook HMAC Engine (256-Bit SSL)"
                     : payment.verifiedBy?.name
-                    ? `Verified by ${payment.verifiedBy.name} (${payment.verifiedBy.role?.name || "Staff"})`
-                    : "Authorized AdSkill Treasury"}
+                      ? `Verified by ${payment.verifiedBy.name} (${payment.verifiedBy.role?.name || "Staff"})`
+                      : "Authorized AdSkill Treasury"}
                 </span>
               </div>
             </div>
@@ -531,7 +552,14 @@ export default function PaymentDetailPage() {
                 </div>
                 <div>
                   <span className="text-[10px] font-mono font-bold text-slate-500 block">
-                    AUTH: {(payment.externalReference || payment.stripePaymentIntentId || payment.id).slice(-12).toUpperCase()}
+                    AUTH:{" "}
+                    {(
+                      payment.externalReference ||
+                      payment.stripePaymentIntentId ||
+                      payment.id
+                    )
+                      .slice(-12)
+                      .toUpperCase()}
                   </span>
                   <span className="text-[9px] text-slate-400 block">
                     ADSKILL IMMUTABLE AUDIT TRAIL
@@ -552,7 +580,11 @@ export default function PaymentDetailPage() {
                   ) : (
                     <Download className="w-3.5 h-3.5 text-amber-700" />
                   )}
-                  <span>{isDownloadingReceipt ? "Generating..." : "Download Receipt"}</span>
+                  <span>
+                    {isDownloadingReceipt
+                      ? "Generating..."
+                      : "Download Receipt"}
+                  </span>
                 </button>
 
                 <button
@@ -581,7 +613,8 @@ export default function PaymentDetailPage() {
                   Uploaded Proof Documents & Physical Slips
                 </h3>
                 <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg text-slate-400">
-                  {proofDocs.length} Attachment{proofDocs.length !== 1 ? "s" : ""}
+                  {proofDocs.length} Attachment
+                  {proofDocs.length !== 1 ? "s" : ""}
                 </span>
               </div>
 
@@ -606,7 +639,8 @@ export default function PaymentDetailPage() {
                               {doc.originalName}
                             </h4>
                             <span className="text-[10px] text-slate-400 font-medium">
-                              {formatFileSize(doc.size)} • Uploaded {formatDate(doc.createdAt)}
+                              {formatFileSize(doc.size)} • Uploaded{" "}
+                              {formatDate(doc.createdAt)}
                             </span>
                           </div>
                         </div>
