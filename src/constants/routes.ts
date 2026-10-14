@@ -40,6 +40,8 @@ export const ROUTES = {
   INVOICES: "/invoices-receipts",
   ATTENDANCE: "/attendance",
   STAFF_MANAGEMENT: "/staff-management",
+  LEADS: "/leads",
+  LEAD_DETAIL: (id: string) => `/leads/${id}`,
 } as const;
 
 export const PUBLIC_ROUTES = [

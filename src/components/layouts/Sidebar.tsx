@@ -24,6 +24,7 @@ import {
   Receipt,
   ShieldAlert,
   User,
+  UserPlus,
   Users,
 } from "lucide-react";
 import Image from "next/image";
@@ -84,6 +85,23 @@ const navSections: NavSection[] = [
         title: "Notifications",
         href: ROUTES.NOTIFICATIONS,
         icon: Bell,
+      },
+    ],
+  },
+  {
+    sectionTitle: "LEADS MANAGEMENT",
+    portalType: "MANAGEMENT",
+    items: [
+      {
+        title: "Leads",
+        href: ROUTES.LEADS,
+        icon: UserPlus,
+        subItems: [
+          {
+            title: "Lead List",
+            href: ROUTES.LEADS,
+          },
+        ],
       },
     ],
   },
