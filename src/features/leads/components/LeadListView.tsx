@@ -177,6 +177,11 @@ export function LeadListView({
 
     try {
       await deleteLeadMutation(id).unwrap();
+      await alert({
+        title: "Lead Deleted",
+        message: `Prospective lead "${name}" has been permanently removed.`,
+        variant: "success",
+      });
     } catch (err: any) {
       await alert({
         title: "Delete Error",

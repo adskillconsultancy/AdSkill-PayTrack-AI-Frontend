@@ -9,6 +9,7 @@ import {
   Eye, ListTree, ShieldCheck, CreditCard, Building, User,
   BadgeCheck
 } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface Props {
   receipt: Receipt | null;
@@ -34,6 +35,7 @@ export function ReceiptDetailModal({ receipt, apiBaseUrl, token, onClose }: Prop
   const [downloading, setDownloading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"details" | "preview">("details");
+  const { alert } = useConfirm();
 
   if (!receipt) return null;
 
@@ -66,7 +68,11 @@ export function ReceiptDetailModal({ receipt, apiBaseUrl, token, onClose }: Prop
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("PDF download failed.");
+      await alert({
+        title: "Download Failed",
+        message: "Failed to download receipt PDF. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setDownloading(false);
     }

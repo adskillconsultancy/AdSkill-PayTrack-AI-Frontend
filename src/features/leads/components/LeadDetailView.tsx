@@ -146,12 +146,6 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
     React.useState<LeadStatus>("NEW");
   const [assignedStaffId, setAssignedStaffId] = React.useState<string>("");
   const [isSavingLeadDetails, setIsSavingLeadDetails] = React.useState(false);
-  const [detailsSuccessMsg, setDetailsSuccessMsg] = React.useState<
-    string | null
-  >(null);
-  const [detailsErrorMsg, setDetailsErrorMsg] = React.useState<string | null>(
-    null,
-  );
 
   React.useEffect(() => {
     if (lead) {
@@ -167,9 +161,21 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
 
   const handleSaveLeadDetails = async () => {
     if (!lead || !hasLeadDetailsChanged) return;
+
+    const assignedStaffName =
+      staffList.find((s) => s.id === assignedStaffId)?.name ||
+      (assignedStaffId ? "Selected Staff" : "Unassigned");
+
+    const isConfirmed = await confirm({
+      title: "Confirm Lead Update",
+      message: `Save changes for "${lead.fullName}"?\n\n• New Status: ${statusLabel[leadStatusValue] || leadStatusValue}\n• Assigned Staff: ${assignedStaffName}`,
+      confirmText: "Yes, Save Changes",
+      cancelText: "Cancel",
+      variant: "info",
+    });
+    if (!isConfirmed) return;
+
     setIsSavingLeadDetails(true);
-    setDetailsSuccessMsg(null);
-    setDetailsErrorMsg(null);
 
     try {
       await updateLead({
@@ -179,14 +185,19 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
           assignedToId: assignedStaffId || null,
         },
       }).unwrap();
-      setDetailsSuccessMsg(
-        "Lead status and assigned staff updated successfully!",
-      );
-      setTimeout(() => setDetailsSuccessMsg(null), 3500);
+
+      await alert({
+        title: "Lead Updated Successfully",
+        message: `Lead status and caseworker assignment have been saved.`,
+        variant: "success",
+      });
     } catch (err: any) {
-      setDetailsErrorMsg(
-        err?.data?.message || err?.message || "Failed to update lead details",
-      );
+      await alert({
+        title: "Update Failed",
+        message:
+          err?.data?.message || err?.message || "Failed to update lead details",
+        variant: "danger",
+      });
     } finally {
       setIsSavingLeadDetails(false);
     }
@@ -205,6 +216,11 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
 
     try {
       await deleteLead(leadId).unwrap();
+      await alert({
+        title: "Lead Deleted",
+        message: `Prospective lead "${lead.fullName}" has been permanently removed.`,
+        variant: "success",
+      });
       router.push("/leads");
     } catch (err: any) {
       await alert({
@@ -242,10 +258,19 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
       setNotes("");
       setNextFollowUp("");
       setStatusUpdate("");
+
+      await alert({
+        title: "Activity Recorded Successfully",
+        message: `New ${activityType.toLowerCase()} log added to "${lead?.fullName}" timeline.`,
+        variant: "success",
+      });
     } catch (err: any) {
-      setFormError(
-        err?.data?.message || err?.message || "Failed to save activity log",
-      );
+      await alert({
+        title: "Failed to Record Activity",
+        message:
+          err?.data?.message || err?.message || "Failed to save activity log",
+        variant: "danger",
+      });
     }
   };
 
@@ -504,11 +529,9 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   <select
                     value={leadStatusValue}
                     disabled={isSavingLeadDetails || isUpdatingLead}
-                    onChange={(e) => {
-                      setLeadStatusValue(e.target.value as LeadStatus);
-                      setDetailsSuccessMsg(null);
-                      setDetailsErrorMsg(null);
-                    }}
+                    onChange={(e) =>
+                      setLeadStatusValue(e.target.value as LeadStatus)
+                    }
                     className="w-full h-10 px-2.5 rounded-xl border border-[#EAE6DF] bg-white text-xs font-bold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]">
                     <option value="NEW">New Lead</option>
                     <option value="CONTACTED">Contacted</option>
@@ -527,11 +550,7 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   <select
                     value={assignedStaffId}
                     disabled={isSavingLeadDetails || isUpdatingLead}
-                    onChange={(e) => {
-                      setAssignedStaffId(e.target.value);
-                      setDetailsSuccessMsg(null);
-                      setDetailsErrorMsg(null);
-                    }}
+                    onChange={(e) => setAssignedStaffId(e.target.value)}
                     className="w-full h-10 px-2.5 rounded-xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]">
                     <option value="">-- Unassigned --</option>
                     {staffList.map((st) => (
@@ -542,19 +561,6 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   </select>
                 </div>
               </div>
-
-              {detailsSuccessMsg && (
-                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center gap-1.5 animate-in fade-in">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  <span>{detailsSuccessMsg}</span>
-                </div>
-              )}
-
-              {detailsErrorMsg && (
-                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800 animate-in fade-in">
-                  {detailsErrorMsg}
-                </div>
-              )}
 
               <Button
                 type="button"

@@ -71,6 +71,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import type { CaseStatus, DocumentType, Payment } from "@/types/client-case.types";
 import { cn } from "@/lib/utils";
 import { downloadAndPrintCaseInvoice } from "@/lib/documentDownload";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const labels: Record<CaseStatus, string> = {
   INTAKE: "Intake",
@@ -172,6 +173,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const [downloadDocument] = useLazyGetDocumentDownloadQuery();
   const [createPayment, paymentState] = useCreatePaymentMutation();
   const [verifyPayment] = useVerifyPaymentMutation();
+  const { confirm, alert } = useConfirm();
 
   const canAssignCaseworker =
     !isClientAccount && (isSuperAdmin || (hasPermission("case:update") && role !== "CONSULTANT"));
@@ -216,9 +218,21 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
         body: { assignedConsultantId: consultantId },
       }).unwrap();
       setIsAssignModalOpen(false);
-      setNotice(consultantId ? "Caseworker assigned successfully." : "Caseworker unassigned successfully.");
+      const msg = consultantId ? "Caseworker assigned successfully." : "Caseworker unassigned successfully.";
+      setNotice(msg);
+      await alert({
+        title: "Caseworker Assignment",
+        message: msg,
+        variant: "success",
+      });
     } catch (err: unknown) {
-      setNotice(errorText(err));
+      const errStr = errorText(err);
+      setNotice(errStr);
+      await alert({
+        title: "Assignment Failed",
+        message: errStr,
+        variant: "danger",
+      });
     } finally {
       setIsAssigningStaff(false);
     }
@@ -248,6 +262,11 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to download invoice";
       setNotice(msg);
+      await alert({
+        title: "Invoice Download Failed",
+        message: msg,
+        variant: "danger",
+      });
     } finally {
       setIsDownloadingInvoice(false);
     }
@@ -313,8 +332,19 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
       }).unwrap();
       setPaymentAmount("");
       setNotice("Payment submitted for verification.");
+      await alert({
+        title: "Payment Submitted",
+        message: "Payment transaction submitted successfully for verification.",
+        variant: "success",
+      });
     } catch (error) {
-      setNotice(errorText(error));
+      const errStr = errorText(error);
+      setNotice(errStr);
+      await alert({
+        title: "Payment Submission Failed",
+        message: errStr,
+        variant: "danger",
+      });
     }
   };
 
@@ -324,8 +354,19 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
       await uploadDocuments({ caseId: clientId, files, documentType }).unwrap();
       setFiles([]);
       setNotice("Documents uploaded successfully.");
+      await alert({
+        title: "Documents Uploaded",
+        message: "Files uploaded and sent to security scanning successfully.",
+        variant: "success",
+      });
     } catch (error) {
-      setNotice(errorText(error));
+      const errStr = errorText(error);
+      setNotice(errStr);
+      await alert({
+        title: "Upload Failed",
+        message: errStr,
+        variant: "danger",
+      });
     }
   };
 
@@ -334,16 +375,91 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
       const response = await downloadDocument(id).unwrap();
       if (response.data?.signedDownloadUrl) window.open(response.data.signedDownloadUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
-      setNotice(errorText(error));
+      const errStr = errorText(error);
+      setNotice(errStr);
+      await alert({
+        title: "Download Failed",
+        message: errStr,
+        variant: "danger",
+      });
     }
   };
 
   const changeStatus = async (caseStatus: CaseStatus) => {
+    const isConfirmed = await confirm({
+      title: "Update Case Status?",
+      message: `Are you sure you want to change the case status to ${labels[caseStatus]}?`,
+      confirmText: "Yes, Update Status",
+      variant: "info",
+    });
+    if (!isConfirmed) return;
+
     try {
       await updateCase({ id: clientId, body: { caseStatus } }).unwrap();
       setNotice("Case status updated successfully.");
+      await alert({
+        title: "Case Status Updated",
+        message: `Case status has been successfully set to ${labels[caseStatus]}.`,
+        variant: "success",
+      });
     } catch (error) {
-      setNotice(errorText(error));
+      const errStr = errorText(error);
+      setNotice(errStr);
+      await alert({
+        title: "Status Update Failed",
+        message: errStr,
+        variant: "danger",
+      });
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string, docName: string) => {
+    const isConfirmed = await confirm({
+      title: "Delete Document?",
+      message: `Are you sure you want to permanently delete "${docName}"? This action cannot be undone.`,
+      confirmText: "Yes, Delete Document",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
+
+    try {
+      await deleteDocument({ documentId: docId, caseId: clientId }).unwrap();
+      await alert({
+        title: "Document Deleted",
+        message: `"${docName}" has been permanently removed from the case vault.`,
+        variant: "success",
+      });
+    } catch (error) {
+      await alert({
+        title: "Deletion Failed",
+        message: errorText(error),
+        variant: "danger",
+      });
+    }
+  };
+
+  const handleVerifyPayment = async (p: Payment) => {
+    const isConfirmed = await confirm({
+      title: "Verify Payment Settlement?",
+      message: `Are you sure you want to verify and post this ${money(p.amount, p.currency)} payment? An official receipt will be generated.`,
+      confirmText: "Yes, Verify Payment",
+      variant: "success",
+    });
+    if (!isConfirmed) return;
+
+    try {
+      await verifyPayment(p.id).unwrap();
+      await alert({
+        title: "Payment Verified",
+        message: `Payment of ${money(p.amount, p.currency)} has been verified. Official receipt has been created.`,
+        variant: "success",
+      });
+    } catch (error) {
+      await alert({
+        title: "Verification Failed",
+        message: errorText(error),
+        variant: "danger",
+      });
     }
   };
 
@@ -553,8 +669,19 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                     await updateUser({ id: profile!.id, data }).unwrap();
                     setEditing(null);
                     setNotice("Client profile updated successfully.");
+                    await alert({
+                      title: "Profile Updated",
+                      message: "Client profile information has been saved successfully.",
+                      variant: "success",
+                    });
                   } catch (error) {
-                    setNotice(errorText(error));
+                    const errStr = errorText(error);
+                    setNotice(errStr);
+                    await alert({
+                      title: "Update Failed",
+                      message: errStr,
+                      variant: "danger",
+                    });
                   }
                 }}
               />
@@ -624,8 +751,19 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                     await updateCase({ id: clientId, body }).unwrap();
                     setEditing(null);
                     setNotice("Case details updated successfully.");
+                    await alert({
+                      title: "Case Updated",
+                      message: "Case parameters and milestones have been saved successfully.",
+                      variant: "success",
+                    });
                   } catch (error) {
-                    setNotice(errorText(error));
+                    const errStr = errorText(error);
+                    setNotice(errStr);
+                    await alert({
+                      title: "Update Failed",
+                      message: errStr,
+                      variant: "danger",
+                    });
                   }
                 }}
               />
@@ -975,7 +1113,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => deleteDocument({ documentId: doc.id, caseId: clientId })}
+                                    onClick={() => handleDeleteDocument(doc.id, doc.originalName)}
                                     className="h-8 w-8 p-0 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer">
                                     <Trash2 className="h-3.5 w-3.5" />
                                     <span className="sr-only">Delete</span>
@@ -1081,7 +1219,10 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                     {canVerify && payment.status === "PENDING" && (
                       <Button
                         size="sm"
-                        onClick={() => verifyPayment(payment.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleVerifyPayment(payment);
+                        }}
                         className="h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold cursor-pointer">
                         Verify
                       </Button>

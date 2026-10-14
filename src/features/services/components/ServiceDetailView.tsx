@@ -177,9 +177,12 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
         id: service.id,
         data: { isActive: newStatus },
       }).unwrap();
-      setStatusMessage(`Service is now ${newStatus ? "active" : "inactive"}`);
-      clearStatusSoon(3500);
       refetchDirect();
+      await alert({
+        title: "Service Status Updated",
+        message: `Service "${service.name}" is now ${newStatus ? "active" : "inactive"}.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const msg =
         typeof err === "object" && err !== null && "data" in err
@@ -207,6 +210,11 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
 
     try {
       await deleteServiceMutation(service.id).unwrap();
+      await alert({
+        title: "Service Deleted",
+        message: `Service "${service.name}" has been permanently removed from the catalog.`,
+        variant: "success",
+      });
       router.push(ROUTES.SERVICES);
     } catch (err: unknown) {
       const msg =

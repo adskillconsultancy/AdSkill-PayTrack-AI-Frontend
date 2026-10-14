@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { cn, formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
@@ -8,6 +8,7 @@ import {
   Clock, ArrowUpRight, Building, User, Loader2,
   Copy, Check, FileCheck2
 } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface Props {
   invoice: Invoice;
@@ -31,6 +32,7 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; i
 export function InvoiceCard({ invoice, apiBaseUrl, token, onView }: Props) {
   const [downloading, setDownloading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const { alert } = useConfirm();
 
   const status = invoice.status || "ISSUED";
   const conf = statusConfig[status] || statusConfig.ISSUED;
@@ -63,7 +65,11 @@ export function InvoiceCard({ invoice, apiBaseUrl, token, onView }: Props) {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Failed to download PDF. Please try again.");
+      await alert({
+        title: "Download Failed",
+        message: "Failed to download invoice PDF. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setDownloading(false);
     }

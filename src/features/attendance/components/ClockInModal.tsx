@@ -6,6 +6,7 @@ import { X, Clock, Sparkles, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useClockInMutation } from "@/services/api/attendance/attendanceApi";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface ClockInModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const [clockIn, { isLoading }] = useClockInMutation();
+  const { alert } = useConfirm();
 
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -76,9 +78,18 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
       await clockIn({ currentFocus: finalFocus || undefined }).unwrap();
       onClose();
       if (onSuccess) onSuccess();
+      await alert({
+        title: "Clock In Confirmed",
+        message: "You have successfully clocked in for your shift today.",
+        variant: "success",
+      });
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string } };
-      alert(apiErr?.data?.message || "Failed to clock in");
+      await alert({
+        title: "Clock In Failed",
+        message: apiErr?.data?.message || "Failed to clock in",
+        variant: "danger",
+      });
     }
   };
 

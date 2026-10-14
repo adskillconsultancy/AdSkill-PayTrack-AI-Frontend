@@ -1,11 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle, CheckCircle2, Info, Trash2, X } from "lucide-react";
 import { useConfirmStore } from "@/stores/confirm.store";
 import { Button } from "@/components/common/Button";
 
 export function ConfirmationModal() {
+  const [mounted, setMounted] = React.useState(false);
+
   const {
     isOpen,
     type,
@@ -16,6 +19,10 @@ export function ConfirmationModal() {
     variant,
     closeWithResult,
   } = useConfirmStore();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Handle escape & enter key
   React.useEffect(() => {
@@ -39,7 +46,7 @@ export function ConfirmationModal() {
     };
   }, [isOpen, closeWithResult]);
 
-  if (!isOpen) return null;
+  if (!mounted || !isOpen) return null;
 
   const renderIcon = () => {
     switch (variant) {
@@ -83,11 +90,11 @@ export function ConfirmationModal() {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/65 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
         onClick={() => closeWithResult(false)}
       />
 
@@ -97,7 +104,7 @@ export function ConfirmationModal() {
         <button
           type="button"
           onClick={() => closeWithResult(false)}
-          className="absolute top-5 right-5 rounded-2xl p-2 text-slate-400 hover:bg-[#F1ECE4] hover:text-[#0a0a0a] transition-colors"
+          className="absolute top-5 right-5 rounded-2xl p-2 text-slate-400 hover:bg-[#F1ECE4] hover:text-[#0a0a0a] transition-colors cursor-pointer"
           title="Close dialog"
         >
           <X className="h-4 w-4" />
@@ -110,7 +117,7 @@ export function ConfirmationModal() {
             <h3 className="text-base sm:text-lg font-black text-[#0a0a0a]">
               {title}
             </h3>
-            <p className="text-xs text-[#64748B] leading-relaxed">
+            <p className="text-xs text-[#64748B] leading-relaxed whitespace-pre-wrap">
               {message}
             </p>
           </div>
@@ -140,7 +147,8 @@ export function ConfirmationModal() {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -32,6 +32,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { Button } from "@/components/common";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const formatMoney = (amount: number | string, currency = "USD") =>
   new Intl.NumberFormat("en-US", {
@@ -54,6 +55,7 @@ export function ClientDashboardHub() {
 
   const [activeTab, setActiveTab] = React.useState<"schedule" | "history" | "documents">("schedule");
   const [downloadingId, setDownloadingId] = React.useState<string | null>(null);
+  const { alert } = useConfirm();
 
   const summary = summaryRes?.data;
   const displayName = user?.preferredName || user?.name || "Valued Client";
@@ -75,7 +77,11 @@ export function ClientDashboardHub() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Failed to download invoice PDF. Please try again.");
+      await alert({
+        title: "Download Failed",
+        message: "Failed to download invoice PDF. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setDownloadingId(null);
     }
@@ -96,7 +102,11 @@ export function ClientDashboardHub() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Failed to download receipt PDF. Please try again.");
+      await alert({
+        title: "Download Failed",
+        message: "Failed to download receipt PDF. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setDownloadingId(null);
     }

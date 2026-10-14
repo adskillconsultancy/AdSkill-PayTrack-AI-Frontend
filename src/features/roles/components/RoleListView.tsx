@@ -75,6 +75,11 @@ export function RoleListView() {
     try {
       await deleteRole(role.id).unwrap();
       refetchRoles();
+      await alert({
+        title: "Role Deleted",
+        message: `Role "${role.name}" has been removed.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const errorObj = err as { data?: { message?: string } };
       await alert({

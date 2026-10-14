@@ -38,7 +38,7 @@ export function CaseNotesTimeline({
   isSuperAdmin = false,
 }: CaseNotesTimelineProps) {
   const { user } = useAuth();
-  const { confirm } = useConfirm();
+  const { confirm, alert } = useConfirm();
   const { data: notesResponse, isLoading, isFetching } = useGetCaseNotesQuery(caseId);
   const notes = notesResponse?.data || [];
 
@@ -89,12 +89,17 @@ export function CaseNotesTimeline({
 
       setNoteContent("");
       setIsPinned(false);
-      setActionNotice("Note posted successfully to timeline.");
-      setTimeout(() => setActionNotice(""), 3500);
+      await alert({
+        title: "Note Posted",
+        message: "Your note has been added to the case timeline.",
+        variant: "success",
+      });
     } catch (err: any) {
-      setActionNotice(
-        err?.data?.message || err?.message || "Failed to post note. Please try again."
-      );
+      await alert({
+        title: "Failed to Post Note",
+        message: err?.data?.message || err?.message || "Failed to post note. Please try again.",
+        variant: "danger",
+      });
     }
   };
 
@@ -111,10 +116,17 @@ export function CaseNotesTimeline({
     setDeletingId(noteId);
     try {
       await deleteNote({ id: noteId, caseId }).unwrap();
-      setActionNotice("Note removed from timeline.");
-      setTimeout(() => setActionNotice(""), 3000);
+      await alert({
+        title: "Note Removed",
+        message: "The note has been removed from the case timeline.",
+        variant: "success",
+      });
     } catch (err: any) {
-      setActionNotice(err?.data?.message || "Could not delete note");
+      await alert({
+        title: "Failed to Remove Note",
+        message: err?.data?.message || "Could not delete note",
+        variant: "danger",
+      });
     } finally {
       setDeletingId(null);
     }

@@ -8,6 +8,7 @@ import {
   useGenerateDigestMutation,
 } from "@/services/api/attendance/attendanceApi";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface DailyAiDigestCardProps {
   className?: string;
@@ -17,6 +18,7 @@ export function DailyAiDigestCard({ className }: DailyAiDigestCardProps) {
   const [isExpanded, setIsExpanded] = React.useState(true);
   const { data: digestResponse, isLoading, refetch } = useGetTodayDigestQuery();
   const [generateDigest, { isLoading: isGenerating }] = useGenerateDigestMutation();
+  const { alert } = useConfirm();
 
   const digest = digestResponse?.data;
 
@@ -24,8 +26,17 @@ export function DailyAiDigestCard({ className }: DailyAiDigestCardProps) {
     try {
       await generateDigest({}).unwrap();
       refetch();
+      await alert({
+        title: "Digest Updated",
+        message: "AI Executive Daily Digest has been re-synthesized successfully.",
+        variant: "success",
+      });
     } catch {
-      alert("Failed to refresh digest");
+      await alert({
+        title: "Refresh Failed",
+        message: "Failed to refresh AI digest. Please try again.",
+        variant: "danger",
+      });
     }
   };
 

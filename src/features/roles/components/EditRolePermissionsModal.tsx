@@ -2,6 +2,7 @@ import * as React from "react";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/common";
 import { useUpdateRolePermissionsMutation } from "@/services/api/roles/rolesApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { RoleItem, PermissionGroup } from "../types";
 import {
   getRoleDisplayName,
@@ -24,6 +25,7 @@ export function EditRolePermissionsModal({
   allPermissionsCount,
   onSuccess,
 }: EditRolePermissionsModalProps) {
+  const { alert } = useConfirm();
   const [editingPermIds, setEditingPermIds] = React.useState<string[]>([]);
   const [editSuccessMsg, setEditSuccessMsg] = React.useState<string | null>(null);
 
@@ -52,15 +54,21 @@ export function EditRolePermissionsModal({
         data: { permissionIds: editingPermIds },
       }).unwrap();
 
-      setEditSuccessMsg("Permissions updated successfully!");
       onSuccess();
-      setTimeout(() => {
-        setEditSuccessMsg(null);
-        onClose();
-      }, 1200);
+      onClose();
+
+      await alert({
+        title: "Permissions Updated",
+        message: `Capabilities for role "${getRoleDisplayName(role.name)}" have been successfully saved.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const errorObj = err as { data?: { message?: string } };
-      alert(errorObj?.data?.message || "Failed to update permissions");
+      await alert({
+        title: "Failed to Update Permissions",
+        message: errorObj?.data?.message || "Failed to update permissions",
+        variant: "danger",
+      });
     }
   };
 

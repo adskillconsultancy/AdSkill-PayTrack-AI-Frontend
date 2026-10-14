@@ -42,6 +42,7 @@ import {
   useUpdateUserPermissionsMutation,
   BackendUser,
 } from "@/services/api/users/usersApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   useGetAllRolesQuery,
   useGetAllPermissionsQuery,
@@ -125,6 +126,7 @@ export function EditUserForm({ userId }: EditUserFormProps) {
 
   const [updateUserMutation, { isLoading: isApiUpdating }] = useUpdateUserMutation();
   const [updateUserPermissionsMutation] = useUpdateUserPermissionsMutation();
+  const { alert } = useConfirm();
 
   const availableRoles = rolesResponse?.data || [];
   const permissionGroups = permsResponse?.data || [];
@@ -269,15 +271,22 @@ export function EditUserForm({ userId }: EditUserFormProps) {
       setIsSubmitting(false);
       setIsSuccess(true);
       const targetSlug = user.clientId || user.id;
-      setTimeout(() => {
-        router.push(`/users/${targetSlug}`);
-      }, 700);
+      await alert({
+        title: "Profile Updated",
+        message: `Account settings and security profile for "${name.trim()}" have been saved.`,
+        variant: "success",
+      });
+      router.push(`/users/${targetSlug}`);
     } catch (err: unknown) {
       setIsSubmitting(false);
       const apiErr = err as { data?: { message?: string } };
-      setErrorMessage(
-        apiErr?.data?.message || "Failed to update user profile. Please check all fields."
-      );
+      const msg = apiErr?.data?.message || "Failed to update user profile. Please check all fields.";
+      setErrorMessage(msg);
+      await alert({
+        title: "Update Failed",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 

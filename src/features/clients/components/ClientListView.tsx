@@ -13,6 +13,7 @@ import { FileText, ChevronRight, Eye, Copy, RefreshCw, ShieldCheck, Printer, Loa
 import { downloadAndPrintCaseInvoice } from "@/lib/documentDownload";
 import { ClientMetricCards } from "./ClientMetricCards";
 import { ClientSearchBar } from "./ClientSearchBar";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface ClientListViewProps {
   pageTitle?: string;
@@ -54,6 +55,7 @@ export function ClientListView({
   const [destinationFilter, setDestinationFilter] = React.useState("ALL");
   const [selectedSort, setSelectedSort] = React.useState("Newest First");
   const [currentPage, setCurrentPage] = React.useState(1);
+  const { alert } = useConfirm();
   const [downloadingCaseId, setDownloadingCaseId] = React.useState<string | null>(null);
   const pageSize = 10;
 
@@ -63,7 +65,11 @@ export function ClientListView({
       await downloadAndPrintCaseInvoice(caseId, caseCode);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to download invoice";
-      alert(msg);
+      await alert({
+        title: "Download Failed",
+        message: msg,
+        variant: "danger",
+      });
     } finally {
       setDownloadingCaseId(null);
     }

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, LogOut, Sparkles } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useClockOutMutation } from "@/services/api/attendance/attendanceApi";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface ClockOutModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export function ClockOutModal({ isOpen, onClose, onSuccess }: ClockOutModalProps
   const [eodNotes, setEodNotes] = React.useState("");
   const [mounted, setMounted] = React.useState(false);
   const [clockOut, { isLoading }] = useClockOutMutation();
+  const { confirm, alert } = useConfirm();
 
   React.useEffect(() => {
     setMounted(true);
@@ -45,13 +47,30 @@ export function ClockOutModal({ isOpen, onClose, onSuccess }: ClockOutModalProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isConfirmed = await confirm({
+      title: "Clock Out & Complete Shift?",
+      message: "Are you sure you want to end your shift for today? Your active hours and EOD notes will be finalized.",
+      confirmText: "Yes, Clock Out",
+      variant: "warning",
+    });
+    if (!isConfirmed) return;
+
     try {
       await clockOut({ eodNotes: eodNotes.trim() || undefined }).unwrap();
       onClose();
       if (onSuccess) onSuccess();
+      await alert({
+        title: "Shift Completed",
+        message: "You have successfully clocked out. Have a great day!",
+        variant: "success",
+      });
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string } };
-      alert(apiErr?.data?.message || "Failed to clock out");
+      await alert({
+        title: "Clock Out Failed",
+        message: apiErr?.data?.message || "Failed to clock out",
+        variant: "danger",
+      });
     }
   };
 

@@ -33,6 +33,7 @@ import type {
 } from "../types";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface LeadActivityDrawerProps {
   leadId: string | null;
@@ -60,6 +61,7 @@ export function LeadActivityDrawer({
   const [addActivity, { isLoading: isAddingActivity }] =
     useAddLeadActivityMutation();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
+  const { confirm, alert } = useConfirm();
 
   // Activity form state
   const [activityType, setActivityType] =
@@ -117,25 +119,67 @@ export function LeadActivityDrawer({
 
   const handleQuickStatusChange = async (newStatus: LeadStatus) => {
     if (!leadId) return;
+    const isConfirmed = await confirm({
+      title: "Update Lead Status?",
+      message: `Are you sure you want to change lead status to ${newStatus}?`,
+      confirmText: "Yes, Update Status",
+      variant: "info",
+    });
+    if (!isConfirmed) return;
+
     try {
       await updateLead({
         id: leadId,
         data: { status: newStatus },
       }).unwrap();
+      await alert({
+        title: "Status Updated",
+        message: `Lead status updated to ${newStatus}.`,
+        variant: "success",
+      });
     } catch (err: any) {
-      setFormError(err?.data?.message || "Failed to update status");
+      const msg = err?.data?.message || "Failed to update status";
+      setFormError(msg);
+      await alert({
+        title: "Update Failed",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 
   const handleQuickAssign = async (staffId: string) => {
     if (!leadId) return;
+    const assignedStaff = staffList.find((s) => s.id === staffId);
+    const staffName = assignedStaff ? assignedStaff.name : "Unassigned";
+    const isConfirmed = await confirm({
+      title: "Reassign Lead?",
+      message: staffId
+        ? `Are you sure you want to assign this lead to ${staffName}?`
+        : "Are you sure you want to unassign this lead?",
+      confirmText: staffId ? "Yes, Assign Staff" : "Yes, Unassign",
+      variant: "info",
+    });
+    if (!isConfirmed) return;
+
     try {
       await updateLead({
         id: leadId,
         data: { assignedToId: staffId || null },
       }).unwrap();
+      await alert({
+        title: "Lead Reassigned",
+        message: staffId ? `Lead assigned to ${staffName}.` : "Lead has been unassigned.",
+        variant: "success",
+      });
     } catch (err: any) {
-      setFormError(err?.data?.message || "Failed to reassign lead");
+      const msg = err?.data?.message || "Failed to reassign lead";
+      setFormError(msg);
+      await alert({
+        title: "Assignment Failed",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 
@@ -166,10 +210,20 @@ export function LeadActivityDrawer({
       setNotes("");
       setNextFollowUp("");
       setStatusUpdate("");
+      await alert({
+        title: "Activity Logged",
+        message: "Interaction record has been saved to the lead history.",
+        variant: "success",
+      });
     } catch (err: any) {
-      setFormError(
-        err?.data?.message || err?.message || "Failed to record activity log",
-      );
+      const msg =
+        err?.data?.message || err?.message || "Failed to record activity log";
+      setFormError(msg);
+      await alert({
+        title: "Log Failed",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 

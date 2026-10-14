@@ -6,6 +6,7 @@ import { Button } from "@/components/common/Button";
 import { useCreateLeadMutation } from "@/services/api/leads/leadsApi";
 import type { LeadStatus } from "../types";
 import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface CreateLeadModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ export function CreateLeadModal({
   onSuccess,
 }: CreateLeadModalProps) {
   const { user } = useAuth();
+  const { alert } = useConfirm();
   const [createLead, { isLoading }] = useCreateLeadMutation();
 
   const [formData, setFormData] = React.useState({
@@ -83,6 +85,8 @@ export function CreateLeadModal({
         assignedToId: formData.assignedToId || undefined,
       }).unwrap();
 
+      const createdName = formData.fullName.trim();
+
       // Reset & close
       setFormData({
         fullName: "",
@@ -97,6 +101,12 @@ export function CreateLeadModal({
       });
       onSuccess?.();
       onClose();
+
+      await alert({
+        title: "Lead Created Successfully",
+        message: `Prospective lead "${createdName}" has been added to the CRM pipeline.`,
+        variant: "success",
+      });
     } catch (err: any) {
       setErrorMessage(
         err?.data?.message || err?.message || "Failed to create lead. Please check your inputs.",

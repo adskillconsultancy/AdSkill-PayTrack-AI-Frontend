@@ -93,9 +93,12 @@ export function UserDetailView({ userId }: UserDetailViewProps) {
         id: user.id,
         data: { status: newStatus },
       }).unwrap();
-      setStatusMessage(`Account status changed to ${newStatus}`);
-      setTimeout(() => setStatusMessage(null), 3500);
       refetchUser();
+      await alert({
+        title: "Account Status Updated",
+        message: `Account status for "${user.name}" is now ${newStatus === "ACTIVE" ? "active" : "suspended"}.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string } };
       await alert({

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import { cn, formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
@@ -9,6 +9,7 @@ import {
   Loader2, ArrowUpRight, ShieldCheck,
   Copy, Check, BadgeCheck
 } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface Props {
   receipt: Receipt;
@@ -26,6 +27,7 @@ const formatDate = (d?: string | null) =>
 export function ReceiptCard({ receipt, apiBaseUrl, token, onView }: Props) {
   const [downloading, setDownloading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const { alert } = useConfirm();
 
   const client = receipt.case?.user;
 
@@ -52,7 +54,11 @@ export function ReceiptCard({ receipt, apiBaseUrl, token, onView }: Props) {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Failed to download PDF. Please try again.");
+      await alert({
+        title: "Download Failed",
+        message: "Failed to download receipt PDF. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setDownloading(false);
     }

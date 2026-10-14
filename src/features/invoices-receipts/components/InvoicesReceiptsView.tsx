@@ -26,6 +26,7 @@ import {
   Building, User, Calendar, ExternalLink, Sparkles,
   Layers, ChevronRight, BadgeCheck
 } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
@@ -142,6 +143,7 @@ function GenerateInvoiceModal({
 export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
   const { hasPermission, isClientAccount } = usePermissions();
   const accessToken = useAuthStore((s) => s.accessToken);
+  const { alert } = useConfirm();
 
   const canGenerateInvoice = hasPermission("invoice:generate");
   const canReadInvoice = hasPermission("invoice:read");
@@ -282,7 +284,11 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Failed to download PDF.");
+      await alert({
+        title: "Download Failed",
+        message: "Failed to download invoice PDF. Please try again.",
+        variant: "danger",
+      });
     }
   };
 
@@ -300,7 +306,11 @@ export function InvoicesReceiptsView({ caseId }: { caseId?: string }) {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("Failed to download PDF.");
+      await alert({
+        title: "Download Failed",
+        message: "Failed to download receipt PDF. Please try again.",
+        variant: "danger",
+      });
     }
   };
 

@@ -211,6 +211,11 @@ export function UserListView() {
       }).unwrap();
       setActiveMenuId(null);
       refetch();
+      await alert({
+        title: "User Status Updated",
+        message: `Account for "${item.name}" is now ${isActivating ? "active" : "suspended"}.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string } };
       await alert({
@@ -236,6 +241,11 @@ export function UserListView() {
       await deleteUser(item.id).unwrap();
       setActiveMenuId(null);
       refetch();
+      await alert({
+        title: "User Account Deleted",
+        message: `User account "${item.name}" has been removed.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string } };
       await alert({

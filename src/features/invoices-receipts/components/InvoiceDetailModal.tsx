@@ -9,6 +9,7 @@ import {
   Printer, Loader2, Copy, Check, Eye, ListTree, ShieldCheck,
   Building2, CreditCard, ChevronRight
 } from "lucide-react";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface Props {
   invoice: Invoice | null;
@@ -34,6 +35,7 @@ export function InvoiceDetailModal({ invoice, apiBaseUrl, token, onClose }: Prop
   const [downloading, setDownloading] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState<"details" | "preview">("details");
+  const { alert } = useConfirm();
 
   if (!invoice) return null;
 
@@ -74,7 +76,11 @@ export function InvoiceDetailModal({ invoice, apiBaseUrl, token, onClose }: Prop
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("PDF download failed.");
+      await alert({
+        title: "Download Failed",
+        message: "Failed to download invoice PDF. Please try again.",
+        variant: "danger",
+      });
     } finally {
       setDownloading(false);
     }

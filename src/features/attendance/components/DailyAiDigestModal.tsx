@@ -16,6 +16,7 @@ import {
   useGenerateDigestMutation,
 } from "@/services/api/attendance/attendanceApi";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/hooks/useConfirm";
 
 interface DailyAiDigestModalProps {
   isOpen: boolean;
@@ -56,13 +57,23 @@ export function DailyAiDigestModal({ isOpen, onClose }: DailyAiDigestModalProps)
   if (!isOpen || !mounted) return null;
 
   const digest = digestResponse?.data;
+  const { alert } = useConfirm();
 
   const handleRegenerate = async () => {
     try {
       await generateDigest({}).unwrap();
       refetch();
+      await alert({
+        title: "Digest Updated",
+        message: "AI Executive Daily Digest has been re-synthesized successfully.",
+        variant: "success",
+      });
     } catch {
-      alert("Failed to refresh digest");
+      await alert({
+        title: "Refresh Failed",
+        message: "Failed to refresh AI digest. Please try again.",
+        variant: "danger",
+      });
     }
   };
 

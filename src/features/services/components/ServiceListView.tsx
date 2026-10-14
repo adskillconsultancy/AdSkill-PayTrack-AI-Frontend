@@ -150,6 +150,11 @@ export function ServiceListView({
 
     try {
       await deleteServiceMutation(id).unwrap();
+      await alert({
+        title: "Service Removed",
+        message: `Service ${serviceName} has been deactivated and removed.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const msg =
         typeof err === "object" && err !== null && "data" in err
@@ -181,6 +186,11 @@ export function ServiceListView({
 
     try {
       await updateServiceMutation({ id, data: { isActive: nextIsActive } }).unwrap();
+      await alert({
+        title: "Service Status Updated",
+        message: `Service "${current.name}" is now ${nextIsActive ? "active" : "inactive"}.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const msg =
         typeof err === "object" && err !== null && "data" in err

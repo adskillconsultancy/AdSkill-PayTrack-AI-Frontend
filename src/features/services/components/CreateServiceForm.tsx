@@ -20,6 +20,7 @@ import { Input } from "@/components/common/Input";
 import { ROUTES } from "@/constants/routes";
 import { cn } from "@/lib/utils";
 import { useCreateServiceMutation } from "@/services/api/services/servicesApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   createServiceSchema,
   SERVICE_CATEGORIES,
@@ -76,6 +77,7 @@ export function CreateServiceForm() {
   // RTK Query Live Mutation
   const [createServiceMutation, { isLoading: isApiLoading }] =
     useCreateServiceMutation();
+  const { alert } = useConfirm();
 
   // Fee Separation Input States (empty string initial to prevent leading zeros)
   const [govFee, setGovFee] = React.useState<string>("");
@@ -182,9 +184,12 @@ export function CreateServiceForm() {
 
       setIsSubmitting(false);
       setIsSuccess(true);
-      setTimeout(() => {
-        router.push(ROUTES.SERVICES);
-      }, 700);
+      await alert({
+        title: "Service Published",
+        message: `Service offering "${data.name.trim()}" has been added to the catalog.`,
+        variant: "success",
+      });
+      router.push(ROUTES.SERVICES);
     } catch (err: unknown) {
       setIsSubmitting(false);
       const msg =
@@ -193,6 +198,11 @@ export function CreateServiceForm() {
             "Failed to publish service offering. Please check all fields."
           : "Failed to publish service offering. Please check all fields.";
       setErrorMessage(msg);
+      await alert({
+        title: "Publish Failed",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 

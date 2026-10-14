@@ -28,6 +28,7 @@ import {
   Printer,
 } from "lucide-react";
 import { downloadAndPrintPaymentReceipt } from "@/lib/documentDownload";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export interface PaymentDetailModalProps {
   payment: Payment | null;
@@ -62,6 +63,7 @@ export function PaymentDetailModal({
   const { hasPermission } = usePermissions();
   const canVerify = hasPermission("payment:verify");
   const [verifyPayment, { isLoading: isVerifying }] = useVerifyPaymentMutation();
+  const { confirm, alert } = useConfirm();
   const [copied, setCopied] = React.useState(false);
   const [notice, setNotice] = React.useState("");
   const [isPrinting, setIsPrinting] = React.useState(false);
@@ -83,6 +85,11 @@ export function PaymentDetailModal({
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to print slip";
       setNotice(msg);
+      await alert({
+        title: "Print Failed",
+        message: msg,
+        variant: "danger",
+      });
     } finally {
       setIsPrinting(false);
     }
@@ -103,12 +110,31 @@ export function PaymentDetailModal({
   };
 
   const handleVerify = async () => {
+    const isConfirmed = await confirm({
+      title: "Verify Payment Settlement?",
+      message: `Are you sure you want to verify and post this ${formatMoney(payment.amount, payment.currency)} payment? An official receipt will be generated.`,
+      confirmText: "Yes, Verify Payment",
+      variant: "success",
+    });
+    if (!isConfirmed) return;
+
     try {
       await verifyPayment(payment.id).unwrap();
       setNotice("Payment verified and credited successfully!");
+      await alert({
+        title: "Payment Verified",
+        message: "Payment verified and credited successfully! Official receipt generated.",
+        variant: "success",
+      });
       if (onVerified) onVerified();
     } catch (err: any) {
-      setNotice(err?.data?.message || "Failed to verify payment");
+      const errStr = err?.data?.message || "Failed to verify payment";
+      setNotice(errStr);
+      await alert({
+        title: "Verification Failed",
+        message: errStr,
+        variant: "danger",
+      });
     }
   };
 

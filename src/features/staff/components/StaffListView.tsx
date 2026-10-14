@@ -27,6 +27,7 @@ import {
   useUpdateUserMutation,
   BackendUser,
 } from "@/services/api/users/usersApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import { StaffSearchBar, DatePreset } from "./StaffSearchBar";
 
 type StaffStatus = "Active" | "Suspended" | "Inactive" | "Pending";
@@ -212,6 +213,7 @@ export function StaffListView() {
   });
 
   const [updateUser] = useUpdateUserMutation();
+  const { confirm, alert } = useConfirm();
 
   // Map staff items directly from backend database response with date-specific attendance
   const staff: StaffItem[] = React.useMemo(() => {
@@ -317,12 +319,33 @@ export function StaffListView() {
   }, [staff, usersResponse]);
 
   const handleToggleStatus = async (item: StaffItem, newStatus: "ACTIVE" | "SUSPENDED") => {
+    const isSuspending = newStatus === "SUSPENDED";
+    const isConfirmed = await confirm({
+      title: isSuspending ? "Suspend Staff Member?" : "Activate Staff Member?",
+      message: isSuspending
+        ? `Are you sure you want to suspend ${item.name}? They will lose access to the system immediately.`
+        : `Are you sure you want to reactivate ${item.name}? They will regain access to their account.`,
+      confirmText: isSuspending ? "Yes, Suspend" : "Yes, Activate",
+      variant: isSuspending ? "danger" : "info",
+    });
+
+    if (!isConfirmed) return;
+
     try {
       await updateUser({ id: item.id, data: { status: newStatus } }).unwrap();
       setActiveMenuId(null);
       refetchUsers();
+      await alert({
+        title: "Staff Status Updated",
+        message: `${item.name} is now ${newStatus.toLowerCase()}.`,
+        variant: "success",
+      });
     } catch {
-      alert("Failed to update status");
+      await alert({
+        title: "Update Failed",
+        message: "Failed to update staff status. Please try again.",
+        variant: "danger",
+      });
     }
   };
 

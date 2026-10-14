@@ -2,6 +2,7 @@ import * as React from "react";
 import { ShieldAlert } from "lucide-react";
 import { Button, Input } from "@/components/common";
 import { useCreateRoleMutation } from "@/services/api/roles/rolesApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { PermissionGroup } from "../types";
 import { getPermissionDisplayName } from "../utils/roleFormatters";
 
@@ -21,8 +22,8 @@ export function CreateRoleModal({
   const [newRoleName, setNewRoleName] = React.useState("");
   const [selectedPermIds, setSelectedPermIds] = React.useState<string[]>([]);
   const [createRoleError, setCreateRoleError] = React.useState<string | null>(null);
-
   const [createRole, { isLoading: isCreating }] = useCreateRoleMutation();
+  const { alert } = useConfirm();
 
   if (!isOpen) return null;
 
@@ -40,9 +41,11 @@ export function CreateRoleModal({
       return;
     }
 
+    const createdName = newRoleName.trim().toUpperCase().replace(/\s+/g, "_");
+
     try {
       await createRole({
-        name: newRoleName.trim().toUpperCase().replace(/\s+/g, "_"),
+        name: createdName,
         permissionIds: selectedPermIds,
       }).unwrap();
 
@@ -50,6 +53,11 @@ export function CreateRoleModal({
       setSelectedPermIds([]);
       onSuccess();
       onClose();
+      await alert({
+        title: "Role Created",
+        message: `Role "${createdName}" has been successfully configured.`,
+        variant: "success",
+      });
     } catch (err: unknown) {
       const errorObj = err as { data?: { message?: string } };
       setCreateRoleError(errorObj?.data?.message || "Failed to create role");

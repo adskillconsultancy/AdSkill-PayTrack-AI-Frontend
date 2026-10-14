@@ -29,6 +29,7 @@ import {
   useGetServiceByIdQuery,
   useUpdateServiceMutation,
 } from "@/services/api/services/servicesApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   createServiceSchema,
   SERVICE_CATEGORIES,
@@ -58,6 +59,7 @@ export function EditServiceForm({ serviceId }: EditServiceFormProps) {
   // Live Mutation
   const [updateServiceMutation, { isLoading: isApiUpdating }] =
     useUpdateServiceMutation();
+  const { alert } = useConfirm();
 
   const service: BackendService | null = React.useMemo(() => {
     if (!serviceResponse) return null;
@@ -227,9 +229,12 @@ export function EditServiceForm({ serviceId }: EditServiceFormProps) {
 
       setIsSubmitting(false);
       setIsSuccess(true);
-      setTimeout(() => {
-        router.push(`/services/${service.code || service.id}`);
-      }, 700);
+      await alert({
+        title: "Service Updated",
+        message: `Service offering "${data.name.trim()}" has been successfully updated.`,
+        variant: "success",
+      });
+      router.push(`/services/${service.code || service.id}`);
     } catch (err: unknown) {
       setIsSubmitting(false);
       const msg =
@@ -238,6 +243,11 @@ export function EditServiceForm({ serviceId }: EditServiceFormProps) {
             "Failed to save changes. Please review fields."
           : "Failed to save changes. Please review fields.";
       setErrorMessage(msg);
+      await alert({
+        title: "Update Failed",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 

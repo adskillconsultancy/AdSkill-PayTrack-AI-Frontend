@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { ROUTES } from "@/constants/routes";
 import { useCreateUserMutation } from "@/services/api/users/usersApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import {
   useGetAllRolesQuery,
   useGetAllPermissionsQuery,
@@ -98,6 +99,7 @@ export function CreateUserForm() {
   const { data: rolesResponse, isLoading: isRolesLoading } = useGetAllRolesQuery();
   const { data: permsResponse, isLoading: isPermsLoading } = useGetAllPermissionsQuery();
   const [createUser, { isLoading: isSubmitting }] = useCreateUserMutation();
+  const { alert } = useConfirm();
 
   const availableRoles = rolesResponse?.data || [];
   const permissionGroups = permsResponse?.data || [];
@@ -207,9 +209,12 @@ export function CreateUserForm() {
       }).unwrap();
 
       setIsSuccess(true);
-      setTimeout(() => {
-        router.push(ROUTES.USERS);
-      }, 1200);
+      await alert({
+        title: "Account Created Successfully",
+        message: `Account for "${name.trim()}" has been successfully provisioned.`,
+        variant: "success",
+      });
+      router.push(ROUTES.USERS);
     } catch (err: unknown) {
       const apiErr = err as {
         data?: {
@@ -218,15 +223,18 @@ export function CreateUserForm() {
         };
       };
 
+      let msg = "Failed to create user. Please check your connection.";
       if (apiErr?.data?.errorSources && apiErr.data.errorSources.length > 0) {
-        setErrorMessage(
-          `${apiErr.data.errorSources[0].path}: ${apiErr.data.errorSources[0].message}`
-        );
+        msg = `${apiErr.data.errorSources[0].path}: ${apiErr.data.errorSources[0].message}`;
       } else if (apiErr?.data?.message) {
-        setErrorMessage(apiErr.data.message);
-      } else {
-        setErrorMessage("Failed to create user. Please check your connection.");
+        msg = apiErr.data.message;
       }
+      setErrorMessage(msg);
+      await alert({
+        title: "Creation Failed",
+        message: msg,
+        variant: "danger",
+      });
     }
   };
 

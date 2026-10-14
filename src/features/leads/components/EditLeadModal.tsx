@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useUpdateLeadMutation } from "@/services/api/leads/leadsApi";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { BackendLead, LeadStatus } from "../types";
 
 interface EditLeadModalProps {
@@ -35,6 +36,7 @@ export function EditLeadModal({
   staffList = [],
   onSuccess,
 }: EditLeadModalProps) {
+  const { alert } = useConfirm();
   const [updateLead, { isLoading }] = useUpdateLeadMutation();
 
   const [formData, setFormData] = React.useState({
@@ -120,6 +122,12 @@ export function EditLeadModal({
 
       onSuccess?.();
       onClose();
+
+      await alert({
+        title: "Lead Updated Successfully",
+        message: `Lead details for "${formData.fullName.trim()}" have been saved.`,
+        variant: "success",
+      });
     } catch (err: any) {
       setErrorMessage(
         err?.data?.message || err?.message || "Failed to update lead information.",
