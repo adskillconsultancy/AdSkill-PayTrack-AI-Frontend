@@ -4,15 +4,19 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import {
+  DatePresetFilter,
+  getLocalTodayYMD,
+  getLocalYesterdayYMD,
+} from "@/components/common/DatePresetFilter";
+import {
   Search,
   SlidersHorizontal,
   X,
   RotateCcw,
-  Calendar,
   Check,
 } from "lucide-react";
 
-export type DatePreset = "TODAY" | "YESTERDAY" | "THIS_WEEK" | "THIS_MONTH" | "ALL" | "CUSTOM";
+export type DatePreset = "TODAY" | "YESTERDAY" | "ALL" | "CUSTOM";
 
 interface StaffSearchBarProps {
   searchQuery: string;
@@ -23,12 +27,10 @@ interface StaffSearchBarProps {
   onStatusFilterChange: (status: string) => void;
   leadFilter: "ALL" | "WITH_LEADS" | "NO_LEADS" | "BUSY";
   onLeadFilterChange: (lead: "ALL" | "WITH_LEADS" | "NO_LEADS" | "BUSY") => void;
-  datePreset: DatePreset;
-  onDatePresetChange: (preset: DatePreset) => void;
-  customStartDate: string;
-  onCustomStartDateChange: (date: string) => void;
-  customEndDate: string;
-  onCustomEndDateChange: (date: string) => void;
+  startDate?: string;
+  onStartDateChange?: (d: string) => void;
+  endDate?: string;
+  onEndDateChange?: (d: string) => void;
   sortBy: string;
   onSortByChange: (sort: string) => void;
   onResetFilters: () => void;
@@ -47,12 +49,10 @@ export function StaffSearchBar({
   onStatusFilterChange,
   leadFilter,
   onLeadFilterChange,
-  datePreset,
-  onDatePresetChange,
-  customStartDate,
-  onCustomStartDateChange,
-  customEndDate,
-  onCustomEndDateChange,
+  startDate = "",
+  onStartDateChange,
+  endDate = "",
+  onEndDateChange,
   sortBy,
   onSortByChange,
   onResetFilters,
@@ -79,22 +79,13 @@ export function StaffSearchBar({
     (roleFilter !== "ALL" ? 1 : 0) +
     (statusFilter !== "ALL" ? 1 : 0) +
     (leadFilter !== "ALL" ? 1 : 0) +
-    (datePreset !== "ALL" ? 1 : 0) +
+    (startDate || endDate ? 1 : 0) +
     (sortBy !== "Newest First" ? 1 : 0);
 
   const clearAllFilters = () => {
     onResetFilters();
     setIsFilterOpen(false);
   };
-
-  const datePresetTabs: { label: string; value: DatePreset }[] = [
-    { label: "All Time", value: "ALL" },
-    { label: "Today", value: "TODAY" },
-    { label: "Yesterday", value: "YESTERDAY" },
-    { label: "This Week", value: "THIS_WEEK" },
-    { label: "This Month", value: "THIS_MONTH" },
-    { label: "Custom Day", value: "CUSTOM" },
-  ];
 
   const statusOptions = [
     { label: "All Statuses", value: "ALL" },
@@ -117,6 +108,15 @@ export function StaffSearchBar({
     "Name (Z-A)",
     "Most Leads Handled",
   ];
+
+  const todayStr = getLocalTodayYMD();
+  const yesterdayStr = getLocalYesterdayYMD();
+
+  const isToday = startDate === todayStr && endDate === todayStr;
+  const isYesterday = startDate === yesterdayStr && endDate === yesterdayStr;
+  const isAllTime = !startDate && !endDate;
+  const isCustom = !isAllTime && !isToday && !isYesterday;
+  const [showCustomPicker, setShowCustomPicker] = React.useState(false);
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -186,67 +186,18 @@ export function StaffSearchBar({
                 </div>
 
                 <div className="divide-y divide-[#F0ECE6] max-h-[420px] overflow-y-auto pr-1">
-                  {/* Date Preset Section */}
-                  <div className="py-3 space-y-2">
-                    <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B] flex items-center justify-between">
-                      <span>Shift & Activity Date</span>
-                      <span className="text-[10px] text-[#059669] font-mono lowercase">defaults to all time</span>
-                    </label>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {datePresetTabs.map((preset) => {
-                        const isSelected = datePreset === preset.value;
-                        return (
-                          <button
-                            key={preset.value}
-                            type="button"
-                            onClick={() => onDatePresetChange(preset.value)}
-                            className={cn(
-                              "px-2 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer text-center",
-                              isSelected
-                                ? "bg-[#0a0a0a] text-white shadow-2xs font-bold"
-                                : "bg-[#FAF8F5] text-[#64748B] hover:bg-[#F1ECE4] hover:text-[#0a0a0a]"
-                            )}
-                          >
-                            {preset.label}
-                          </button>
-                        );
-                      })}
+                  {/* Date Preset Section with Today, Yesterday, Custom Date */}
+                  {onStartDateChange && onEndDateChange && (
+                    <div className="py-3">
+                      <DatePresetFilter
+                        startDate={startDate}
+                        endDate={endDate}
+                        onStartDateChange={onStartDateChange}
+                        onEndDateChange={onEndDateChange}
+                        label="Shift & Registration Date"
+                      />
                     </div>
-
-                    {/* Custom Date Pickers */}
-                    {datePreset === "CUSTOM" && (
-                      <div className="p-3 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] space-y-2.5 mt-2 animate-in fade-in duration-150">
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#0a0a0a]">
-                          <Calendar className="h-3.5 w-3.5 text-[#D97706]" />
-                          <span>Custom Date Range</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <label className="text-[10px] font-semibold text-[#64748B] block mb-1">
-                              From
-                            </label>
-                            <input
-                              type="date"
-                              value={customStartDate}
-                              onChange={(e) => onCustomStartDateChange(e.target.value)}
-                              className="w-full h-8 px-2 rounded-lg border border-[#EAE6DF] bg-white text-xs text-[#0a0a0a] font-mono focus:outline-none focus:border-[#0a0a0a]"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-semibold text-[#64748B] block mb-1">
-                              To
-                            </label>
-                            <input
-                              type="date"
-                              value={customEndDate}
-                              onChange={(e) => onCustomEndDateChange(e.target.value)}
-                              className="w-full h-8 px-2 rounded-lg border border-[#EAE6DF] bg-white text-xs text-[#0a0a0a] font-mono focus:outline-none focus:border-[#0a0a0a]"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  )}
 
                   {/* Role Section */}
                   <div className="py-3 space-y-2">
@@ -370,63 +321,126 @@ export function StaffSearchBar({
       {/* 3. QUICK DATE PRESET PILLS BAR */}
       <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
         <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white border border-[#EAE6DF] shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-x-auto">
-          {datePresetTabs.map((preset) => {
-            const isSelected = datePreset === preset.value;
-            return (
-              <button
-                key={preset.value}
-                type="button"
-                onClick={() => onDatePresetChange(preset.value)}
+          <button
+            type="button"
+            onClick={() => {
+              setShowCustomPicker(false);
+              onStartDateChange?.("");
+              onEndDateChange?.("");
+            }}
+            className={cn(
+              "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5",
+              isAllTime
+                ? "bg-[#0a0a0a] text-white shadow-2xs"
+                : "text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5]"
+            )}
+          >
+            <span>All Time</span>
+            {totalStaffCount !== undefined && (
+              <span
                 className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5",
-                  isSelected
-                    ? "bg-[#0a0a0a] text-white shadow-2xs"
-                    : "text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5]"
+                  "text-[10px] px-1.5 py-0.5 rounded-full font-mono",
+                  isAllTime ? "bg-white/20 text-white" : "bg-[#F1ECE4] text-[#64748B]"
                 )}
               >
-                <span>{preset.label}</span>
-                {preset.value === "ALL" && totalStaffCount !== undefined && (
-                  <span
-                    className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-full font-mono",
-                      isSelected ? "bg-white/20 text-white" : "bg-[#F1ECE4] text-[#64748B]"
-                    )}
-                  >
-                    {totalStaffCount}
-                  </span>
-                )}
-                {isSelected && preset.value !== "ALL" && activeOnDateCount !== undefined && (
-                  <span
-                    className={cn(
-                      "text-[10px] px-1.5 py-0.5 rounded-full font-mono",
-                      isSelected ? "bg-white/20 text-white" : "bg-[#F1ECE4] text-[#64748B]"
-                    )}
-                  >
-                    {activeOnDateCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                {totalStaffCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowCustomPicker(false);
+              onStartDateChange?.(todayStr);
+              onEndDateChange?.(todayStr);
+            }}
+            className={cn(
+              "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5",
+              isToday
+                ? "bg-[#0a0a0a] text-white shadow-2xs"
+                : "text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5]"
+            )}
+          >
+            <span>Today</span>
+            {isToday && activeOnDateCount !== undefined && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-white/20 text-white">
+                {activeOnDateCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowCustomPicker(false);
+              onStartDateChange?.(yesterdayStr);
+              onEndDateChange?.(yesterdayStr);
+            }}
+            className={cn(
+              "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5",
+              isYesterday
+                ? "bg-[#0a0a0a] text-white shadow-2xs"
+                : "text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5]"
+            )}
+          >
+            <span>Yesterday</span>
+            {isYesterday && activeOnDateCount !== undefined && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-white/20 text-white">
+                {activeOnDateCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowCustomPicker(true)}
+            className={cn(
+              "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5",
+              isCustom || showCustomPicker
+                ? "bg-[#0a0a0a] text-white shadow-2xs"
+                : "text-[#64748B] hover:text-[#0a0a0a] hover:bg-[#FAF8F5]"
+            )}
+          >
+            <span>Custom Date</span>
+            {(isCustom || showCustomPicker) && activeOnDateCount !== undefined && !isAllTime && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-mono bg-white/20 text-white">
+                {activeOnDateCount}
+              </span>
+            )}
+          </button>
         </div>
 
-        {/* Custom Date Input directly visible if CUSTOM selected */}
-        {datePreset === "CUSTOM" && (
+        {/* Custom Date Inputs directly visible if Custom is chosen or active */}
+        {(isCustom || showCustomPicker) && (
           <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white border border-[#EAE6DF] shadow-[0_2px_10px_rgb(0,0,0,0.02)] animate-in fade-in duration-150">
-            <span className="text-[11px] font-bold text-[#64748B] pl-2">Date:</span>
+            <span className="text-[11px] font-bold text-[#64748B] pl-2">From:</span>
             <input
               type="date"
-              value={customStartDate}
-              onChange={(e) => onCustomStartDateChange(e.target.value)}
+              value={startDate}
+              onChange={(e) => onStartDateChange?.(e.target.value)}
               className="h-8 px-2.5 rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] text-xs font-mono text-[#0a0a0a] focus:outline-none"
             />
             <span className="text-xs text-[#94A3B8]">to</span>
             <input
               type="date"
-              value={customEndDate}
-              onChange={(e) => onCustomEndDateChange(e.target.value)}
+              value={endDate}
+              onChange={(e) => onEndDateChange?.(e.target.value)}
               className="h-8 px-2.5 rounded-xl border border-[#EAE6DF] bg-[#FAF8F5] text-xs font-mono text-[#0a0a0a] focus:outline-none"
             />
+            {(startDate || endDate) && (
+              <button
+                type="button"
+                onClick={() => {
+                  onStartDateChange?.("");
+                  onEndDateChange?.("");
+                  setShowCustomPicker(false);
+                }}
+                className="px-2 py-1 text-xs text-[#D97706] hover:underline font-bold cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
           </div>
         )}
       </div>

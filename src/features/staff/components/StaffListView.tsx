@@ -28,7 +28,7 @@ import {
   BackendUser,
 } from "@/services/api/users/usersApi";
 import { useConfirm } from "@/hooks/useConfirm";
-import { StaffSearchBar, DatePreset } from "./StaffSearchBar";
+import { StaffSearchBar } from "./StaffSearchBar";
 
 type StaffStatus = "Active" | "Suspended" | "Inactive" | "Pending";
 
@@ -118,9 +118,8 @@ export function StaffListView() {
   const [roleFilter, setRoleFilter] = React.useState("ALL");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
   const [leadFilter, setLeadFilter] = React.useState<"ALL" | "WITH_LEADS" | "NO_LEADS" | "BUSY">("ALL");
-  const [datePreset, setDatePreset] = React.useState<DatePreset>("ALL");
-  const [customStartDate, setCustomStartDate] = React.useState(toDateStr(new Date()));
-  const [customEndDate, setCustomEndDate] = React.useState(toDateStr(new Date()));
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
   const [sortBy, setSortBy] = React.useState("Newest First");
   const [currentPage, setCurrentPage] = React.useState(1);
   const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
@@ -142,38 +141,12 @@ export function StaffListView() {
     return () => window.removeEventListener("click", handleOutsideClick);
   }, []);
 
-  // Compute selected date range
-  const dateParams = React.useMemo(() => {
-    const now = new Date();
-    switch (datePreset) {
-      case "TODAY":
-        return { startDate: toDateStr(now), endDate: toDateStr(now), label: "Today" };
-      case "YESTERDAY": {
-        const y = new Date(now);
-        y.setDate(now.getDate() - 1);
-        return { startDate: toDateStr(y), endDate: toDateStr(y), label: "Yesterday" };
-      }
-      case "THIS_WEEK": {
-        const start = new Date(now);
-        start.setDate(now.getDate() - now.getDay());
-        return { startDate: toDateStr(start), endDate: toDateStr(now), label: "This Week" };
-      }
-      case "THIS_MONTH": {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        return { startDate: toDateStr(start), endDate: toDateStr(now), label: "This Month" };
-      }
-      case "CUSTOM": {
-        return {
-          startDate: customStartDate || toDateStr(now),
-          endDate: customEndDate || customStartDate || toDateStr(now),
-          label: "Custom Day",
-        };
-      }
-      case "ALL":
-      default:
-        return { startDate: undefined, endDate: undefined, label: "All Time" };
-    }
-  }, [datePreset, customStartDate, customEndDate]);
+  // Compute selected date label
+  const dateLabel = React.useMemo(() => {
+    if (!startDate && !endDate) return "All Time";
+    if (startDate === endDate) return startDate;
+    return `${startDate || "—"} to ${endDate || "—"}`;
+  }, [startDate, endDate]);
 
   // Map Sort Option to Backend Sort Params
   const sortParams = React.useMemo(() => {
@@ -202,6 +175,8 @@ export function StaffListView() {
     excludeRoleName: "CLIENT", // PostgreSQL directly filters out non-staff!
     roleName: roleFilter !== "ALL" ? roleFilter : undefined,
     status: statusFilter !== "ALL" ? statusFilter.toUpperCase() : undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
     hasAssignedCases:
       leadFilter === "WITH_LEADS" || leadFilter === "BUSY"
         ? true
@@ -228,15 +203,17 @@ export function StaffListView() {
 
       const totalLeads = u._count?.assignedCases ?? assigned.length;
 
-      // Filter attendance records to the selected date range in memory (0 API requests!)
+      // Filter attendance records to the selected date range in memory
       const allUserAtt = u.attendances || [];
       const userAtt = allUserAtt.filter((r) => {
-        if (datePreset === "ALL") return true;
+        if (!startDate && !endDate) return true;
         if (!r.workDate) return false;
         const workDateStr = toDateStr(new Date(r.workDate));
-        if (dateParams.startDate && dateParams.endDate) {
-          return workDateStr >= dateParams.startDate && workDateStr <= dateParams.endDate;
+        if (startDate && endDate) {
+          return workDateStr >= startDate && workDateStr <= endDate;
         }
+        if (startDate) return workDateStr >= startDate;
+        if (endDate) return workDateStr <= endDate;
         return true;
       });
 
@@ -282,7 +259,7 @@ export function StaffListView() {
         clockInTime: activeAtt ? activeAtt.clockIn : null,
       };
     });
-  }, [usersResponse, datePreset, dateParams]);
+  }, [usersResponse, startDate, endDate]);
 
   // Client-side filtering: high workload filter
   const displayedStaff = React.useMemo(() => {
@@ -354,7 +331,8 @@ export function StaffListView() {
     setRoleFilter("ALL");
     setStatusFilter("ALL");
     setLeadFilter("ALL");
-    setDatePreset("ALL");
+    setStartDate("");
+    setEndDate("");
     setSortBy("Newest First");
     setCurrentPage(1);
   };
@@ -404,7 +382,7 @@ export function StaffListView() {
     },
     {
       key: "shift",
-      header: `ACTIVITY (${dateParams.label.toUpperCase()})`,
+      header: `ACTIVITY (${dateLabel.toUpperCase()})`,
       cell: (item) => {
         if (item.shiftStatus === "WORKING") {
           return (
@@ -635,7 +613,7 @@ export function StaffListView() {
         <div className="rounded-2xl border border-[#EAE6DF] bg-white p-4 sm:p-5 shadow-xs flex items-center justify-between">
           <div className="space-y-1">
             <span className="text-xs font-bold text-[#059669] uppercase tracking-wider">
-              On Duty ({dateParams.label})
+              On Duty ({dateLabel})
             </span>
             <div className="text-2xl font-black text-[#059669]">{stats.workingToday}</div>
             <div className="text-[11px] text-[#059669] font-medium">Clocked in / active shifts</div>
@@ -678,12 +656,10 @@ export function StaffListView() {
         onStatusFilterChange={(s) => { setStatusFilter(s); setCurrentPage(1); }}
         leadFilter={leadFilter}
         onLeadFilterChange={(l) => { setLeadFilter(l); setCurrentPage(1); }}
-        datePreset={datePreset}
-        onDatePresetChange={(p) => { setDatePreset(p); setCurrentPage(1); }}
-        customStartDate={customStartDate}
-        onCustomStartDateChange={(d) => { setCustomStartDate(d); setCurrentPage(1); }}
-        customEndDate={customEndDate}
-        onCustomEndDateChange={(d) => { setCustomEndDate(d); setCurrentPage(1); }}
+        startDate={startDate}
+        onStartDateChange={(d) => { setStartDate(d); setCurrentPage(1); }}
+        endDate={endDate}
+        onEndDateChange={(d) => { setEndDate(d); setCurrentPage(1); }}
         sortBy={sortBy}
         onSortByChange={(sb) => setSortBy(sb)}
         onResetFilters={handleResetFilters}
@@ -696,7 +672,7 @@ export function StaffListView() {
       <div className="flex items-center justify-between text-xs text-[#64748B] px-1">
         <div>
           Showing <strong className="text-[#0a0a0a]">{totalCount}</strong> staff members · Viewing{" "}
-          <strong className="text-[#0a0a0a]">{dateParams.label}</strong> shift activity
+          <strong className="text-[#0a0a0a]">{dateLabel}</strong> shift activity
         </div>
         <div className="hidden sm:flex items-center gap-3">
           <span className="flex items-center gap-1.5">
