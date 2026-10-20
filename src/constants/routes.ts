@@ -43,6 +43,7 @@ export const ROUTES = {
   LEADS: "/leads",
   LEADS_FOLLOW_UP: "/leads/follow-up",
   LEAD_DETAIL: (id: string) => `/leads/${id}`,
+  EXPENSE_TRACKER: "/expense-tracker",
 } as const;
 
 export const PUBLIC_ROUTES = [

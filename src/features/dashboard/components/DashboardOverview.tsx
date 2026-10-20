@@ -13,6 +13,8 @@ import { DashboardPaymentAnalytics } from "./DashboardPaymentAnalytics";
 import { DashboardRecentActivity } from "./DashboardRecentActivity";
 import { DashboardVerificationQueue } from "./DashboardVerificationQueue";
 import { StaffDashboardHub } from "./StaffDashboardHub";
+import { DashboardExpenseWidget } from "./DashboardExpenseWidget";
+import { DashboardExpenseSection } from "./DashboardExpenseSection";
 
 export function DashboardOverview() {
   const { isSuperAdmin, isClientAccount } = usePermissions();
@@ -53,21 +55,27 @@ export function DashboardOverview() {
       {/* 3. Primary Executive KPIs (Revenue, Pending, Receivables, Clients) */}
       <DashboardKPICards filterParams={filterParams} />
 
-      {/* 3. Action Center: Pending Payment Verification Queue */}
+      {/* 4. Action Center: Pending Payment Verification Queue */}
       <DashboardVerificationQueue filterParams={filterParams} />
 
-      {/* 4. Staff Shift & Attendance Operations Hub (Super Admin) */}
+      {/* 5. Staff Shift & Attendance Operations Hub (Super Admin) */}
       <DashboardAttendanceWidget filterParams={filterParams} />
 
-      {/* 5. Two-Column Analytics Grid: Cashflow Flows vs Client Growth */}
+      {/* 6. Office Expense & Income Ledger Section (Super Admin) */}
+      <DashboardExpenseSection />
+
+      {/* 7. Two-Column Analytics Grid: Cashflow Flows vs Client Growth */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DashboardPaymentAnalytics filterParams={filterParams} />
         <DashboardClientGrowth filterParams={filterParams} />
       </div>
 
-      {/* 6. Bottom Grid: Case Standing vs Recent Audit Stream */}
+      {/* 8. Bottom Grid: Case Standing + Expense Summary vs Recent Audit Stream */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DashboardCaseDistribution filterParams={filterParams} />
+        <div className="space-y-6">
+          <DashboardCaseDistribution filterParams={filterParams} />
+          <DashboardExpenseWidget />
+        </div>
         <DashboardRecentActivity filterParams={filterParams} />
       </div>
     </div>

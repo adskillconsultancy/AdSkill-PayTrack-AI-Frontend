@@ -26,6 +26,7 @@ import {
   User,
   UserPlus,
   Users,
+  Wallet,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -197,6 +198,12 @@ const navSections: NavSection[] = [
         href: ROUTES.REPORTS,
         icon: FileBarChart,
         requiredAnyPermissions: ["report:view", "report:export"],
+      },
+      {
+        title: "Expense & Income",
+        href: ROUTES.EXPENSE_TRACKER,
+        icon: Wallet,
+        requiredAnyPermissions: ["expense:read", "expense:create"],
       },
     ],
   },
