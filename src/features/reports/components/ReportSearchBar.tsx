@@ -4,6 +4,7 @@ import * as React from "react";
 import { Search, SlidersHorizontal, RotateCcw, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
+import { DatePresetFilter } from "@/components/common/DatePresetFilter";
 import type { ReportCategory } from "../types";
 
 interface ReportSearchBarProps {
@@ -200,32 +201,14 @@ export function ReportSearchBar({
                     </div>
                   </div>
 
-                  {/* Collection Date Range */}
-                  <div>
-                    <label className="block text-[11px] font-bold uppercase tracking-wider text-[#64748B] mb-2">
-                      Collection Date Range
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <span className="text-[10px] text-[#94A3B8] font-mono block mb-1">From</span>
-                        <input
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => onStartDateChange(e.target.value)}
-                          className="w-full h-9 px-2.5 rounded-xl border border-[#EAE6DF] bg-white text-xs font-mono text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
-                        />
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-[#94A3B8] font-mono block mb-1">To</span>
-                        <input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => onEndDateChange(e.target.value)}
-                          className="w-full h-9 px-2.5 rounded-xl border border-[#EAE6DF] bg-white text-xs font-mono text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  {/* Collection Date Range with Today, Yesterday, Custom Presets */}
+                  <DatePresetFilter
+                    startDate={startDate}
+                    endDate={endDate}
+                    onStartDateChange={onStartDateChange}
+                    onEndDateChange={onEndDateChange}
+                    label="Collection Date Range"
+                  />
                 </div>
 
                 {/* Footer Controls */}

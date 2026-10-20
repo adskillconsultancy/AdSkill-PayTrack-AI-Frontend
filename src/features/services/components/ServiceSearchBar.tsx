@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, SlidersHorizontal, Plus, X, Check, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
+import { DatePresetFilter } from "@/components/common/DatePresetFilter";
 import { ROUTES } from "@/constants/routes";
 import type { BackendServiceCategory } from "../types";
 
@@ -15,6 +16,10 @@ interface ServiceSearchBarProps {
   onCategoryChange: (cat: BackendServiceCategory | "ALL") => void;
   statusFilter: "ALL" | "ACTIVE" | "INACTIVE";
   onStatusChange: (status: "ALL" | "ACTIVE" | "INACTIVE") => void;
+  startDate?: string;
+  onStartDateChange?: (d: string) => void;
+  endDate?: string;
+  onEndDateChange?: (d: string) => void;
   sortOption: string;
   onSortChange: (sort: string) => void;
   onResetFilters: () => void;
@@ -52,6 +57,10 @@ export function ServiceSearchBar({
   onCategoryChange,
   statusFilter,
   onStatusChange,
+  startDate = "",
+  onStartDateChange,
+  endDate = "",
+  onEndDateChange,
   sortOption,
   onSortChange,
   onResetFilters,
@@ -74,6 +83,7 @@ export function ServiceSearchBar({
   const activeFiltersCount =
     (categoryFilter !== "ALL" ? 1 : 0) +
     (statusFilter !== "ALL" ? 1 : 0) +
+    (startDate || endDate ? 1 : 0) +
     (sortOption !== "Newest First" ? 1 : 0);
 
   const clearAllFilters = () => {
@@ -234,6 +244,19 @@ export function ServiceSearchBar({
                     })}
                   </div>
                 </div>
+
+                {/* Date Filter Section */}
+                {onStartDateChange && onEndDateChange && (
+                  <div className="py-3 border-t border-[#F0ECE6]">
+                    <DatePresetFilter
+                      startDate={startDate}
+                      endDate={endDate}
+                      onStartDateChange={onStartDateChange}
+                      onEndDateChange={onEndDateChange}
+                      label="Created Date Range"
+                    />
+                  </div>
+                )}
 
                 <div className="py-3 border-t border-[#F0ECE6] space-y-2">
                   <label className="text-[11px] font-extrabold uppercase tracking-wider text-[#64748B]">

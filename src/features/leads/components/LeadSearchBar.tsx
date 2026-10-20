@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
+import { DatePresetFilter } from "@/components/common/DatePresetFilter";
 import { useGetFollowUpQueueQuery } from "@/services/api/leads/leadsApi";
 import type { LeadStatus } from "../types";
 
@@ -24,6 +25,10 @@ interface LeadSearchBarProps {
   onServiceChange: (serviceId: string) => void;
   assignedFilter: string;
   onAssignedChange: (staffId: string) => void;
+  startDate?: string;
+  onStartDateChange?: (d: string) => void;
+  endDate?: string;
+  onEndDateChange?: (d: string) => void;
   sortOption: string;
   onSortChange: (sort: string) => void;
   onResetFilters: () => void;
@@ -53,6 +58,10 @@ export function LeadSearchBar({
   onServiceChange,
   assignedFilter,
   onAssignedChange,
+  startDate = "",
+  onStartDateChange,
+  endDate = "",
+  onEndDateChange,
   sortOption,
   onSortChange,
   onResetFilters,
@@ -88,7 +97,8 @@ export function LeadSearchBar({
   const activeFiltersCount =
     (statusFilter !== "ALL" ? 1 : 0) +
     (serviceFilter !== "ALL" ? 1 : 0) +
-    (assignedFilter !== "ALL" ? 1 : 0);
+    (assignedFilter !== "ALL" ? 1 : 0) +
+    (startDate || endDate ? 1 : 0);
 
   const clearAllFilters = () => {
     onResetFilters();
@@ -219,6 +229,19 @@ export function LeadSearchBar({
                     ))}
                   </select>
                 </div>
+
+                {/* Date Filter Section */}
+                {onStartDateChange && onEndDateChange && (
+                  <div className="pt-2 border-t border-[#F0ECE6]">
+                    <DatePresetFilter
+                      startDate={startDate}
+                      endDate={endDate}
+                      onStartDateChange={onStartDateChange}
+                      onEndDateChange={onEndDateChange}
+                      label="Created Date Range"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="mt-4 pt-3 border-t border-[#F0ECE6]">

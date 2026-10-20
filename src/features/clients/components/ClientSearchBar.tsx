@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -13,6 +13,7 @@ import {
   Check,
   RotateCcw,
 } from "lucide-react";
+import { DatePresetFilter } from "@/components/common/DatePresetFilter";
 import type { CaseStatus } from "@/types/client-case.types";
 
 interface ClientSearchBarProps {
@@ -22,6 +23,11 @@ interface ClientSearchBarProps {
   onStatusFilterChange: (status: string) => void;
   destinationFilter: string;
   onDestinationFilterChange: (destination: string) => void;
+  startDate?: string;
+  onStartDateChange?: (d: string) => void;
+  endDate?: string;
+  onEndDateChange?: (d: string) => void;
+  onResetFilters?: () => void;
   onNewClientClick: () => void;
   availableDestinations?: string[];
   className?: string;
@@ -35,6 +41,11 @@ export function ClientSearchBar({
   onStatusFilterChange,
   destinationFilter,
   onDestinationFilterChange,
+  startDate = "",
+  onStartDateChange,
+  endDate = "",
+  onEndDateChange,
+  onResetFilters,
   onNewClientClick,
   availableDestinations = ["Canada", "United Kingdom", "Australia", "Germany", "United States"],
   className,
@@ -55,12 +66,20 @@ export function ClientSearchBar({
   }, []);
 
   const activeFiltersCount =
-    (statusFilter !== "ALL" ? 1 : 0) + (destinationFilter !== "ALL" ? 1 : 0);
+    (statusFilter !== "ALL" ? 1 : 0) +
+    (destinationFilter !== "ALL" ? 1 : 0) +
+    (startDate || endDate ? 1 : 0);
 
   const clearAllFilters = () => {
-    onStatusFilterChange("ALL");
-    onDestinationFilterChange("ALL");
-    onSearchChange("");
+    if (onResetFilters) {
+      onResetFilters();
+    } else {
+      onStatusFilterChange("ALL");
+      onDestinationFilterChange("ALL");
+      onStartDateChange?.("");
+      onEndDateChange?.("");
+      onSearchChange("");
+    }
     setIsFilterOpen(false);
   };
 
@@ -211,6 +230,19 @@ export function ClientSearchBar({
                   })}
                 </div>
               </div>
+
+              {/* Date Filter Section */}
+              {onStartDateChange && onEndDateChange && (
+                <div className="py-3 border-t border-[#F0ECE6]">
+                  <DatePresetFilter
+                    startDate={startDate}
+                    endDate={endDate}
+                    onStartDateChange={onStartDateChange}
+                    onEndDateChange={onEndDateChange}
+                    label="Registration Date Range"
+                  />
+                </div>
+              )}
 
               {/* Apply / Close */}
               <div className="pt-3 border-t border-[#F0ECE6] flex justify-end">

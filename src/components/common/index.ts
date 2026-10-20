@@ -50,3 +50,5 @@ export type {
 
 export { GlobalOmniSearch } from "./GlobalOmniSearch";
 export { ConfirmationModal } from "./ConfirmationModal";
+export { DatePresetFilter } from "./DatePresetFilter";
+export type { DatePresetFilterProps } from "./DatePresetFilter";

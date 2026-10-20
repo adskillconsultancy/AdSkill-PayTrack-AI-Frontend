@@ -49,15 +49,33 @@ export function ClientListView({
   const isConsultant = role === "CONSULTANT";
   const canCreateClient = isSuperAdmin || hasPermission("user:create") || hasPermission("case:create");
 
-  const { data, isLoading, isError, refetch } = useGetAllCasesQuery();
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
   const [destinationFilter, setDestinationFilter] = React.useState("ALL");
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
   const [selectedSort, setSelectedSort] = React.useState("Newest First");
   const [currentPage, setCurrentPage] = React.useState(1);
   const { alert } = useConfirm();
   const [downloadingCaseId, setDownloadingCaseId] = React.useState<string | null>(null);
   const pageSize = 10;
+
+  // Debounce search input
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data, isLoading, isError, refetch } = useGetAllCasesQuery({
+    search: debouncedSearch.trim() || undefined,
+    status: statusFilter !== "ALL" ? statusFilter : undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
+  });
 
   const handleDownloadInvoice = async (caseId: string, caseCode: string) => {
     setDownloadingCaseId(caseId);
@@ -192,6 +210,19 @@ export function ClientListView({
       onStatusFilterChange={(value) => { setStatusFilter(value); setCurrentPage(1); }}
       destinationFilter={destinationFilter}
       onDestinationFilterChange={(value) => { setDestinationFilter(value); setCurrentPage(1); }}
+      startDate={startDate}
+      onStartDateChange={(d) => { setStartDate(d); setCurrentPage(1); }}
+      endDate={endDate}
+      onEndDateChange={(d) => { setEndDate(d); setCurrentPage(1); }}
+      onResetFilters={() => {
+        setSearchQuery("");
+        setStatusFilter("ALL");
+        setDestinationFilter("ALL");
+        setStartDate("");
+        setEndDate("");
+        setSelectedSort("Newest First");
+        setCurrentPage(1);
+      }}
       availableDestinations={destinations}
       onNewClientClick={() => router.push("/clients/create")}
       showNewClientButton={canCreateClient}

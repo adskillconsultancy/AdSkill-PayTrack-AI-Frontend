@@ -51,6 +51,8 @@ export function ServiceListView({
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [categoryFilter, setCategoryFilter] = React.useState<BackendServiceCategory | "ALL">("ALL");
   const [statusFilter, setStatusFilter] = React.useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
   const [sortOption, setSortOption] = React.useState("Newest First");
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 10;
@@ -112,6 +114,8 @@ export function ServiceListView({
         : statusFilter === "ACTIVE"
         ? "true"
         : "false",
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
     sortBy,
     sortOrder,
   });
@@ -129,6 +133,8 @@ export function ServiceListView({
     setSearchQuery("");
     setCategoryFilter("ALL");
     setStatusFilter("ALL");
+    setStartDate("");
+    setEndDate("");
     setSortOption("Newest First");
     setCurrentPage(1);
   };
@@ -606,6 +612,16 @@ export function ServiceListView({
         onCategoryChange={setCategoryFilter}
         statusFilter={statusFilter}
         onStatusChange={setStatusFilter}
+        startDate={startDate}
+        onStartDateChange={(d) => {
+          setStartDate(d);
+          setCurrentPage(1);
+        }}
+        endDate={endDate}
+        onEndDateChange={(d) => {
+          setEndDate(d);
+          setCurrentPage(1);
+        }}
         sortOption={sortOption}
         onSortChange={setSortOption}
         onResetFilters={handleResetFilters}

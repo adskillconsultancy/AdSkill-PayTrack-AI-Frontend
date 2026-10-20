@@ -35,11 +35,23 @@ export function UserListView() {
 
   // Query states
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState<string>("ALL");
   const [statusFilter, setStatusFilter] = React.useState<string>("ALL");
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
   const [selectedSort, setSelectedSort] = React.useState("Newest First");
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 10;
+
+  // Debounce search input
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Active action dropdown menu for row
   const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
@@ -74,9 +86,11 @@ export function UserListView() {
   const { data: usersResponse, isLoading, refetch } = useGetUsersQuery({
     page: currentPage,
     limit: pageSize,
-    searchTerm: searchQuery.trim() || undefined,
+    searchTerm: debouncedSearch.trim() || undefined,
     roleName: roleFilter !== "ALL" ? roleFilter : undefined,
     status: statusFilter !== "ALL" ? statusFilter.toUpperCase() : undefined,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
     sortBy: sortParams.sortBy,
     sortOrder: sortParams.sortOrder,
   });
@@ -504,10 +518,23 @@ export function UserListView() {
           setStatusFilter(s);
           setCurrentPage(1);
         }}
+        startDate={startDate}
+        onStartDateChange={(d) => {
+          setStartDate(d);
+          setCurrentPage(1);
+        }}
+        endDate={endDate}
+        onEndDateChange={(d) => {
+          setEndDate(d);
+          setCurrentPage(1);
+        }}
         onResetFilters={() => {
           setSearchQuery("");
           setRoleFilter("ALL");
           setStatusFilter("ALL");
+          setStartDate("");
+          setEndDate("");
+          setSelectedSort("Newest First");
           setCurrentPage(1);
         }}
       />

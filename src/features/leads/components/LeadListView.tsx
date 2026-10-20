@@ -69,6 +69,8 @@ export function LeadListView({
   const [statusFilter, setStatusFilter] = React.useState<LeadStatus | "ALL">("ALL");
   const [serviceFilter, setServiceFilter] = React.useState<string>("ALL");
   const [assignedFilter, setAssignedFilter] = React.useState<string>("ALL");
+  const [startDate, setStartDate] = React.useState("");
+  const [endDate, setEndDate] = React.useState("");
   const [selectedSort, setSelectedSort] = React.useState("Newest First");
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 10;
@@ -116,6 +118,8 @@ export function LeadListView({
     status: statusFilter,
     serviceId: serviceFilter,
     assignedToId: assignedFilter,
+    startDate: startDate || undefined,
+    endDate: endDate || undefined,
     sortBy,
     sortOrder,
   });
@@ -156,6 +160,8 @@ export function LeadListView({
     setStatusFilter("ALL");
     setServiceFilter("ALL");
     setAssignedFilter("ALL");
+    setStartDate("");
+    setEndDate("");
     setSelectedSort("Newest First");
     setCurrentPage(1);
   };
@@ -390,6 +396,16 @@ export function LeadListView({
         assignedFilter={assignedFilter}
         onAssignedChange={(stf) => {
           setAssignedFilter(stf);
+          setCurrentPage(1);
+        }}
+        startDate={startDate}
+        onStartDateChange={(d) => {
+          setStartDate(d);
+          setCurrentPage(1);
+        }}
+        endDate={endDate}
+        onEndDateChange={(d) => {
+          setEndDate(d);
           setCurrentPage(1);
         }}
         sortOption={selectedSort}

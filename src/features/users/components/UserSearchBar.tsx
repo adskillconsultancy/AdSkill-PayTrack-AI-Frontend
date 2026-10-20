@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
+import { DatePresetFilter } from "@/components/common/DatePresetFilter";
 import { ROUTES } from "@/constants/routes";
 import { useGetAllRolesQuery } from "@/services/api/roles/rolesApi";
 
@@ -23,6 +24,10 @@ interface UserSearchBarProps {
   onRoleFilterChange: (role: string) => void;
   statusFilter: string;
   onStatusFilterChange: (status: string) => void;
+  startDate?: string;
+  onStartDateChange?: (d: string) => void;
+  endDate?: string;
+  onEndDateChange?: (d: string) => void;
   onResetFilters: () => void;
   className?: string;
 }
@@ -34,6 +39,10 @@ export function UserSearchBar({
   onRoleFilterChange,
   statusFilter,
   onStatusFilterChange,
+  startDate = "",
+  onStartDateChange,
+  endDate = "",
+  onEndDateChange,
   onResetFilters,
   className,
 }: UserSearchBarProps) {
@@ -55,7 +64,9 @@ export function UserSearchBar({
   }, []);
 
   const activeFiltersCount =
-    (roleFilter !== "ALL" ? 1 : 0) + (statusFilter !== "ALL" ? 1 : 0);
+    (roleFilter !== "ALL" ? 1 : 0) +
+    (statusFilter !== "ALL" ? 1 : 0) +
+    (startDate || endDate ? 1 : 0);
 
   const clearAllFilters = () => {
     onResetFilters();
@@ -251,6 +262,19 @@ export function UserSearchBar({
                     })}
                   </div>
                 </div>
+
+                {/* Date Filter Section */}
+                {onStartDateChange && onEndDateChange && (
+                  <div className="py-3 border-t border-[#F0ECE6]">
+                    <DatePresetFilter
+                      startDate={startDate}
+                      endDate={endDate}
+                      onStartDateChange={onStartDateChange}
+                      onEndDateChange={onEndDateChange}
+                      label="Registration Date Range"
+                    />
+                  </div>
+                )}
 
                 {/* Close Button */}
                 <div className="pt-3 border-t border-[#F0ECE6] flex justify-end">

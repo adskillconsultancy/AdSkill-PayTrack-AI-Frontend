@@ -148,6 +148,8 @@ export interface GetLeadsQueryParams {
   country?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
+  startDate?: string;
+  endDate?: string;
 }
 
 export type FollowUpUrgency = "OVERDUE" | "TODAY" | "UPCOMING" | "COMPLETED" | "ALL";
