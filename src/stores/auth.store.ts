@@ -26,16 +26,38 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
 
       // Actions
-      setAuth: (user, accessToken) =>
-        set({ user, accessToken, isAuthenticated: true }),
+      setAuth: (user, accessToken) => {
+        if (typeof window !== "undefined") {
+          try {
+            Object.keys(sessionStorage).forEach((key) => {
+              if (key.startsWith("followup_modal_dismissed")) {
+                sessionStorage.removeItem(key);
+              }
+            });
+            sessionStorage.removeItem(`followup_modal_dismissed_${user.id}`);
+            sessionStorage.removeItem("followup_modal_dismissed");
+          } catch (_) {}
+        }
+        set({ user, accessToken, isAuthenticated: true });
+      },
 
       updateUser: (updates) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...updates } : null,
         })),
 
-      logout: () =>
-        set({ user: null, accessToken: null, isAuthenticated: false }),
+      logout: () => {
+        if (typeof window !== "undefined") {
+          try {
+            Object.keys(sessionStorage).forEach((key) => {
+              if (key.startsWith("followup_modal_dismissed")) {
+                sessionStorage.removeItem(key);
+              }
+            });
+          } catch (_) {}
+        }
+        set({ user: null, accessToken: null, isAuthenticated: false });
+      },
     }),
     {
       name: "paytrack-auth",

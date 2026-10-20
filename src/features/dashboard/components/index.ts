@@ -12,3 +12,4 @@ export { ClientDashboardHub } from "./ClientDashboardHub";
 export { StaffDashboardHub } from "./StaffDashboardHub";
 export { DashboardAttendanceWidget } from "./DashboardAttendanceWidget";
 export { DashboardFollowUpAlert } from "./DashboardFollowUpAlert";
+export { DashboardFollowUpModal } from "./DashboardFollowUpModal";

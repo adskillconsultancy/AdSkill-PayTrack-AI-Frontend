@@ -1,12 +1,18 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { Flame, Clock, Calendar, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/common";
 import { ROUTES } from "@/constants";
+import { useAuth } from "@/hooks/useAuth";
 import { useGetFollowUpQueueQuery } from "@/services/api/leads/leadsApi";
+import { DashboardFollowUpModal } from "./DashboardFollowUpModal";
 
 export function DashboardFollowUpAlert() {
+  const { user } = useAuth();
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+
   const { data: queueResponse } = useGetFollowUpQueueQuery(
     { page: 1, limit: 1 },
     { pollingInterval: 30000 },
@@ -22,12 +28,43 @@ export function DashboardFollowUpAlert() {
 
   const hasUrgentFollowUps = counts.overdue > 0 || counts.today > 0;
 
+  // Check if dismissed for current login session
+  React.useEffect(() => {
+    if (!hasUrgentFollowUps) return;
+
+    const storageKey = user?.id
+      ? `followup_modal_dismissed_${user.id}`
+      : "followup_modal_dismissed";
+
+    try {
+      const isDismissed = sessionStorage.getItem(storageKey) === "true";
+      if (!isDismissed) {
+        setIsModalOpen(true);
+      }
+    } catch (_) {
+      // If sessionStorage is unavailable, do not force modal
+    }
+  }, [hasUrgentFollowUps, user?.id]);
+
+  const handleCloseModal = () => {
+    const storageKey = user?.id
+      ? `followup_modal_dismissed_${user.id}`
+      : "followup_modal_dismissed";
+
+    try {
+      sessionStorage.setItem(storageKey, "true");
+    } catch (_) {}
+
+    setIsModalOpen(false);
+  };
+
   if (!hasUrgentFollowUps) {
     return null;
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-4 sm:p-5 shadow-xs">
+    <>
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-4 sm:p-5 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400">
@@ -65,7 +102,8 @@ export function DashboardFollowUpAlert() {
           <Link href={ROUTES.LEADS_FOLLOW_UP}>
             <Button
               size="sm"
-              className="gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-xs">
+              className="gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs h-9 px-4 cursor-pointer shadow-xs"
+            >
               <Calendar className="h-3.5 w-3.5" />
               <span>Open Follow-Up Queue</span>
               <ArrowRight className="h-3.5 w-3.5 ml-0.5" />
@@ -74,5 +112,14 @@ export function DashboardFollowUpAlert() {
         </div>
       </div>
     </div>
-  );
+
+    <DashboardFollowUpModal
+      isOpen={isModalOpen}
+      onClose={handleCloseModal}
+      counts={counts}
+    />
+  </>
+);
 }
+
+
