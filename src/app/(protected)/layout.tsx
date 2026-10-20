@@ -108,7 +108,7 @@ export default function ProtectedLayout({
       <div
         className={cn(
           "transition-all duration-300 ease-in-out min-h-screen flex-1 flex flex-col min-w-0 bg-background",
-          isOpen ? "lg:ml-64" : "lg:ml-0",
+          isOpen ? "lg:ml-64" : "lg:ml-20",
         )}>
         {/* Top Header: 3-Zone Layout (Left Context, Center Omni-Search, Right Actions) */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-sidebar/95 backdrop-blur-md px-4 sm:px-6 shrink-0 border-b border-border/70 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)]">
@@ -123,29 +123,6 @@ export default function ProtectedLayout({
               <Menu className="h-5 w-5" />
               <span className="sr-only">Open menu</span>
             </Button>
-
-            {/* When collapsed on desktop: show AdSkill logo icon & brand */}
-            {!isOpen && (
-              <div className="hidden lg:flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted p-1 shadow-2xs">
-                  <Image
-                    src="/logo-icon.svg"
-                    alt="AdSkill PayTrack AI"
-                    width={26}
-                    height={26}
-                    className="object-contain"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-extrabold tracking-tight text-foreground leading-tight">
-                    PayTrack<span className="text-[#F3A712]"> AI</span>
-                  </span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
-                    by AdSkill
-                  </span>
-                </div>
-              </div>
-            )}
 
             {/* Mobile Brand Title */}
             <div className="flex lg:hidden items-center gap-2">
@@ -165,18 +142,6 @@ export default function ProtectedLayout({
             {/* Mobile Search Trigger */}
             <div className="sm:hidden">
               <GlobalOmniSearch compact />
-            </div>
-
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-lg bg-background/50 border border-border text-sm shadow-2xs"
-              title={user?.country || "Account region"}>
-              <span>
-                {user?.country === "Canada"
-                  ? "🇨🇦"
-                  : user?.country === "United Kingdom"
-                    ? "🇬🇧"
-                    : "🇺🇸"}
-              </span>
             </div>
 
             <button
@@ -312,11 +277,7 @@ export default function ProtectedLayout({
           </div>
         </header>
 
-        <div
-          className={cn(
-            "flex-1 p-4 sm:p-6 pb-24 lg:pb-6 w-full transition-all duration-300",
-            !isOpen && "lg:pl-[calc(5rem+1.5rem)]",
-          )}>
+        <div className="flex-1 p-4 sm:p-6 pb-24 lg:pb-6 w-full transition-all duration-300">
           <main className="min-h-[calc(100vh-4rem)] rounded-2xl bg-card border border-border/70 p-4 sm:p-6 space-y-6 shadow-sm">
             {children}
           </main>

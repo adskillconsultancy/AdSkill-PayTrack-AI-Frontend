@@ -26,6 +26,7 @@ import {
   User,
   UserPlus,
   Users,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -391,11 +392,31 @@ export function Sidebar() {
     }));
   };
 
+  const isExpandedView = isOpen || isMobileOpen;
+
+  // Automatically close mobile sidebar on navigation
+  React.useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname, searchParams, setMobileOpen]);
+
+  // Lock body scroll when mobile drawer is open
+  React.useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileOpen]);
+
   const closeMobileSidebar = () => {
     if (isMobileOpen) setMobileOpen(false);
   };
 
   const handleLogout = () => {
+    closeMobileSidebar();
     logout();
     document.cookie =
       "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -635,13 +656,15 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed left-0 z-50 flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out shadow-[4px_0_24px_-4px_rgba(0,0,0,0.06)]",
+          "fixed left-0 top-0 h-screen z-50 flex flex-col bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out shadow-[4px_0_24px_-4px_rgba(0,0,0,0.06)]",
           "border-r border-sidebar-border/70",
-          isOpen ? "top-0 h-screen w-64" : "top-16 h-[calc(100vh-4rem)] w-20",
-          isMobileOpen ? "translate-x-0 w-72" : "-translate-x-full lg:translate-x-0",
+          isOpen ? "lg:w-64" : "lg:w-20",
+          isMobileOpen
+            ? "translate-x-0 w-72 max-w-[85vw]"
+            : "-translate-x-full lg:translate-x-0",
         )}>
-        {/* 🏢 1. HEADER (SHOWN ONLY WHEN SIDEBAR IS OPEN - COMPLETELY BORDERLESS) 🏢 */}
-        {isOpen && (
+        {/* 🏢 1. HEADER (BRAND LOCKUP WHEN EXPANDED, COMPACT LOGO WHEN COLLAPSED) 🏢 */}
+        {isExpandedView ? (
           <div className="h-16 shrink-0 flex items-center justify-between px-3.5 border-b border-sidebar-border/70 transition-all">
             {/* Full Brand Lockup when Open */}
             <Link
@@ -668,24 +691,52 @@ export function Sidebar() {
               </div>
             </Link>
 
-            {/* Collapse Button (<) */}
+            {/* Mobile Close Button (X) */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileOpen(false)}
+              title="Close Sidebar"
+              className="lg:hidden h-8.5 w-8.5 rounded-xl bg-[#FAF8F5] text-[#525252] hover:bg-[#F1F5F9] hover:text-[#0a0a0a] transition-colors shrink-0 cursor-pointer">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close Sidebar</span>
+            </Button>
+
+            {/* Desktop Collapse Button (<) */}
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={toggleSidebar}
               title="Collapse Sidebar"
-              className="h-8.5 w-8.5 rounded-xl bg-[#FAF8F5] text-[#525252] hover:bg-[#F1F5F9] hover:text-[#0a0a0a] transition-colors shrink-0">
+              className="hidden lg:flex h-8.5 w-8.5 rounded-xl bg-[#FAF8F5] text-[#525252] hover:bg-[#F1F5F9] hover:text-[#0a0a0a] transition-colors shrink-0 cursor-pointer">
               <ChevronLeft className="h-4 w-4" />
               <span className="sr-only">Collapse Sidebar</span>
             </Button>
           </div>
+        ) : (
+          /* COLLAPSED HEADER: Brand Logo Icon in the top-left corner */
+          <div className="h-16 shrink-0 flex items-center justify-center border-b border-sidebar-border/70 transition-all">
+            <Link
+              href={ROUTES.DASHBOARD}
+              title="AdSkill PayTrack AI"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted p-1 shadow-2xs hover:bg-primary/10 transition-all group cursor-pointer">
+              <Image
+                src="/logo-icon.svg"
+                alt="AdSkill PayTrack AI"
+                width={26}
+                height={26}
+                className="object-contain transition-transform group-hover:scale-105"
+              />
+            </Link>
+          </div>
         )}
 
         {/* 🧭 2. NAVIGATION LINKS (OPEN OR COLLAPSED) 🧭 */}
-        {isOpen ? (
+        {isExpandedView ? (
           /* EXPANDED VIEW: ACCORDION LIST GROUPED BY SECTIONS */
-          <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6 scrollbar-none">
+          <div className="flex-1 overflow-y-auto px-3.5 py-4 space-y-6 scrollbar-none pb-20 lg:pb-4">
             {filteredNavSections.map((section) => (
               <div key={section.sectionTitle} className="space-y-2">
                 <div className="px-3 text-[11px] font-bold uppercase tracking-wider text-[#525252]">
@@ -890,11 +941,11 @@ export function Sidebar() {
         <div
           className={cn(
             "border-t border-[#F0ECE6] bg-[#FAF8F5]/50 shrink-0",
-            isOpen
+            isExpandedView
               ? "p-3.5 border-r border-[#EAE6DF]"
               : "py-3 flex justify-center",
           )}>
-          {isOpen ? (
+          {isExpandedView ? (
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a] text-[#F3A712] font-black text-sm shadow-xs border border-[#F3A712]/30">
