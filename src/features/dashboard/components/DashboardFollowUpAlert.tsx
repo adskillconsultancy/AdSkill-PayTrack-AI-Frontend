@@ -116,7 +116,13 @@ export function DashboardFollowUpAlert() {
     <DashboardFollowUpModal
       isOpen={isModalOpen}
       onClose={handleCloseModal}
-      counts={counts}
+      counts={{
+        overdue: counts.overdue,
+        today: counts.today,
+        upcoming: counts.upcoming,
+        completed: counts.completed ?? 0,
+        total: counts.total,
+      }}
     />
   </>
 );

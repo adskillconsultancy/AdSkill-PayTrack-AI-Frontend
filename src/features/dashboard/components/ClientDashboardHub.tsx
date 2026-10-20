@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/common";
 import { useConfirm } from "@/hooks/useConfirm";
+import { ClientCaseStageTracker } from "./ClientCaseStageTracker";
 
 const formatMoney = (amount: number | string, currency = "USD") =>
   new Intl.NumberFormat("en-US", {
@@ -199,6 +200,9 @@ export function ClientDashboardHub() {
           </div>
         </div>
       </div>
+
+      {/* 2.1 CLIENT CASE LIFECYCLE PROGRESS BAR & STAFF DIRECTIVES */}
+      <ClientCaseStageTracker summary={summary} />
 
       {/* 3. CORE METRIC CARDS (SPECIFICATION SECTION 10) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

@@ -207,6 +207,21 @@ export interface AdSkillContactInfo {
   portalUrl: string;
 }
 
+export interface ClientConsultantInfo {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  whatsapp?: string | null;
+}
+
+export interface ClientCaseNoteItem {
+  id: string;
+  content: string;
+  createdAt: string;
+  authorName: string;
+}
+
 export interface ClientDashboardSummary {
   hasActiveCase: boolean;
   caseId: string | null;
@@ -216,6 +231,9 @@ export interface ClientDashboardSummary {
   currency: string;
   caseStatus: string | null;
   financialStatus: string | null;
+  clientVisibleNotes: string | null;
+  assignedConsultant: ClientConsultantInfo | null;
+  clientNotes: ClientCaseNoteItem[];
   totalProfessionalFee: number;
   totalPaid: number;
   remainingBalance: number;
@@ -230,3 +248,4 @@ export interface ClientDashboardSummary {
   adskillContact: AdSkillContactInfo;
   feeDisclaimer: string;
 }
+

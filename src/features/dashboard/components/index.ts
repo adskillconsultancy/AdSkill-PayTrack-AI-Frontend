@@ -13,3 +13,5 @@ export { StaffDashboardHub } from "./StaffDashboardHub";
 export { DashboardAttendanceWidget } from "./DashboardAttendanceWidget";
 export { DashboardFollowUpAlert } from "./DashboardFollowUpAlert";
 export { DashboardFollowUpModal } from "./DashboardFollowUpModal";
+export { ClientCaseStageTracker } from "./ClientCaseStageTracker";
+export { ClientStaffDirectivesCard } from "./ClientStaffDirectivesCard";
