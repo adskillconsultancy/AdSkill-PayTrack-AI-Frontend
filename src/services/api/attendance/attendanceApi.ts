@@ -45,17 +45,7 @@ export interface AttendanceTeamResponse {
   records: AttendanceRecord[];
 }
 
-export interface DailyAiDigestResponse {
-  id: string;
-  date: string;
-  summaryContent: string;
-  totalHoursLogged: number;
-  activeUsersCount: number;
-  paymentsCollected: number;
-  metadata?: Record<string, unknown> | null;
-  createdAt: string;
-  updatedAt: string;
-}
+
 
 export interface GetAttendanceQueryParams {
   page?: number;
@@ -131,23 +121,7 @@ export const attendanceApi = baseApi.injectEndpoints({
       providesTags: [{ type: "Attendance", id: "TEAM" }],
     }),
 
-    getTodayDigest: builder.query<ApiResponse<DailyAiDigestResponse>, { date?: string } | void>({
-      query: (params) => ({
-        url: "/attendance/digest/today",
-        method: "GET",
-        params: params || {},
-      }),
-      providesTags: [{ type: "Attendance", id: "DIGEST" }],
-    }),
 
-    generateDigest: builder.mutation<ApiResponse<DailyAiDigestResponse>, { date?: string }>({
-      query: (body) => ({
-        url: "/attendance/digest/generate",
-        method: "POST",
-        body,
-      }),
-      invalidatesTags: [{ type: "Attendance", id: "DIGEST" }],
-    }),
   }),
   overrideExisting: false,
 });
@@ -159,6 +133,5 @@ export const {
   useUpdateFocusMutation,
   useGetMyAttendanceHistoryQuery,
   useGetTeamAttendanceQuery,
-  useGetTodayDigestQuery,
-  useGenerateDigestMutation,
+
 } = attendanceApi;

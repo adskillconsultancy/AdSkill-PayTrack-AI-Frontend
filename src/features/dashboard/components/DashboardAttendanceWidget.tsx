@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import {
   Clock,
   Users,
-  Sparkles,
   ArrowRight,
   UserCheck,
   Timer,
@@ -16,7 +15,6 @@ import {
 } from "lucide-react";
 import { useGetDashboardAttendanceSummaryQuery } from "@/services/api/dashboard/dashboardApi";
 import type { DashboardFilterParams } from "@/types/dashboard.types";
-import { DailyAiDigestModal } from "@/features/attendance/components/DailyAiDigestModal";
 import { ROUTES } from "@/constants";
 
 interface DashboardAttendanceWidgetProps {
@@ -26,7 +24,6 @@ interface DashboardAttendanceWidgetProps {
 export function DashboardAttendanceWidget({ filterParams }: DashboardAttendanceWidgetProps = {}) {
   const { data: response, isLoading, isError } =
     useGetDashboardAttendanceSummaryQuery(filterParams);
-  const [isDigestOpen, setIsDigestOpen] = useState(false);
 
   const summary = response?.data;
   const recentRecords = summary?.recentRecords || [];
@@ -145,22 +142,13 @@ export function DashboardAttendanceWidget({ filterParams }: DashboardAttendanceW
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
-                Real-time staff clock-ins, logged billable shift hours, and AI executive summaries
+                Real-time staff clock-ins and logged billable shift hours
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setIsDigestOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#F3A712]/30 bg-[#F3A712]/10 px-3 py-1.5 text-xs font-bold text-[#D97706] dark:text-[#FBBF24] hover:bg-[#F3A712]/20 transition-all cursor-pointer shadow-2xs hover:scale-[1.02]"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>AI Daily Digest</span>
-            </button>
-
-            <Link
+          <Link
               href={ROUTES.ATTENDANCE || "/attendance"}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition-all cursor-pointer shadow-2xs hover:scale-[1.02]"
             >
@@ -335,11 +323,6 @@ export function DashboardAttendanceWidget({ filterParams }: DashboardAttendanceW
         </div>
       </div>
 
-      {/* AI Daily Digest Modal */}
-      <DailyAiDigestModal
-        isOpen={isDigestOpen}
-        onClose={() => setIsDigestOpen(false)}
-      />
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { X, LogOut, Sparkles } from "lucide-react";
+import { X, LogOut } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useClockOutMutation } from "@/services/api/attendance/attendanceApi";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -111,12 +111,8 @@ export function ClockOutModal({ isOpen, onClose, onSuccess }: ClockOutModalProps
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#0a0a0a] flex items-center justify-between">
-              <span>What did you accomplish today? (Optional)</span>
-              <span className="text-[11px] font-semibold text-[#D97706] flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
-                Powers AI Daily Digest
-              </span>
+            <label className="text-xs font-bold text-[#0a0a0a] block">
+              What did you accomplish today? (Optional)
             </label>
             <textarea
               rows={4}
@@ -125,13 +121,6 @@ export function ClockOutModal({ isOpen, onClose, onSuccess }: ClockOutModalProps
               placeholder="e.g.&#10;• Completed intake review for Client Mohammad Rahim&#10;• Followed up on $2,500 pending invoice payment&#10;• Submitted case documentation package"
               className="w-full p-3.5 rounded-xl border border-[#EAE6DF] bg-white text-sm text-[#0a0a0a] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#0a0a0a]/10 focus:border-[#0a0a0a] transition-all resize-none leading-relaxed"
             />
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-[#FEF3C7]/40 border border-[#FEF3C7] text-xs text-[#92400E] flex items-start gap-2.5">
-            <Sparkles className="h-4 w-4 text-[#D97706] shrink-0 mt-0.5" />
-            <p>
-              Your bullet points are aggregated into the daily team briefing for management oversight and client service tracking.
-            </p>
           </div>
 
           {/* Action buttons */}

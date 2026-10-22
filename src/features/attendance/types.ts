@@ -33,14 +33,4 @@ export interface AttendanceSummaryStats {
   totalHoursToday: number;
 }
 
-export interface DailyAiDigestData {
-  id: string;
-  date: string;
-  summaryContent: string;
-  totalHoursLogged: number;
-  activeUsersCount: number;
-  paymentsCollected: number;
-  metadata?: Record<string, unknown> | null;
-  createdAt: string;
-  updatedAt: string;
-}
+

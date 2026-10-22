@@ -3,14 +3,13 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { AttendanceSummaryStats } from "../types";
-import { Clock, UserCheck, Sparkles, Activity } from "lucide-react";
+import { Clock, UserCheck, Activity } from "lucide-react";
 import { SkeletonMetricCards } from "@/components/common/Skeleton";
 
 interface AttendanceMetricCardsProps {
   stats?: AttendanceSummaryStats;
   isLoading?: boolean;
   className?: string;
-  onOpenDigest?: () => void;
 }
 
 export function AttendanceMetricCards({
@@ -21,7 +20,6 @@ export function AttendanceMetricCards({
   },
   isLoading = false,
   className,
-  onOpenDigest,
 }: AttendanceMetricCardsProps) {
   if (isLoading) {
     return <SkeletonMetricCards className={className} />;
@@ -85,42 +83,19 @@ export function AttendanceMetricCards({
       ),
       indicatorColor: "text-[#7E22CE]",
     },
-    {
-      id: "AiDigest",
-      label: "AI DAILY DIGEST",
-      value: "Executive",
-      statusText: "View Accomplishments",
-      isInteractive: true,
-      onClick: onOpenDigest,
-      icon: (
-        <div className="flex h-12 w-12 sm:h-13 sm:w-13 shrink-0 items-center justify-center rounded-full bg-[#FEF3C7] text-[#D97706] ring-4 ring-[#FEF3C7]/50 shadow-2xs group-hover:bg-[#FDE68A] transition-colors">
-          <Sparkles className="h-5 w-5 text-[#D97706]" />
-        </div>
-      ),
-      indicatorIcon: (
-        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[#D97706]">
-          <Sparkles className="h-2.5 w-2.5" />
-        </span>
-      ),
-      indicatorColor: "text-[#D97706]",
-    },
   ];
 
   return (
     <div
       className={cn(
-        "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5",
+        "grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5",
         className
       )}
     >
       {cards.map((card) => (
         <div
           key={card.id}
-          onClick={card.onClick}
-          className={cn(
-            "group relative flex items-center justify-between p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#EAE6DF] bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all duration-200",
-            card.isInteractive && "cursor-pointer hover:border-[#D97706]/40 hover:shadow-md"
-          )}
+          className="group relative flex items-center justify-between p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-[#EAE6DF] bg-white shadow-[0_4px_20px_rgb(0,0,0,0.02)] transition-all duration-200"
         >
           {/* Left Info Stack */}
           <div className="space-y-1.5">

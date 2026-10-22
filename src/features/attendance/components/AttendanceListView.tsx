@@ -7,20 +7,20 @@ import { Loader } from "@/components/common/Loader";
 import { AttendanceItem, AttendanceStatus } from "../types";
 import { AttendanceMetricCards } from "./AttendanceMetricCards";
 import { AttendanceSearchBar } from "./AttendanceSearchBar";
-import { DailyAiDigestModal } from "./DailyAiDigestModal";
+
 import { ClockInModal } from "./ClockInModal";
 import { ClockOutModal } from "./ClockOutModal";
 import {
   Clock,
   ChevronRight,
   Eye,
-  Sparkles,
   Calendar,
   CheckCircle,
   Activity,
   X,
   User,
   Briefcase,
+  FileText,
 } from "lucide-react";
 import {
   AttendanceRecord,
@@ -45,7 +45,7 @@ export function AttendanceListView() {
   const [isClockInOpen, setIsClockInOpen] = React.useState(false);
   const [isClockOutOpen, setIsClockOutOpen] = React.useState(false);
   const [selectedRecord, setSelectedRecord] = React.useState<AttendanceRecord | null>(null);
-  const [showAiDigest, setShowAiDigest] = React.useState(false);
+
 
   // My current attendance status
   const { data: myStatusResponse, refetch: refetchMyStatus } = useGetMyAttendanceStatusQuery();
@@ -266,7 +266,7 @@ export function AttendanceListView() {
             className="flex items-center gap-1.5 text-xs text-[#171717] hover:text-[#0284C7] max-w-[220px] text-left group cursor-pointer"
             title="Click to view full notes"
           >
-            <Sparkles className="h-3.5 w-3.5 text-[#D97706] shrink-0" />
+            <FileText className="h-3.5 w-3.5 text-[#0284C7] shrink-0" />
             <span className="truncate underline-offset-2 group-hover:underline">
               {item.eodNotes.replace(/\n/g, " ")}
             </span>
@@ -303,8 +303,8 @@ export function AttendanceListView() {
 
   return (
     <div className="space-y-6">
-      {/* 1. TOP BREADCRUMB & PAGE TITLE */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* 1. TOP PAGE TITLE */}
+      <div>
         <div className="flex items-center gap-3.5">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-[#0a0a0a] shadow-2xs">
             <Clock className="h-5 w-5 text-[#0a0a0a]" />
@@ -316,33 +316,17 @@ export function AttendanceListView() {
             <div className="flex items-center gap-2 text-xs font-semibold text-[#64748B] mt-0.5">
               <span>Management</span>
               <ChevronRight className="h-3 w-3 text-[#94A3B8]" />
-              <span className="text-[#0a0a0a] font-bold">Attendance & AI Digest</span>
+              <span className="text-[#0a0a0a] font-bold">Attendance</span>
             </div>
           </div>
         </div>
-
-        {/* Action Open AI Digest Modal */}
-        <button
-          type="button"
-          onClick={() => setShowAiDigest(true)}
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[#D97706]/30 bg-[#FEF3C7]/50 hover:bg-[#FEF3C7] text-xs font-bold text-[#B45309] transition-all cursor-pointer shadow-2xs group"
-        >
-          <Sparkles className="h-4 w-4 text-[#D97706] group-hover:scale-110 transition-transform" />
-          <span>View AI Executive Digest</span>
-        </button>
       </div>
 
-      {/* 2. AI EXECUTIVE DIGEST MODAL */}
-      <DailyAiDigestModal
-        isOpen={showAiDigest}
-        onClose={() => setShowAiDigest(false)}
-      />
 
       {/* 3. 4 METRIC SUMMARY KPI CARDS */}
       <AttendanceMetricCards
         stats={metrics}
         isLoading={isLoading}
-        onOpenDigest={() => setShowAiDigest(true)}
       />
 
       {/* 4. SEARCH AND FILTER CONTROLS */}
@@ -504,8 +488,8 @@ export function AttendanceListView() {
 
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-[#64748B] uppercase flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-[#D97706]" />
-                Daily Accomplishments (AI Summary Notes)
+                <FileText className="h-3.5 w-3.5 text-[#0284C7]" />
+                Daily Accomplishments / Shift Notes
               </span>
               <div className="p-4 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs text-[#171717] leading-relaxed whitespace-pre-wrap">
                 {selectedRecord.eodNotes || "No end-of-day accomplishment notes were entered for this session."}

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { X, Clock, Sparkles, ChevronDown, Check } from "lucide-react";
+import { X, Clock, Info, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useClockInMutation } from "@/services/api/attendance/attendanceApi";
 import { cn } from "@/lib/utils";
@@ -190,9 +190,9 @@ export function ClockInModal({ isOpen, onClose, onSuccess }: ClockInModalProps) 
           </div>
 
           <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs text-[#64748B] flex items-start gap-2.5">
-            <Sparkles className="h-4 w-4 text-[#D97706] shrink-0 mt-0.5" />
+            <Info className="h-4 w-4 text-[#D97706] shrink-0 mt-0.5" />
             <p>
-              Your clock-in timestamp is tracked automatically. When you clock out, you can note your daily accomplishments for the AI Executive Digest.
+              Your clock-in timestamp is tracked automatically. When you clock out, you can note your daily accomplishments and shift summary.
             </p>
           </div>
 
