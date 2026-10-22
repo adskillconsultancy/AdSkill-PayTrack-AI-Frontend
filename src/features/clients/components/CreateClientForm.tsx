@@ -1154,11 +1154,17 @@ Please log in and update your password upon your first visit. If you have any qu
                       onChange={(e) => handleServiceSelect(e.target.value)}
                       className="w-full h-12 px-3.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-2xs cursor-pointer">
                       <option value="">-- Choose active immigration or visa offering --</option>
-                      {services.map((s: any) => (
-                        <option key={s.id} value={s.id}>
-                          {`${s.name} [${s.code}] • Category: ${s.category} • Base Fee: $${Number(s.baseFee || 0).toLocaleString()} ${s.currency || "USD"}`}
-                        </option>
-                      ))}
+                      {services.map((s: any) => {
+                        const isCustom = Number(s.baseFee || 0) === 0;
+                        const feeLabel = isCustom
+                          ? "Custom Quote"
+                          : `$${Number(s.baseFee).toLocaleString()} ${s.currency || "USD"}`;
+                        return (
+                          <option key={s.id} value={s.id}>
+                            {`${s.name} [${s.code}] • Category: ${s.category} • Fee: ${feeLabel}`}
+                          </option>
+                        );
+                      })}
                     </select>
                   )}
                 </div>
@@ -1674,6 +1680,12 @@ Please log in and update your password upon your first visit. If you have any qu
                       {...register("baseFee", { valueAsNumber: true })}
                       className="h-11 rounded-xl bg-white border-slate-200 text-xs font-extrabold text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                     />
+                    {watchedServiceId && services.find((s: any) => s.id === watchedServiceId && Number(s.baseFee || 0) === 0) && (
+                      <p className="text-[11px] font-semibold text-amber-800 flex items-center gap-1.5 mt-1 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                        <FileText className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                        <span>Custom Quoted Service — enter the agreed fee for this client.</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">

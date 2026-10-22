@@ -33,6 +33,7 @@ import {
   Trash2,
   UserPlus,
   Scale,
+  FileText,
 } from "lucide-react";
 
 interface ServiceListViewProps {
@@ -369,13 +370,21 @@ export function ServiceListView({
           Number(item.estimatedAttorneyFee || 0) +
           Number(item.estimatedThirdPartyFee || 0);
         const totalCost = base + ptSum;
+        const isCustomQuote = base === 0;
 
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="font-mono font-black text-xs text-[#065F46] bg-[#ECFDF5] px-2 py-0.5 rounded-md border border-[#A7F3D0]">
-                ${base.toLocaleString()} Advisory
-              </span>
+              {isCustomQuote ? (
+                <span className="inline-flex items-center gap-1 font-bold text-xs text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200 shadow-2xs">
+                  <FileText className="h-3 w-3 text-amber-600" />
+                  Custom Quote
+                </span>
+              ) : (
+                <span className="font-mono font-black text-xs text-[#065F46] bg-[#ECFDF5] px-2 py-0.5 rounded-md border border-[#A7F3D0]">
+                  ${base.toLocaleString()} Advisory
+                </span>
+              )}
               {ptSum > 0 && (
                 <span className="font-mono text-[10px] font-bold text-[#2563EB] bg-[#EFF6FF] px-1.5 py-0.5 rounded border border-[#BFDBFE]">
                   +${ptSum.toLocaleString()} Pass-thru
@@ -383,10 +392,16 @@ export function ServiceListView({
               )}
             </div>
             <div className="text-[10px] text-[#64748B]">
-              Total:{" "}
-              <strong className="text-[#0a0a0a] font-mono">
-                ${totalCost.toLocaleString()} {item.currency || "USD"}
-              </strong>
+              {isCustomQuote ? (
+                <span>Evaluated at Case Intake</span>
+              ) : (
+                <>
+                  Total:{" "}
+                  <strong className="text-[#0a0a0a] font-mono">
+                    ${totalCost.toLocaleString()} {item.currency || "USD"}
+                  </strong>
+                </>
+              )}
             </div>
           </div>
         );
@@ -396,8 +411,22 @@ export function ServiceListView({
       key: "milestones",
       header: "Retainer & Terms",
       cell: (item) => {
+        const base = Number(item.baseFee || 0);
         const deposit = item.defaultDeposit ? Number(item.defaultDeposit) : null;
         const installments = item.defaultInstallments;
+
+        if (base === 0) {
+          return (
+            <div className="space-y-0.5">
+              <span className="text-xs font-bold text-slate-700 block">
+                Flexible Retainer
+              </span>
+              <span className="text-[10px] text-slate-500 block">
+                Structured upon Client Intake
+              </span>
+            </div>
+          );
+        }
 
         return (
           <div className="space-y-1">

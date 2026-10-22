@@ -533,41 +533,58 @@ export function ServiceDetailView({ serviceId }: ServiceDetailViewProps) {
             </div>
           </div>
 
-          {/* Right Financial Box (REPLACING THE OLD BLACK CONTAINER) */}
+          {/* Right Financial Box */}
           <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 space-y-4">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                Total Client Commitment
+            {base === 0 ? (
+              <div className="space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                  Engagement &amp; Pricing Model
+                </div>
+                <div className="inline-flex items-center gap-2 font-black text-2xl tracking-tight text-amber-900 bg-amber-50 px-3.5 py-1.5 rounded-xl border border-amber-200 shadow-2xs">
+                  <FileText className="h-6 w-6 text-amber-600" />
+                  Custom Quote
+                </div>
+                <p className="text-xs font-medium text-slate-600 leading-relaxed">
+                  Fee is structured individually per client case based on complexity and timeline during intake.
+                </p>
               </div>
-              <div className="mt-1 font-mono text-3xl font-black tracking-tight text-slate-900">
-                {formatCurrency(totalCost, currency)}
+            ) : (
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Total Client Commitment
+                </div>
+                <div className="mt-1 font-mono text-3xl font-black tracking-tight text-slate-900">
+                  {formatCurrency(totalCost, currency)}
+                </div>
+                <div className="mt-1 flex items-center justify-between text-xs font-bold">
+                  <span className="text-emerald-700">
+                    {formatCurrency(base, currency)} Advisory
+                  </span>
+                  <span className="text-sky-700">
+                    {formatCurrency(passThrough, currency)} Pass-Through
+                  </span>
+                </div>
               </div>
-              <div className="mt-1 flex items-center justify-between text-xs font-bold">
-                <span className="text-emerald-700">
-                  {formatCurrency(base, currency)} Advisory
-                </span>
-                <span className="text-sky-700">
-                  {formatCurrency(passThrough, currency)} Pass-Through
-                </span>
-              </div>
-            </div>
+            )}
 
-            <div className="space-y-1.5 pt-3 border-t border-slate-200/80">
-              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                <span>AdSkill ({advisoryShare}%)</span>
-                <span>Pass-Through ({passThroughShare}%)</span>
+            {base > 0 && (
+              <div className="space-y-1.5 pt-3 border-t border-slate-200/80">
+                <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  <span>AdSkill ({advisoryShare}%)</span>
+                  <span>Pass-Through ({passThroughShare}%)</span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden flex">
+                  <div
+                    className="h-full bg-emerald-500 transition-all duration-700"
+                    style={{ width: `${advisoryShare}%` }}
+                  />
+                  <div
+                    className="h-full bg-sky-500 transition-all duration-700"
+                    style={{ width: `${passThroughShare}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-2.5 w-full rounded-full bg-slate-200 overflow-hidden flex">
-                <div
-                  className="h-full bg-emerald-500 transition-all duration-700"
-                  style={{ width: `${advisoryShare}%` }}
-                />
-                <div
-                  className="h-full bg-sky-500 transition-all duration-700"
-                  style={{ width: `${passThroughShare}%` }}
-                />
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
