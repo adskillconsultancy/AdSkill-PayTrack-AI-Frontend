@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/common";
 import { ROUTES } from "@/constants/routes";
 import { CreateExpenseModal, ExpenseDetailModal } from "@/features/expenses";
@@ -20,6 +21,8 @@ import {
   TrendingUp,
   Wallet,
 } from "lucide-react";
+import Link from "next/link";
+import React, { useState } from "react";
 
 const CATEGORY_NAMES: Record<string, string> = {
   MEALS_ENTERTAINMENT: "Meals & Refreshments",
