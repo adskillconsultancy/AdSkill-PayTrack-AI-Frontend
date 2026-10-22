@@ -12,8 +12,10 @@ import {
   ChevronRight,
   Download,
   FileSpreadsheet,
+  FileBarChart,
   Printer,
   ShieldAlert,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";

@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Sparkles,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/common";
 
@@ -103,6 +104,18 @@ export function DashboardHeader({
               >
                 <Receipt className="h-3.5 w-3.5 text-[#F3A712]" />
                 <span>Record Payment</span>
+              </Button>
+            </Link>
+
+            <Link href={ROUTES.REPORTS_STAFF_PERFORMANCE}>
+              <Button
+                type="button"
+                size="sm"
+                className="gap-2 bg-[#4F46E5] text-white hover:bg-[#4338CA] dark:bg-[#6366F1] dark:text-white dark:hover:bg-[#4F46E5] font-bold text-xs h-9 px-3.5 rounded-xl cursor-pointer shadow-sm transition-all hover:scale-[1.02] border border-[#4F46E5]/40"
+                title="View Team Daily Operations & Performance Summary"
+              >
+                <Users className="h-3.5 w-3.5" />
+                <span>Daily Summary</span>
               </Button>
             </Link>
 

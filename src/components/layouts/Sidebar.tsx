@@ -200,6 +200,12 @@ const navSections: NavSection[] = [
         requiredAnyPermissions: ["report:view", "report:export"],
       },
       {
+        title: "Staff Performance",
+        href: ROUTES.REPORTS_STAFF_PERFORMANCE,
+        icon: Users,
+        requiredAnyPermissions: ["report:view", "report:export"],
+      },
+      {
         title: "Expense & Income",
         href: ROUTES.EXPENSE_TRACKER,
         icon: Wallet,
