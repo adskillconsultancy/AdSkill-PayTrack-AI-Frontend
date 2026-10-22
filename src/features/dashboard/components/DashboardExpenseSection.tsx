@@ -1,31 +1,25 @@
-"use client";
-
-import React, { useState } from "react";
-import Link from "next/link";
-import {
-  Wallet,
-  TrendingDown,
-  TrendingUp,
-  Plus,
-  ArrowRight,
-  Receipt,
-  Calendar,
-  Loader2,
-  Sparkles,
-  FileText,
-  Trash2,
-  Eye,
-} from "lucide-react";
 import { Button } from "@/components/common";
 import { ROUTES } from "@/constants/routes";
+import { CreateExpenseModal, ExpenseDetailModal } from "@/features/expenses";
 import { useConfirm } from "@/hooks/useConfirm";
 import {
-  useGetExpensesQuery,
   useDeleteExpenseMutation,
+  useGetExpensesQuery,
   type ExpenseEntry,
   type TransactionType,
 } from "@/services/api/expenses/expensesApi";
-import { CreateExpenseModal, ExpenseDetailModal } from "@/features/expenses";
+import {
+  ArrowRight,
+  Calendar,
+  Eye,
+  FileText,
+  Loader2,
+  Sparkles,
+  Trash2,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 
 const CATEGORY_NAMES: Record<string, string> = {
   MEALS_ENTERTAINMENT: "Meals & Refreshments",
@@ -52,14 +46,20 @@ export function DashboardExpenseSection() {
   const [modalType, setModalType] = useState<TransactionType>("EXPENSE");
 
   // Detail / Edit modal state
-  const [selectedExpense, setSelectedExpense] = useState<ExpenseEntry | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<ExpenseEntry | null>(
+    null,
+  );
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const { confirm, alert } = useConfirm();
   const [deleteExpense] = useDeleteExpenseMutation();
 
   // Fetch the 6 most recent transactions for the dashboard table
-  const { data: response, isLoading, isError } = useGetExpensesQuery({
+  const {
+    data: response,
+    isLoading,
+    isError,
+  } = useGetExpensesQuery({
     page: 1,
     limit: 6,
     sortBy: "transactionDate",
@@ -94,13 +94,16 @@ export function DashboardExpenseSection() {
         await deleteExpense(item.id).unwrap();
         await alert({
           title: "Entry Deleted",
-          message: "The transaction has been successfully removed from the office ledger.",
+          message:
+            "The transaction has been successfully removed from the office ledger.",
           variant: "success",
         });
       } catch (err: any) {
         await alert({
           title: "Delete Failed",
-          message: err?.data?.message || "Failed to delete transaction. Please try again.",
+          message:
+            err?.data?.message ||
+            "Failed to delete transaction. Please try again.",
           variant: "danger",
         });
       }
@@ -169,7 +172,8 @@ export function DashboardExpenseSection() {
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Real-time tracking of operational expenses, tea/refreshments, utility bills, and direct income
+                Real-time tracking of operational expenses, tea/refreshments,
+                utility bills, and direct income
               </p>
             </div>
           </div>
@@ -179,16 +183,14 @@ export function DashboardExpenseSection() {
             <Button
               type="button"
               onClick={() => handleOpenModal("EXPENSE")}
-              className="h-9 px-3.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold shadow-xs shadow-rose-200 gap-1.5 cursor-pointer transition-all"
-            >
+              className="h-9 px-3.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold shadow-xs shadow-rose-200 gap-1.5 cursor-pointer transition-all">
               <TrendingDown className="h-3.5 w-3.5" />
               Add Expense
             </Button>
             <Button
               type="button"
               onClick={() => handleOpenModal("INCOME")}
-              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs shadow-emerald-200 gap-1.5 cursor-pointer transition-all"
-            >
+              className="h-9 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs shadow-emerald-200 gap-1.5 cursor-pointer transition-all">
               <TrendingUp className="h-3.5 w-3.5" />
               Add Income
             </Button>
@@ -196,8 +198,7 @@ export function DashboardExpenseSection() {
               type="button"
               variant="outline"
               asChild
-              className="h-9 px-3 rounded-xl border-border bg-card text-foreground hover:bg-accent text-xs font-bold gap-1 cursor-pointer"
-            >
+              className="h-9 px-3 rounded-xl border-border bg-card text-foreground hover:bg-accent text-xs font-bold gap-1 cursor-pointer">
               <Link href={ROUTES.EXPENSE_TRACKER}>
                 View All
                 <ArrowRight className="h-3.5 w-3.5 ml-0.5 text-muted-foreground" />
@@ -214,7 +215,8 @@ export function DashboardExpenseSection() {
               Recent Office Ledger Entries
             </span>
             <span className="text-[11px] text-muted-foreground font-semibold">
-              Showing {items.length} latest transactions (click row to view full details & receipt)
+              Showing {items.length} latest transactions (click row to view full
+              details & receipt)
             </span>
           </div>
 
@@ -234,8 +236,7 @@ export function DashboardExpenseSection() {
               <Button
                 type="button"
                 onClick={() => handleOpenModal("EXPENSE")}
-                className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold"
-              >
+                className="h-8 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-bold">
                 Log First Expense
               </Button>
             </div>
@@ -267,15 +268,16 @@ export function DashboardExpenseSection() {
                       item.category === "OTHER"
                         ? item.otherCategory || "Other"
                         : CATEGORY_NAMES[item.category] || item.category;
-                    const { dateFormatted, timeFormatted } = formatDateTime(item.transactionDate);
+                    const { dateFormatted, timeFormatted } = formatDateTime(
+                      item.transactionDate,
+                    );
 
                     return (
                       <tr
                         key={item.id}
                         onClick={() => handleViewDetail(item)}
                         className="hover:bg-muted/40 transition-colors group cursor-pointer"
-                        title="Click to view full details, receipt image, or edit"
-                      >
+                        title="Click to view full details, receipt image, or edit">
                         {/* 1. Date & Time */}
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
@@ -300,8 +302,7 @@ export function DashboardExpenseSection() {
                               isExpense
                                 ? "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20"
                                 : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-                            }`}
-                          >
+                            }`}>
                             {isExpense ? (
                               <TrendingDown className="h-3 w-3 stroke-[2.5]" />
                             ) : (
@@ -322,10 +323,11 @@ export function DashboardExpenseSection() {
                         <td className="py-3 px-4 max-w-[260px]">
                           <p
                             className="truncate text-muted-foreground font-medium text-xs"
-                            title={item.description || ""}
-                          >
+                            title={item.description || ""}>
                             {item.description || (
-                              <span className="italic text-muted-foreground/60">No details</span>
+                              <span className="italic text-muted-foreground/60">
+                                No details
+                              </span>
                             )}
                           </p>
                         </td>
@@ -337,8 +339,7 @@ export function DashboardExpenseSection() {
                               isExpense
                                 ? "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20"
                                 : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
-                            }`}
-                          >
+                            }`}>
                             {isExpense ? "-" : "+"}
                             {formatCurrency(Number(item.amount), item.currency)}
                           </span>
@@ -350,22 +351,22 @@ export function DashboardExpenseSection() {
                         </td>
 
                         {/* 7. Action: View Details / Edit + Delete */}
-                        <td className="py-3 px-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <td
+                          className="py-3 px-4 text-center whitespace-nowrap"
+                          onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               type="button"
                               onClick={() => handleViewDetail(item)}
                               className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all cursor-pointer"
-                              title="View details, receipt & edit"
-                            >
+                              title="View details, receipt & edit">
                               <Eye className="h-3.5 w-3.5" />
                             </button>
                             <button
                               type="button"
                               onClick={(e) => handleDelete(item, e)}
                               className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 transition-all cursor-pointer"
-                              title="Delete entry"
-                            >
+                              title="Delete entry">
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </div>
