@@ -349,12 +349,6 @@ const navSections: NavSection[] = [
         icon: User,
       },
       {
-        title: "Service Catalog",
-        href: ROUTES.SERVICES,
-        icon: Briefcase,
-        requiredPermission: "service:read",
-      },
-      {
         title: "Support & Messenger",
         href: ROUTES.SUPPORT,
         icon: MessageSquare,
@@ -514,7 +508,7 @@ export function Sidebar() {
         };
       })
       .filter(Boolean) as NavSection[];
-  }, [hasPermission, hasAnyPermission, isClientAccount, isSuperAdmin]);
+  }, [hasPermission, hasAnyPermission, isClientAccount, isStandardUser, isSuperAdmin]);
 
   // Flattened items for pure icon column in collapsed mode
   const allItems = React.useMemo(

@@ -65,13 +65,13 @@ export function UserWelcomeHub() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <Link href={ROUTES.SERVICES}>
+            <Link href={ROUTES.SUPPORT}>
               <Button
                 type="button"
                 className="gap-2 rounded-2xl bg-[#0a0a0a] text-[#F3A712] hover:bg-[#1f1f1f] dark:bg-[#FAF8F5] dark:text-[#0a0a0a] font-bold text-xs sm:text-sm px-5 py-3 cursor-pointer shadow-md transition-all hover:scale-[1.02]"
               >
-                <Briefcase className="h-4 w-4" />
-                <span>Explore Services</span>
+                <Calendar className="h-4 w-4" />
+                <span>Book Consultation</span>
               </Button>
             </Link>
 
@@ -172,16 +172,16 @@ export function UserWelcomeHub() {
         <div className="rounded-3xl border border-border bg-card p-6 shadow-xs flex flex-col justify-between space-y-4">
           <div className="space-y-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F3A712]/15 text-[#F3A712]">
-              <Briefcase className="h-5 w-5" />
+              <Calendar className="h-5 w-5" />
             </div>
-            <h3 className="font-bold text-sm text-foreground">Browse Practice Areas & Services</h3>
+            <h3 className="font-bold text-sm text-foreground">Schedule Case Strategy Consultation</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Explore our transparent fee schedules for EB-2 NIW, EB-1A Extraordinary Ability, E-2 Treaty Investor, Family Immigration, and U.S. Corporate Formations.
+              Book a 1-on-1 strategy session with our senior legal consultants to review your profile and determine the best filing roadmap.
             </p>
           </div>
-          <Link href={ROUTES.SERVICES}>
+          <Link href={ROUTES.SUPPORT}>
             <Button variant="subtle" size="sm" className="gap-2 w-full justify-between">
-              <span>View Service Catalog</span>
+              <span>Book Consultation</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
