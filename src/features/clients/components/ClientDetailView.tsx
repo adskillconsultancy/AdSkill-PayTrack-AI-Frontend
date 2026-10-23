@@ -45,9 +45,11 @@ import {
   UserX,
   Wallet,
   X,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
+import { ROUTES } from "@/constants";
 import { SkeletonDetailView } from "@/components/common/Skeleton";
 import { RichTextEditor } from "@/components/common/RichTextEditor";
 import { CaseNotesTimeline } from "./CaseNotesTimeline";
@@ -462,6 +464,33 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
+
+  if (isError || !clientCase) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 shadow-sm mb-4">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-black text-[#0a0a0a] tracking-tight">Access Restricted or Not Found</h2>
+        <p className="mt-2 max-w-md text-xs sm:text-sm text-[#64748B]">
+          You do not have permission to view this client dossier, or the requested application does not exist.
+        </p>
+        <div className="mt-6">
+          <Button asChild className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
+            <Link href={ROUTES.DASHBOARD}>Return to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const statusStyle = statusStyles[clientCase.caseStatus] || statusStyles.INTAKE;
 

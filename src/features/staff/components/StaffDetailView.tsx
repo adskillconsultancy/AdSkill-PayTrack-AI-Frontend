@@ -22,6 +22,7 @@ import {
   MessageCircle,
   FileText,
   AlertCircle,
+  ShieldAlert,
 } from "lucide-react";
 import {
   useGetUserByIdQuery,
@@ -34,6 +35,8 @@ import {
   useGetAllCasesQuery,
 } from "@/services/api/clients/clientCasesApi";
 import { ClientCase, CaseStatus, FinancialStatus } from "@/types/client-case.types";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ROUTES } from "@/constants";
 
 type DatePreset = "TODAY" | "YESTERDAY" | "THIS_WEEK" | "THIS_MONTH" | "ALL";
 
@@ -187,28 +190,41 @@ export function StaffDetailView({ staffId }: StaffDetailViewProps) {
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 30;
 
+  const { user: currentUser, isSuperAdmin, isManager, hasAnyPermission } = usePermissions();
+  const canAccessStaff =
+    isSuperAdmin ||
+    isManager ||
+    hasAnyPermission(["attendance:read-all", "user:manage-role"]);
+
   // 1. Staff User Profile Query
-  const { data: userResponse, isLoading: userLoading } = useGetUserByIdQuery(staffId);
+  const { data: userResponse, isLoading: userLoading } = useGetUserByIdQuery(staffId, {
+    skip: !canAccessStaff,
+  });
   const user = userResponse?.data;
 
   // 2. Attendance History Query
   const dateParams = React.useMemo(() => getDateParams(datePreset), [datePreset]);
-  const { data: attendanceResponse, isLoading: attLoading } = useGetTeamAttendanceQuery({
-    userId: staffId,
-    page: currentPage,
-    limit: pageSize,
-    startDate: dateParams.startDate,
-    endDate: dateParams.endDate,
-    sortBy: "workDate",
-    sortOrder: "desc",
-  });
+  const { data: attendanceResponse, isLoading: attLoading } = useGetTeamAttendanceQuery(
+    {
+      userId: staffId,
+      page: currentPage,
+      limit: pageSize,
+      startDate: dateParams.startDate,
+      endDate: dateParams.endDate,
+      sortBy: "workDate",
+      sortOrder: "desc",
+    },
+    { skip: !canAccessStaff },
+  );
 
   const records = attendanceResponse?.data?.records || [];
   const totalAttendance = attendanceResponse?.meta?.total || 0;
   const totalAttendancePages = attendanceResponse?.meta?.totalPage || 1;
 
   // 3. Client Cases / Leads Query
-  const { data: casesResponse, isLoading: isCasesLoading } = useGetAllCasesQuery();
+  const { data: casesResponse, isLoading: isCasesLoading } = useGetAllCasesQuery(undefined, {
+    skip: !canAccessStaff,
+  });
   const allCases: ClientCase[] = casesResponse?.data || [];
 
   const assignedCases = React.useMemo(() => {
@@ -409,6 +425,25 @@ export function StaffDetailView({ staffId }: StaffDetailViewProps) {
       ),
     },
   ];
+
+  if (currentUser && !canAccessStaff) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 shadow-sm mb-4">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-black text-[#0a0a0a] tracking-tight">Access Restricted</h2>
+        <p className="mt-2 max-w-md text-xs sm:text-sm text-[#64748B]">
+          Staff details and records are exclusively accessible to Administrators and Managers.
+        </p>
+        <div className="mt-6">
+          <Button asChild className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
+            <Link href={ROUTES.DASHBOARD}>Return to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (userLoading) return <StaffDetailSkeleton />;
 

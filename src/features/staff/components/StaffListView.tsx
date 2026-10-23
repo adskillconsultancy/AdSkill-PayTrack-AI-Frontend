@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Clock,
   CheckCircle,
+  ShieldAlert,
 } from "lucide-react";
 import {
   useGetUsersQuery,
@@ -28,6 +29,8 @@ import {
   BackendUser,
 } from "@/services/api/users/usersApi";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ROUTES } from "@/constants";
 import { StaffSearchBar } from "./StaffSearchBar";
 
 type StaffStatus = "Active" | "Suspended" | "Inactive" | "Pending";
@@ -163,29 +166,38 @@ export function StaffListView() {
     }
   }, [sortBy]);
 
+  const { user, isSuperAdmin, isManager, hasAnyPermission } = usePermissions();
+  const canAccessStaff =
+    isSuperAdmin ||
+    isManager ||
+    hasAnyPermission(["attendance:read-all", "user:manage-role"]);
+
   // 1. Single Consolidated Backend Query: Staff Directory + Roles + Cases + Date Attendance
   const {
     data: usersResponse,
     isLoading: isUsersLoading,
     refetch: refetchUsers,
-  } = useGetUsersQuery({
-    page: currentPage,
-    limit: pageSize,
-    searchTerm: debouncedSearch.trim() || undefined,
-    excludeRoleName: "CLIENT", // PostgreSQL directly filters out non-staff!
-    roleName: roleFilter !== "ALL" ? roleFilter : undefined,
-    status: statusFilter !== "ALL" ? statusFilter.toUpperCase() : undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-    hasAssignedCases:
-      leadFilter === "WITH_LEADS" || leadFilter === "BUSY"
-        ? true
-        : leadFilter === "NO_LEADS"
-        ? false
-        : undefined,
-    sortBy: sortParams.sortBy,
-    sortOrder: sortParams.sortOrder,
-  });
+  } = useGetUsersQuery(
+    {
+      page: currentPage,
+      limit: pageSize,
+      searchTerm: debouncedSearch.trim() || undefined,
+      excludeRoleName: "CLIENT", // PostgreSQL directly filters out non-staff!
+      roleName: roleFilter !== "ALL" ? roleFilter : undefined,
+      status: statusFilter !== "ALL" ? statusFilter.toUpperCase() : undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      hasAssignedCases:
+        leadFilter === "WITH_LEADS" || leadFilter === "BUSY"
+          ? true
+          : leadFilter === "NO_LEADS"
+          ? false
+          : undefined,
+      sortBy: sortParams.sortBy,
+      sortOrder: sortParams.sortOrder,
+    },
+    { skip: !canAccessStaff },
+  );
 
   const [updateUser] = useUpdateUserMutation();
   const { confirm, alert } = useConfirm();
@@ -564,6 +576,25 @@ export function StaffListView() {
       ),
     },
   ];
+
+  if (user && !canAccessStaff) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 shadow-sm mb-4">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-black text-[#0a0a0a] tracking-tight">Access Restricted</h2>
+        <p className="mt-2 max-w-md text-xs sm:text-sm text-[#64748B]">
+          Staff Management is exclusively accessible to Administrators and Managers.
+        </p>
+        <div className="mt-6">
+          <Button asChild className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
+            <Link href={ROUTES.DASHBOARD}>Return to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

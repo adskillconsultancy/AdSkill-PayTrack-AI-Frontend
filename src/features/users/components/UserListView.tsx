@@ -21,6 +21,7 @@ import {
   ExternalLink,
   Trash2,
   Pencil,
+  ShieldAlert,
 } from "lucide-react";
 import {
   useGetUsersQuery,
@@ -28,6 +29,9 @@ import {
   useDeleteUserMutation,
 } from "@/services/api/users/usersApi";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ROUTES } from "@/constants";
+import { Button } from "@/components/common/Button";
 
 export function UserListView() {
   const router = useRouter();
@@ -82,18 +86,26 @@ export function UserListView() {
     }
   }, [selectedSort]);
 
+  const { user, isSuperAdmin, isManager, isStaffAccount, hasAnyPermission } = usePermissions();
+  const canAccessUsers =
+    isSuperAdmin ||
+    (isStaffAccount && (isManager || hasAnyPermission(["user:read", "user:create"])));
+
   // Live Backend Query with Server-side Pagination & Dynamic DB Filters
-  const { data: usersResponse, isLoading, refetch } = useGetUsersQuery({
-    page: currentPage,
-    limit: pageSize,
-    searchTerm: debouncedSearch.trim() || undefined,
-    roleName: roleFilter !== "ALL" ? roleFilter : undefined,
-    status: statusFilter !== "ALL" ? statusFilter.toUpperCase() : undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-    sortBy: sortParams.sortBy,
-    sortOrder: sortParams.sortOrder,
-  });
+  const { data: usersResponse, isLoading, refetch } = useGetUsersQuery(
+    {
+      page: currentPage,
+      limit: pageSize,
+      searchTerm: debouncedSearch.trim() || undefined,
+      roleName: roleFilter !== "ALL" ? roleFilter : undefined,
+      status: statusFilter !== "ALL" ? statusFilter.toUpperCase() : undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      sortBy: sortParams.sortBy,
+      sortOrder: sortParams.sortOrder,
+    },
+    { skip: !canAccessUsers },
+  );
 
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
@@ -476,6 +488,25 @@ export function UserListView() {
       },
     },
   ];
+
+  if (user && !canAccessUsers) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 shadow-sm mb-4">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-black text-[#0a0a0a] tracking-tight">Access Restricted</h2>
+        <p className="mt-2 max-w-md text-xs sm:text-sm text-[#64748B]">
+          User Management is exclusively accessible to Administrators and Managers.
+        </p>
+        <div className="mt-6">
+          <Button asChild className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
+            <Link href={ROUTES.DASHBOARD}>Return to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

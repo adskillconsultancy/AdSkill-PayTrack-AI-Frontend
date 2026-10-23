@@ -29,7 +29,10 @@ import {
   RefreshCw,
   Copy,
   Clock,
+  ShieldAlert,
 } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
+import { ROUTES } from "@/constants";
 
 interface LeadListViewProps {
   pageTitle?: string;
@@ -104,6 +107,9 @@ export function LeadListView({
     }
   }, [selectedSort]);
 
+  const { user, isSuperAdmin, isStaffAccount } = usePermissions();
+  const canAccessLeads = isSuperAdmin || isStaffAccount;
+
   // 1. Fetch live leads
   const {
     data: leadsResponse,
@@ -111,25 +117,31 @@ export function LeadListView({
     isFetching,
     isError,
     refetch,
-  } = useGetLeadsQuery({
-    page: currentPage,
-    limit: pageSize,
-    search: debouncedSearch || undefined,
-    status: statusFilter,
-    serviceId: serviceFilter,
-    assignedToId: assignedFilter,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-    sortBy,
-    sortOrder,
-  });
+  } = useGetLeadsQuery(
+    {
+      page: currentPage,
+      limit: pageSize,
+      search: debouncedSearch || undefined,
+      status: statusFilter,
+      serviceId: serviceFilter,
+      assignedToId: assignedFilter,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      sortBy,
+      sortOrder,
+    },
+    { skip: !canAccessLeads },
+  );
 
   // 2. Fetch summary stats
   const { data: statsResponse, isLoading: isStatsLoading } =
-    useGetLeadSummaryStatsQuery();
+    useGetLeadSummaryStatsQuery(undefined, { skip: !canAccessLeads });
 
   // 3. Fetch services list for dropdowns
-  const { data: servicesResponse } = useGetServicesQuery({ limit: 100 });
+  const { data: servicesResponse } = useGetServicesQuery(
+    { limit: 100 },
+    { skip: !canAccessLeads },
+  );
   const servicesList = (servicesResponse?.data || []).map((s) => ({
     id: s.id,
     name: s.name,
@@ -353,6 +365,25 @@ export function LeadListView({
       },
     },
   ];
+
+  if (user && !canAccessLeads) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 shadow-sm mb-4">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-black text-[#0a0a0a] tracking-tight">Access Restricted</h2>
+        <p className="mt-2 max-w-md text-xs sm:text-sm text-[#64748B]">
+          Leads Management is exclusively accessible to authorized Staff Members.
+        </p>
+        <div className="mt-6">
+          <Button asChild className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
+            <Link href={ROUTES.DASHBOARD}>Return to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

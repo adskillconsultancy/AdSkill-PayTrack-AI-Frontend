@@ -9,11 +9,12 @@ import { DataTable, ColumnDef } from "@/components/common/DataTable";
 import { useGetAllCasesQuery } from "@/services/api/clients/clientCasesApi";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { ClientCase, CaseStatus } from "@/types/client-case.types";
-import { FileText, ChevronRight, Eye, Copy, RefreshCw, ShieldCheck, Printer, Loader2 } from "lucide-react";
+import { FileText, ChevronRight, Eye, Copy, RefreshCw, ShieldCheck, Printer, Loader2, ShieldAlert } from "lucide-react";
 import { downloadAndPrintCaseInvoice } from "@/lib/documentDownload";
 import { ClientMetricCards } from "./ClientMetricCards";
 import { ClientSearchBar } from "./ClientSearchBar";
 import { useConfirm } from "@/hooks/useConfirm";
+import { ROUTES } from "@/constants";
 
 interface ClientListViewProps {
   pageTitle?: string;
@@ -45,9 +46,10 @@ export function ClientListView({
   parentBreadcrumb = "Visa Applications",
 }: ClientListViewProps) {
   const router = useRouter();
-  const { role, user, isSuperAdmin, hasPermission } = usePermissions();
+  const { role, user, isSuperAdmin, isStaffAccount, hasAnyPermission } = usePermissions();
   const isConsultant = role === "CONSULTANT";
-  const canCreateClient = isSuperAdmin || hasPermission("user:create") || hasPermission("case:create");
+  const canAccessClients = isSuperAdmin || (isStaffAccount && hasAnyPermission(["user:read", "case:read", "case:manage"]));
+  const canCreateClient = isSuperAdmin || (isStaffAccount && hasAnyPermission(["user:create", "case:create"]));
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
@@ -70,12 +72,15 @@ export function ClientListView({
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data, isLoading, isError, refetch } = useGetAllCasesQuery({
-    search: debouncedSearch.trim() || undefined,
-    status: statusFilter !== "ALL" ? statusFilter : undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-  });
+  const { data, isLoading, isError, refetch } = useGetAllCasesQuery(
+    {
+      search: debouncedSearch.trim() || undefined,
+      status: statusFilter !== "ALL" ? statusFilter : undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    },
+    { skip: !canAccessClients },
+  );
 
   const handleDownloadInvoice = async (caseId: string, caseCode: string) => {
     setDownloadingCaseId(caseId);
@@ -170,6 +175,25 @@ export function ClientListView({
       ),
     },
   ];
+
+  if (user && !canAccessClients) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 shadow-sm mb-4">
+          <ShieldAlert className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-black text-[#0a0a0a] tracking-tight">Access Restricted</h2>
+        <p className="mt-2 max-w-md text-xs sm:text-sm text-[#64748B]">
+          Client Application Management is exclusively accessible to authorized Staff Members.
+        </p>
+        <div className="mt-6">
+          <Button asChild className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
+            <Link href={ROUTES.DASHBOARD}>Return to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return <div className="space-y-6">
     <div className="flex items-center gap-3.5">

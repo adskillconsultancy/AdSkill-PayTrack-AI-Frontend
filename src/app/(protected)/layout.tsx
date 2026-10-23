@@ -19,11 +19,12 @@ import {
   LogOut,
   Maximize2,
   Menu,
+  ShieldAlert,
   User,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import * as React from "react";
 
 export default function ProtectedLayout({
@@ -32,9 +33,16 @@ export default function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isOpen, setMobileOpen } = useSidebarStore();
   const { user, accessToken, isAuthenticated, logout } = useAuth();
-  const { isClientAccount, hasPermission } = usePermissions();
+  const {
+    isClientAccount,
+    isStandardUser,
+    isSuperAdmin,
+    hasPermission,
+    hasAnyPermission,
+  } = usePermissions();
   const canTrackAttendance = !isClientAccount && hasPermission("attendance:track");
   const [isFullscreen, setIsFullscreen] = React.useState(false);
   const [isProfileOpen, setIsProfileOpen] = React.useState(false);
@@ -51,6 +59,114 @@ export default function ProtectedLayout({
       router.replace(ROUTES.LOGIN);
     }
   }, [accessToken, isAuthenticated, router]);
+
+  // Client-side URL Route Authorization Guard
+  const isAuthorized = React.useMemo(() => {
+    if (!user) return true; // wait for hydration / session
+    if (isSuperAdmin) return true; // universal bypass
+
+    // 1. Standard registered USER (Prospect/Uncontracted, Role: USER)
+    // Strictly confined to personal client portal: /dashboard, /notifications, /profile, /support
+    if (isStandardUser) {
+      const allowedStandardRoutes = [
+        "/dashboard",
+        "/notifications",
+        "/profile",
+        "/support",
+      ];
+      const isAllowed = allowedStandardRoutes.some(
+        (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+      );
+      if (!isAllowed) return false;
+      return true;
+    }
+
+    // 2. Client Account (CLIENT role or clientId)
+    // Permitted client portal routes: /dashboard, /notifications, /profile, /support, /payments, /invoices-receipts, /tracking
+    // Strictly FORBIDDEN from all staff management routes: /clients, /staff-management, /leads, /lead, /users, /roles, /audit, /reports, /expense-tracker, /services, /attendance
+    if (isClientAccount) {
+      const forbiddenForClients = [
+        "/clients",
+        "/staff-management",
+        "/leads",
+        "/lead",
+        "/users",
+        "/roles",
+        "/audit",
+        "/reports",
+        "/expense-tracker",
+        "/services",
+        "/attendance",
+      ];
+      if (
+        forbiddenForClients.some(
+          (prefix) => pathname === prefix || pathname.startsWith(prefix + "/")
+        )
+      ) {
+        return false;
+      }
+    }
+
+    // 3. Capability-specific route requirements for internal staff
+    if (pathname.startsWith("/audit") && !hasPermission("audit:read")) {
+      return false;
+    }
+    if (pathname.startsWith("/roles") && !hasPermission("user:manage-role")) {
+      return false;
+    }
+    if (
+      pathname.startsWith("/staff-management") &&
+      !hasAnyPermission(["attendance:read-all", "user:manage-role", "attendance:track"])
+    ) {
+      return false;
+    }
+    if (
+      pathname.startsWith("/expense-tracker") &&
+      !hasAnyPermission(["expense:read", "expense:create"])
+    ) {
+      return false;
+    }
+    if (
+      pathname.startsWith("/reports") &&
+      !hasAnyPermission(["report:view", "report:export"])
+    ) {
+      return false;
+    }
+    if (
+      pathname.startsWith("/users") &&
+      !hasAnyPermission(["user:read", "user:create", "user:manage-role"])
+    ) {
+      return false;
+    }
+    if (
+      pathname.startsWith("/clients") &&
+      !hasAnyPermission(["user:read", "case:read", "case:manage"])
+    ) {
+      return false;
+    }
+    if (
+      (pathname.startsWith("/leads") || pathname.startsWith("/lead")) &&
+      !hasAnyPermission(["case:read", "case:manage", "lead:read", "lead:manage"])
+    ) {
+      return false;
+    }
+
+    return true;
+  }, [
+    user,
+    isSuperAdmin,
+    isClientAccount,
+    isStandardUser,
+    hasPermission,
+    hasAnyPermission,
+    pathname,
+  ]);
+
+  React.useEffect(() => {
+    if (user && !isAuthorized) {
+      router.replace(ROUTES.DASHBOARD);
+    }
+  }, [user, isAuthorized, router]);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -279,7 +395,24 @@ export default function ProtectedLayout({
 
         <div className="flex-1 p-4 sm:p-6 pb-24 lg:pb-6 w-full transition-all duration-300">
           <main className="min-h-[calc(100vh-4rem)] rounded-2xl bg-card border border-border/70 p-4 sm:p-6 space-y-6 shadow-sm">
-            {children}
+            {!isAuthorized ? (
+              <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 shadow-sm mb-4">
+                  <ShieldAlert className="h-8 w-8" />
+                </div>
+                <h2 className="text-xl font-black text-[#0a0a0a] tracking-tight">Access Restricted</h2>
+                <p className="mt-2 max-w-md text-xs sm:text-sm text-[#64748B]">
+                  You do not have permission to access this section from the direct URL.
+                </p>
+                <div className="mt-6">
+                  <Button asChild className="rounded-xl bg-[#0a0a0a] text-white text-xs font-bold px-5 h-10">
+                    <Link href={ROUTES.DASHBOARD}>Return to Dashboard</Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              children
+            )}
           </main>
         </div>
 

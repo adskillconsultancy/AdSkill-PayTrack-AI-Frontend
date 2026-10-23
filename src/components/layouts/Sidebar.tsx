@@ -97,6 +97,7 @@ const navSections: NavSection[] = [
         title: "Leads",
         href: ROUTES.LEADS,
         icon: UserPlus,
+        requiredAnyPermissions: ["case:read", "case:manage", "lead:read", "lead:manage"],
         subItems: [
           {
             title: "Lead List",
@@ -256,16 +257,19 @@ const navSections: NavSection[] = [
         href: ROUTES.STAFF_MANAGEMENT,
         icon: Users,
         requiredAnyPermissions: [
+          "attendance:read-all",
+          "user:manage-role",
           "attendance:track",
           "attendance:read-self",
-          "attendance:read-all",
-          "user:read",
         ],
         subItems: [
           {
             title: "Staff List",
             href: ROUTES.STAFF_MANAGEMENT,
-            requiredPermission: "user:read",
+            requiredAnyPermissions: [
+              "attendance:read-all",
+              "user:manage-role",
+            ],
           },
           {
             title: "Attendance Tracker",
