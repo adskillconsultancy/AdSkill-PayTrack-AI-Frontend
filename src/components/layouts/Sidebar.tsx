@@ -5,6 +5,8 @@ import { ROUTES } from "@/constants";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
+import { useGetFollowUpQueueQuery } from "@/services/api/leads/leadsApi";
+import { useGetUnreadCountQuery } from "@/services/api/notifications/notificationsApi";
 import { useSidebarStore } from "@/stores/sidebar.store";
 import {
   Bell,
@@ -15,12 +17,10 @@ import {
   ChevronRight,
   CreditCard,
   FileBarChart,
-  FileText,
-  HelpCircle,
-  MessageSquare,
   History,
   LayoutGrid,
   LogOut,
+  MessageSquare,
   Receipt,
   ShieldAlert,
   User,
@@ -33,8 +33,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import * as React from "react";
-import { useGetUnreadCountQuery } from "@/services/api/notifications/notificationsApi";
-import { useGetFollowUpQueueQuery } from "@/services/api/leads/leadsApi";
 
 interface NavSubItem {
   title: string;
@@ -312,8 +310,6 @@ const navSections: NavSection[] = [
     ],
   },
 
-
-
   // ==================== DEDICATED CLIENT PORTAL ====================
   {
     sectionTitle: "CLIENT PORTAL",
@@ -353,6 +349,12 @@ const navSections: NavSection[] = [
         icon: User,
       },
       {
+        title: "Service Catalog",
+        href: ROUTES.SERVICES,
+        icon: Briefcase,
+        requiredPermission: "service:read",
+      },
+      {
         title: "Support & Messenger",
         href: ROUTES.SUPPORT,
         icon: MessageSquare,
@@ -365,8 +367,14 @@ const navSections: NavSection[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user, hasPermission, hasAnyPermission, isClientAccount, isSuperAdmin } =
-    usePermissions();
+  const {
+    user,
+    hasPermission,
+    hasAnyPermission,
+    isClientAccount,
+    isStandardUser,
+    isSuperAdmin,
+  } = usePermissions();
   const { logout } = useAuth();
   const { isOpen, isMobileOpen, toggleSidebar, setSidebarOpen, setMobileOpen } =
     useSidebarStore();
@@ -379,7 +387,7 @@ export function Sidebar() {
   const { data: followUpQueueData } = useGetFollowUpQueueQuery(
     { page: 1, limit: 1 },
     {
-      skip: !user || isClientAccount,
+      skip: !user || isClientAccount || isStandardUser,
       pollingInterval: 30000,
     },
   );
@@ -440,9 +448,18 @@ export function Sidebar() {
   const filteredNavSections = React.useMemo(() => {
     return navSections
       .map((section) => {
-        // Portal type gating: Clients see CLIENT or COMMON; Staff see MANAGEMENT or COMMON
-        if (isClientAccount && section.portalType === "MANAGEMENT") return null;
-        if (!isClientAccount && section.portalType === "CLIENT") return null;
+        // Portal type gating: Clients & Standard Users see CLIENT portal scope (filtered by granular permissions); Staff see MANAGEMENT
+        if (
+          (isClientAccount || isStandardUser) &&
+          section.portalType === "MANAGEMENT"
+        )
+          return null;
+        if (
+          !isClientAccount &&
+          !isStandardUser &&
+          section.portalType === "CLIENT"
+        )
+          return null;
 
         const visibleItems = section.items
           .map((item) => {
@@ -825,11 +842,12 @@ export function Sidebar() {
                             <span className="truncate text-[13.5px]">
                               {item.title}
                             </span>
-                            {item.href === ROUTES.NOTIFICATIONS && unreadCount > 0 && (
-                              <span className="ml-auto flex h-5 min-w-[20px] px-1.5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-2xs">
-                                {unreadCount > 99 ? "99+" : unreadCount}
-                              </span>
-                            )}
+                            {item.href === ROUTES.NOTIFICATIONS &&
+                              unreadCount > 0 && (
+                                <span className="ml-auto flex h-5 min-w-[20px] px-1.5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-bold text-white shadow-2xs">
+                                  {unreadCount > 99 ? "99+" : unreadCount}
+                                </span>
+                              )}
                           </Link>
                         )}
 
@@ -997,8 +1015,3 @@ export function Sidebar() {
     </>
   );
 }
-
-
-
-
-

@@ -135,7 +135,7 @@ export function RegisterForm() {
               Account Created Successfully!
             </h3>
             <p className="text-xs text-[#64748B]">
-              Your client profile is ready. Redirecting to your dashboard...
+              Your account is ready. Redirecting to your dashboard...
             </p>
           </div>
           <div className="pt-2">
@@ -152,10 +152,10 @@ export function RegisterForm() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="text-center mb-5">
             <h2 className="text-xl font-bold text-[#0a0a0a]">
-              Create Client Account
+              Create Portal Account
             </h2>
             <p className="text-xs text-[#64748B] mt-0.5">
-              Sign up to track your payment schedule, milestone invoices, and receipts
+              Sign up to access case onboarding, service offerings, and advisory support
             </p>
           </div>
 

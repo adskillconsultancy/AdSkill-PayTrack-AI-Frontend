@@ -13,11 +13,12 @@ import { DashboardPaymentAnalytics } from "./DashboardPaymentAnalytics";
 import { DashboardRecentActivity } from "./DashboardRecentActivity";
 import { DashboardVerificationQueue } from "./DashboardVerificationQueue";
 import { StaffDashboardHub } from "./StaffDashboardHub";
+import { UserWelcomeHub } from "./UserWelcomeHub";
 import { DashboardExpenseWidget } from "./DashboardExpenseWidget";
 import { DashboardExpenseSection } from "./DashboardExpenseSection";
 
 export function DashboardOverview() {
-  const { isSuperAdmin, isClientAccount } = usePermissions();
+  const { isSuperAdmin, isClientAccount, isStandardUser, isStaffAccount } = usePermissions();
   const {
     period,
     startDate,
@@ -27,18 +28,24 @@ export function DashboardOverview() {
     setCustomDates,
   } = useDashboardFilters("30d");
 
-  // 1. CLIENT ACCOUNT: Dedicated Client Portal Dashboard with Quick Actions
+  // 1. STANDARD USER: Applicant Onboarding & Services Welcome Hub
+  if (isStandardUser) {
+    return <UserWelcomeHub />;
+  }
+
+  // 2. CONTRACTED CLIENT ACCOUNT: Dedicated Client Financial & Milestone Portal
   if (isClientAccount) {
     return <ClientDashboardHub />;
   }
 
-  // 2. STAFF / CONSULTANT: Dedicated Staff Workspace Hub with Quick Actions
-  if (!isSuperAdmin) {
+  // 3. STAFF / CONSULTANT: Dedicated Staff Workspace Hub with Quick Actions
+  if (isStaffAccount && !isSuperAdmin) {
     return <StaffDashboardHub />;
   }
 
-  // 3. SUPER ADMIN: Full Executive CRM Analytics Dashboard
-  return (
+  // 4. SUPER ADMIN: Full Executive CRM Analytics Dashboard
+  if (isSuperAdmin) {
+    return (
     <div className="space-y-6 pb-12">
       {/* 1. Dashboard Header & Time Filter */}
       <DashboardHeader
@@ -79,5 +86,9 @@ export function DashboardOverview() {
         <DashboardRecentActivity filterParams={filterParams} />
       </div>
     </div>
-  );
+    );
+  }
+
+  // Safe fallback for unclassified roles
+  return <UserWelcomeHub />;
 }

@@ -5,8 +5,8 @@ import { ROUTES } from "@/constants";
 import { RegisterForm } from "@/features/auth/components";
 
 export const metadata: Metadata = {
-  title: "Create Client Account",
-  description: "Register your client account for AdSkill PayTrack AI payment schedule and invoice management.",
+  title: "Create Portal Account — AdSkill PayTrack AI",
+  description: "Register your applicant account for AdSkill Consultancy portal and case onboarding.",
 };
 
 export default function RegisterPage() {
@@ -27,7 +27,7 @@ export default function RegisterPage() {
             </div>
           </Link>
           <p className="text-xs font-semibold uppercase tracking-wider text-[#64748B]">
-            Client Portal Registration
+            AdSkill Portal Registration
           </p>
         </div>
 

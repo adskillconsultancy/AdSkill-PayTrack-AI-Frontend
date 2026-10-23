@@ -15,3 +15,4 @@ export { DashboardFollowUpAlert } from "./DashboardFollowUpAlert";
 export { DashboardFollowUpModal } from "./DashboardFollowUpModal";
 export { ClientCaseStageTracker } from "./ClientCaseStageTracker";
 export { ClientStaffDirectivesCard } from "./ClientStaffDirectivesCard";
+export { UserWelcomeHub } from "./UserWelcomeHub";

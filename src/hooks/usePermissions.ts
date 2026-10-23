@@ -10,10 +10,28 @@ export function usePermissions() {
     return user?.role?.name === "SUPER_ADMIN";
   }, [user?.role?.name]);
 
-  // Account identity attribute (clients have clientId or CLIENT role, staff do not)
+  const isManager = useMemo(() => {
+    return user?.role?.name === "MANAGER";
+  }, [user?.role?.name]);
+
+  const isConsultant = useMemo(() => {
+    return user?.role?.name === "CONSULTANT";
+  }, [user?.role?.name]);
+
+  // Basic registered user / prospect (not yet contracted as a client)
+  const isStandardUser = useMemo(() => {
+    return user?.role?.name === "USER";
+  }, [user?.role?.name]);
+
+  // Account identity attribute (contracted clients have CLIENT role or clientId, but not standard USERs)
   const isClientAccount = useMemo(() => {
-    return Boolean(user?.clientId) || user?.role?.name === "CLIENT";
+    return user?.role?.name === "CLIENT" || (Boolean(user?.clientId) && user?.role?.name !== "USER");
   }, [user?.clientId, user?.role?.name]);
+
+  // Staff accounts (Super Admin, Manager, Consultant)
+  const isStaffAccount = useMemo(() => {
+    return isSuperAdmin || isManager || isConsultant;
+  }, [isSuperAdmin, isManager, isConsultant]);
 
   const permissions = useMemo(() => {
     return user?.permissions || [];
@@ -44,7 +62,11 @@ export function usePermissions() {
     user,
     role: user?.role?.name,
     isSuperAdmin,
+    isManager,
+    isConsultant,
     isClientAccount,
+    isStandardUser,
+    isStaffAccount,
     permissions,
     hasPermission,
     hasAnyPermission,
