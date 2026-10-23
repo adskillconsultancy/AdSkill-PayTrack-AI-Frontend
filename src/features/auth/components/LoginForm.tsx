@@ -13,7 +13,6 @@ import {
   ArrowRight,
   ShieldCheck,
   AlertCircle,
-  KeyRound,
   Plane,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
@@ -47,12 +46,6 @@ export function LoginForm() {
       password: "",
     },
   });
-
-  const handleQuickFill = (email: string) => {
-    setValue("email", email, { shouldValidate: true });
-    setValue("password", "Password123!", { shouldValidate: true });
-    setErrorMessage(null);
-  };
 
   const onSubmit = async (data: LoginFormValues) => {
     setErrorMessage(null);
@@ -293,51 +286,6 @@ export function LoginForm() {
           )}
         </Button>
       </form>
-
-      {/* Quick Test Credentials */}
-      <div className="mt-6 pt-5 border-t border-[#EAE6DF] space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#64748B]">
-            <KeyRound className="h-3 w-3 text-[#F3A712]" />
-            <span>Quick Test Credentials:</span>
-          </div>
-          <span className="text-[10px] text-[#94A3B8] font-mono">Password123!</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <Button
-            type="button"
-            variant="subtle"
-            size="sm"
-            onClick={() => handleQuickFill("client@example.com")}
-          >
-            Client
-          </Button>
-          <Button
-            type="button"
-            variant="subtle"
-            size="sm"
-            onClick={() => handleQuickFill("consultant@adskillconsultancy.com")}
-          >
-            Consultant
-          </Button>
-          <Button
-            type="button"
-            variant="subtle"
-            size="sm"
-            onClick={() => handleQuickFill("manager@adskillconsultancy.com")}
-          >
-            Manager
-          </Button>
-          <Button
-            type="button"
-            variant="subtle"
-            size="sm"
-            onClick={() => handleQuickFill("admin@adskillconsultancy.com")}
-          >
-            Super Admin
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }
