@@ -12,6 +12,7 @@ import {
   useUpdateServiceMutation,
 } from "@/services/api/services/servicesApi";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { BackendService, BackendServiceCategory, ServiceSummaryStats } from "../types";
 import { ServiceMetricCards } from "./ServiceMetricCards";
 import { ServiceSearchBar } from "./ServiceSearchBar";
@@ -47,6 +48,11 @@ export function ServiceListView({
 }: ServiceListViewProps) {
   const router = useRouter();
   const { confirm, alert } = useConfirm();
+  const { hasPermission } = usePermissions();
+
+  const canCreateCase = hasPermission("case:create") || hasPermission("case:manage");
+  const canUpdateService = hasPermission("service:update") || hasPermission("service:manage");
+  const canDeleteService = hasPermission("service:delete") || hasPermission("service:manage");
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [debouncedSearch, setDebouncedSearch] = React.useState("");
@@ -497,17 +503,19 @@ export function ServiceListView({
           </button>
 
           {/* Quick Onboard Client Button */}
-          <Button
-            asChild
-            size="sm"
-            variant="ghost"
-            className="h-8 px-2.5 text-[11px] font-bold text-[#0a0a0a] hover:bg-[#FAF8F5] gap-1 cursor-pointer hidden md:inline-flex"
-          >
-            <Link href={ROUTES.CLIENT_CREATE}>
-              <UserPlus className="h-3 w-3 text-[#F3A712]" />
-              <span>Enroll</span>
-            </Link>
-          </Button>
+          {canCreateCase && (
+            <Button
+              asChild
+              size="sm"
+              variant="ghost"
+              className="h-8 px-2.5 text-[11px] font-bold text-[#0a0a0a] hover:bg-[#FAF8F5] gap-1 cursor-pointer hidden md:inline-flex"
+            >
+              <Link href={ROUTES.CLIENT_CREATE}>
+                <UserPlus className="h-3 w-3 text-[#F3A712]" />
+                <span>Enroll</span>
+              </Link>
+            </Button>
+          )}
 
           {/* Row Dropdown Trigger */}
           <button
@@ -536,52 +544,61 @@ export function ServiceListView({
                 <span>View Full Service Dossier</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  router.push(`/services/${item.code || item.id}/edit`);
-                  setActiveMenuId(null);
-                }}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
-              >
-                <Pencil className="h-3.5 w-3.5 text-[#F3A712]" />
-                <span>Edit Service Offering</span>
-              </button>
+              {canUpdateService && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push(`/services/${item.code || item.id}/edit`);
+                    setActiveMenuId(null);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
+                >
+                  <Pencil className="h-3.5 w-3.5 text-[#F3A712]" />
+                  <span>Edit Service Offering</span>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  router.push(ROUTES.CLIENT_CREATE);
-                  setActiveMenuId(null);
-                }}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
-              >
-                <UserPlus className="h-3.5 w-3.5 text-[#059669]" />
-                <span>Create Client Case</span>
-              </button>
+              {canCreateCase && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push(ROUTES.CLIENT_CREATE);
+                    setActiveMenuId(null);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
+                >
+                  <UserPlus className="h-3.5 w-3.5 text-[#059669]" />
+                  <span>Create Client Case</span>
+                </button>
+              )}
 
-              <button
-                type="button"
-                onClick={(e) => handleToggleStatus(item.id, e)}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
-              >
-                <RotateCw className="h-3.5 w-3.5 text-[#D97706]" />
-                <span>
-                  Toggle to {item.isActive ? "Inactive" : "Active"}
-                </span>
-              </button>
+              {canUpdateService && (
+                <button
+                  type="button"
+                  onClick={(e) => handleToggleStatus(item.id, e)}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer"
+                >
+                  <RotateCw className="h-3.5 w-3.5 text-[#D97706]" />
+                  <span>
+                    Toggle to {item.isActive ? "Inactive" : "Active"}
+                  </span>
+                </button>
+              )}
 
-              <div className="my-1 border-t border-[#F0ECE6]" />
-
-              <button
-                type="button"
-                onClick={(e) => handleDeleteService(item.id, e)}
-                disabled={isDeleting}
-                className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer"
-              >
-                <Trash2 className="h-3.5 w-3.5 text-rose-500" />
-                <span>Delete Service</span>
-              </button>
+              {canDeleteService && (
+                <>
+                  <div className="my-1 border-t border-[#F0ECE6]" />
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteService(item.id, e)}
+                    disabled={isDeleting}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                    <span>Delete Service</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>

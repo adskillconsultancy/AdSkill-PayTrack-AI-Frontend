@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { DatePresetFilter } from "@/components/common/DatePresetFilter";
 import { ROUTES } from "@/constants/routes";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { BackendServiceCategory } from "../types";
 
 interface ServiceSearchBarProps {
@@ -66,6 +67,8 @@ export function ServiceSearchBar({
   onResetFilters,
   className,
 }: ServiceSearchBarProps) {
+  const { hasPermission } = usePermissions();
+  const canCreate = hasPermission("service:create") || hasPermission("service:manage");
   const [isFilterOpen, setIsFilterOpen] = React.useState(false);
   const filterRef = React.useRef<HTMLDivElement>(null);
 
@@ -300,15 +303,17 @@ export function ServiceSearchBar({
           )}
         </div>
 
-        <Button
-          asChild
-          className="flex-1 sm:flex-initial h-12 px-5 sm:px-6 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10,10,10,0.2)] gap-2 font-bold text-xs sm:text-sm cursor-pointer transition-all justify-center"
-        >
-          <Link href={ROUTES.SERVICE_CREATE}>
-            <Plus className="h-4 w-4 text-[#F3A712]" />
-            <span>New Service</span>
-          </Link>
-        </Button>
+        {canCreate && (
+          <Button
+            asChild
+            className="flex-1 sm:flex-initial h-12 px-5 sm:px-6 rounded-2xl bg-[#0a0a0a] text-white hover:bg-[#171717] shadow-[0_4px_16px_rgba(10,10,10,0.2)] gap-2 font-bold text-xs sm:text-sm cursor-pointer transition-all justify-center"
+          >
+            <Link href={ROUTES.SERVICE_CREATE}>
+              <Plus className="h-4 w-4 text-[#F3A712]" />
+              <span>New Service</span>
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePermissions } from "@/hooks/usePermissions";
 import { sanitizeHtml } from "@/lib/sanitize";
 
 export interface CaseNotesTimelineProps {
@@ -39,6 +40,9 @@ export function CaseNotesTimeline({
 }: CaseNotesTimelineProps) {
   const { user } = useAuth();
   const { confirm, alert } = useConfirm();
+  const { hasPermission } = usePermissions();
+
+  const canCreateNote = isSuperAdmin || hasPermission("note:create") || hasPermission("note:manage");
   const { data: notesResponse, isLoading, isFetching } = useGetCaseNotesQuery(caseId);
   const notes = notesResponse?.data || [];
 
@@ -195,7 +199,7 @@ export function CaseNotesTimeline({
       )}
 
       {/* Quick Composer */}
-      {isComposerOpen && (
+      {canCreateNote && isComposerOpen && (
         <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -413,7 +417,10 @@ export function CaseNotesTimeline({
               .toUpperCase();
 
             const isAuthor = user?.id === note.authorId;
-            const canDelete = isSuperAdmin || isAuthor;
+            const canDelete =
+              isSuperAdmin ||
+              hasPermission("note:manage") ||
+              (hasPermission("note:delete") && isAuthor);
 
             const isClientVis = note.visibility === "CLIENT";
             const isStaffVis = note.visibility === "STAFF";

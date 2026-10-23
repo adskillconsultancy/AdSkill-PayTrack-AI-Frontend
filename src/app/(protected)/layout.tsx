@@ -150,6 +150,12 @@ export default function ProtectedLayout({
     ) {
       return false;
     }
+    if (
+      pathname.startsWith("/services") &&
+      !hasAnyPermission(["service:read", "service:create", "service:manage"])
+    ) {
+      return false;
+    }
 
     return true;
   }, [

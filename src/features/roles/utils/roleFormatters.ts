@@ -53,9 +53,21 @@ export const PERMISSION_DISPLAY_NAMES: Record<
     label: "View Service Catalog",
     description: "Browse legal & advisory services and standard fees",
   },
+  "service:create": {
+    label: "Create Service Offering",
+    description: "Add new service offerings and fee templates",
+  },
+  "service:update": {
+    label: "Edit Service Offerings",
+    description: "Update pricing, descriptions, and duration",
+  },
+  "service:delete": {
+    label: "Archive / Delete Services",
+    description: "Remove or deactivate services from catalog",
+  },
   "service:manage": {
-    label: "Create & Edit Services",
-    description: "Add new service offerings or update fee structures",
+    label: "Manage Service Catalog",
+    description: "Full management of service offerings, fees, and categories",
   },
 
   // Client Cases
@@ -139,9 +151,17 @@ export const PERMISSION_DISPLAY_NAMES: Record<
     label: "Upload Documents",
     description: "Upload case evidence, IDs, and payment proofs",
   },
+  "document:update": {
+    label: "Edit Document Metadata",
+    description: "Rename documents and update tags or categories",
+  },
   "document:delete": {
     label: "Delete Documents",
     description: "Remove uploaded files and attachments",
+  },
+  "document:manage": {
+    label: "Manage Case Documents",
+    description: "Full management and review of case documents",
   },
 
   // Reports & Financial Intelligence
@@ -168,6 +188,18 @@ export const PERMISSION_DISPLAY_NAMES: Record<
   "note:create": {
     label: "Write Case Notes",
     description: "Post updates and notes on client cases",
+  },
+  "note:update": {
+    label: "Edit Case Notes",
+    description: "Update content of existing case notes",
+  },
+  "note:delete": {
+    label: "Delete Case Notes",
+    description: "Remove case notes and timeline entries",
+  },
+  "note:manage": {
+    label: "Manage Case Notes",
+    description: "Pin notes, moderate comments, and manage visibility",
   },
   "note:read-internal": {
     label: "View Confidential Staff Notes",

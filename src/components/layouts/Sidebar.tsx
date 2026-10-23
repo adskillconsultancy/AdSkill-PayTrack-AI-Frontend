@@ -143,7 +143,7 @@ const navSections: NavSection[] = [
         title: "Services",
         href: ROUTES.SERVICES,
         icon: Briefcase,
-        requiredAnyPermissions: ["service:read", "service:manage"],
+        requiredAnyPermissions: ["service:read", "service:create", "service:manage"],
         subItems: [
           {
             title: "Service List",
@@ -153,7 +153,7 @@ const navSections: NavSection[] = [
           {
             title: "Create Service",
             href: ROUTES.SERVICE_CREATE,
-            requiredPermission: "service:manage",
+            requiredAnyPermissions: ["service:create", "service:manage"],
           },
         ],
       },
