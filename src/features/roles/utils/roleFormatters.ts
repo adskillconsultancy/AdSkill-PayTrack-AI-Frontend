@@ -197,6 +197,64 @@ export const PERMISSION_DISPLAY_NAMES: Record<
     label: "View System Audit Logs",
     description: "Inspect immutable audit trail of system activities",
   },
+
+  // Attendance Tracker
+  "attendance:track": {
+    label: "Track Personal Attendance",
+    description: "Clock in and clock out of shifts",
+  },
+  "attendance:read-self": {
+    label: "View Personal Attendance",
+    description: "View own attendance records and clock-in logs",
+  },
+  "attendance:read-all": {
+    label: "View Team Attendance",
+    description: "View department-wide attendance and live active status",
+  },
+
+  // Office Expenses & Overhead
+  "expense:read": {
+    label: "View Office Expenses",
+    description: "Access office expense logs and operational overheads",
+  },
+  "expense:create": {
+    label: "Record Office Expense",
+    description: "Add new office expenses and receipts",
+  },
+  "expense:update": {
+    label: "Edit Office Expenses",
+    description: "Modify recorded expense amounts and categories",
+  },
+  "expense:delete": {
+    label: "Delete Office Expenses",
+    description: "Remove office expense entries",
+  },
+  "expense:manage": {
+    label: "Manage Expense Categories",
+    description: "Approve expenses and configure categories",
+  },
+
+  // Lead Pipeline & CRM
+  "lead:read": {
+    label: "View Leads",
+    description: "View prospect pipeline and contact records",
+  },
+  "lead:create": {
+    label: "Create Leads",
+    description: "Add new leads and intake submissions",
+  },
+  "lead:update": {
+    label: "Update Leads",
+    description: "Modify lead status, stages, and follow-ups",
+  },
+  "lead:delete": {
+    label: "Delete Leads",
+    description: "Archive or remove prospective leads",
+  },
+  "lead:manage": {
+    label: "Manage Pipeline & Assignments",
+    description: "Assign leads to consultants and manage conversion",
+  },
 };
 
 export function getRoleDisplayName(roleName: string): string {

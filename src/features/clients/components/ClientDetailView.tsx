@@ -309,7 +309,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const canEditCase = hasPermission("case:update") && !isClientAccount;
   const canVerify = hasPermission("payment:verify");
   const canRecordPayment = hasPermission("payment:record");
-  const canManageDocuments = hasPermission("document:manage") || hasPermission("document:create");
+  const canManageDocuments = hasPermission("document:upload") || hasPermission("document:delete");
 
   const initials = (profile?.preferredName || profile?.name || "C")
     .split(" ")
