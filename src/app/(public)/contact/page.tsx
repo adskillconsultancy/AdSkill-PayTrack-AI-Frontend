@@ -17,10 +17,34 @@ import {
   Sparkles,
   Building2,
   CalendarCheck,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
+import { useCreateLeadMutation } from "@/services/api/leads/leadsApi";
+
+// Map service codes from the dropdown to their exact database UUIDs
+const SERVICE_ID_MAP: Record<string, string> = {
+  "EB2-NIW": "ff96b294-3b2d-43dc-b2bd-56ffc4a513a7",
+  "EB1-A": "0034dfee-0bd6-4875-bec7-aab60c90d26a",
+  "EB-3": "d5fbc1ed-6b96-43a2-ae52-ee216787babc",
+  "E-2": "4d84fdbb-a39c-412b-a50d-99acb3d79174",
+  "EB-5": "d91f4278-2f5a-4b87-bb47-e7d772e866ef",
+  "BIZ-FORMATION": "a144aa5c-2fa9-49de-8528-35269c390ffc",
+  "BP-E2": "aacf8fbe-057a-4eaa-9503-4edbdc28ef76",
+  "COS-B1-F1": "6459a070-5282-443a-a1b0-16be839b90ca",
+  "F-1": "e589cb59-5c75-4572-b9ca-6c1dbd00e703",
+  "I-485": "c4d9b3fe-ad78-4858-8ad9-541bc62c617b",
+  "I-130": "849d52c1-a32b-4565-91a2-a658fc100ae3",
+  "N-400": "d486bbc0-a573-41ab-b925-2e617fd34c45",
+  "PROFILE-MENTOR": "3375e8ed-f69b-4089-8e5e-54ac6a1c6021",
+  "RFE-RESPONSE": "ba6cfdad-f980-462a-a680-f772ec40e37c",
+};
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [createdClientCode, setCreatedClientCode] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -29,9 +53,45 @@ export default function ContactPage() {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [createLead, { isLoading }] = useCreateLeadMutation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setErrorMessage(null);
+
+    if (!formData.name.trim()) {
+      setErrorMessage("Full name is required.");
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      setErrorMessage("Phone or WhatsApp number is required.");
+      return;
+    }
+
+    try {
+      const mappedServiceId = SERVICE_ID_MAP[formData.service] || undefined;
+      const res = await createLead({
+        fullName: formData.name.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim() || undefined,
+        serviceId: mappedServiceId,
+        leadSource: "Website Contact Page",
+        whatClientWants: `Program: ${formData.service}\nDetails: ${formData.message.trim()}`,
+        remarks: `Submitted via Public Website Advisory Form on ${new Date().toLocaleDateString()}`,
+        status: "NEW",
+        priority: "HIGH",
+      }).unwrap();
+
+      if (res?.data?.clientCode) {
+        setCreatedClientCode(res.data.clientCode);
+      }
+      setSubmitted(true);
+    } catch (err: any) {
+      console.error("Lead submission error:", err);
+      const apiMsg = err?.data?.message || err?.error || "Failed to submit inquiry. Please try again or reach out via WhatsApp.";
+      setErrorMessage(apiMsg);
+    }
   };
 
   return (
@@ -248,19 +308,36 @@ export default function ContactPage() {
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 shadow-sm">
                       <CheckCircle className="h-8 w-8" />
                     </div>
-                    <h3 className="text-2xl font-bold text-[#0a0a0a]">
-                      Inquiry Received Successfully
-                    </h3>
+                    <div className="space-y-1">
+                      <h3 className="text-2xl font-bold text-[#0a0a0a]">
+                        Inquiry Received Successfully
+                      </h3>
+                      {createdClientCode && (
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-mono font-bold text-[#B47B00] mt-2">
+                          Lead Reference: #{createdClientCode}
+                        </div>
+                      )}
+                    </div>
                     <p className="text-sm text-[#475569] max-w-md mx-auto leading-relaxed">
-                      Thank you, <strong>{formData.name}</strong>. An AdSkill case coordinator has received your message and will follow up with your requested program details within 24 hours.
+                      Thank you, <strong>{formData.name}</strong>. Your inquiry has been registered in our case management system. An AdSkill case coordinator will review your background and reach out within 24 hours.
                     </p>
                     <Button
                       type="button"
                       size="sm"
-                      onClick={() => setSubmitted(false)}
+                      onClick={() => {
+                        setSubmitted(false);
+                        setCreatedClientCode(null);
+                        setFormData({
+                          name: "",
+                          email: "",
+                          phone: "",
+                          service: "EB2-NIW",
+                          message: "",
+                        });
+                      }}
                       className="mt-4"
                     >
-                      Send Another Message
+                      Send Another Inquiry
                     </Button>
                   </div>
                 ) : (
@@ -277,6 +354,13 @@ export default function ContactPage() {
                         Fill in your background details. Our coordinators review each submission under strict confidentiality.
                       </p>
                     </div>
+
+                    {errorMessage && (
+                      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 flex items-start gap-2.5">
+                        <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+                        <div>{errorMessage}</div>
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div className="space-y-1.5">
@@ -295,11 +379,10 @@ export default function ContactPage() {
 
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-[#0a0a0a]">
-                          Email Address *
+                          Email Address
                         </label>
                         <Input
                           type="email"
-                          required
                           placeholder="jane@example.com"
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -377,10 +460,20 @@ export default function ContactPage() {
                       <Button
                         type="submit"
                         size="lg"
+                        disabled={isLoading}
                         className="w-full gap-2 font-bold"
                       >
-                        <Send className="h-4 w-4 text-[#F3A712]" />
-                        <span>Submit Advisory Inquiry</span>
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin text-[#F3A712]" />
+                            <span>Registering Inquiry...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="h-4 w-4 text-[#F3A712]" />
+                            <span>Submit Advisory Inquiry</span>
+                          </>
+                        )}
                       </Button>
                       <p className="text-[11px] text-[#64748B] text-center mt-2.5">
                         Strict confidentiality guaranteed. We never sell or share client data.
