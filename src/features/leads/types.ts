@@ -48,6 +48,20 @@ export interface LeadActivity {
   createdAt: string;
 }
 
+export interface LeadDocument {
+  id: string;
+  leadId: string;
+  fileName: string;
+  fileSize?: number | null;
+  mimeType?: string | null;
+  objectKey: string;
+  bucket: string;
+  documentType?: string | null;
+  originalUrl?: string | null;
+  downloadUrl?: string;
+  createdAt: string;
+}
+
 export interface BackendLead {
   id: string;
   clientCode?: string | null;
@@ -61,7 +75,6 @@ export interface BackendLead {
   status: LeadStatus;
   leadSource?: string | null;
   whatClientWants?: string | null;
-  resumeUrl?: string | null;
   profileAssessment?: string | null;
   meetingScheduled?: string | null;
   meetingDateTime?: string | null;
@@ -102,10 +115,12 @@ export interface BackendLead {
   followUpNotifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  documents?: LeadDocument[];
+  activities?: LeadActivity[];
   _count?: {
     activities: number;
+    documents?: number;
   };
-  activities?: LeadActivity[];
 }
 
 export interface LeadSummaryStats {
@@ -132,7 +147,6 @@ export interface CreateLeadPayload {
   entryNumber?: number | null;
   leadSource?: string | null;
   whatClientWants?: string | null;
-  resumeUrl?: string | null;
   profileAssessment?: string | null;
   meetingScheduled?: string | null;
   meetingDateTime?: string | null;
@@ -159,7 +173,6 @@ export interface UpdateLeadPayload {
   entryNumber?: number | null;
   leadSource?: string | null;
   whatClientWants?: string | null;
-  resumeUrl?: string | null;
   profileAssessment?: string | null;
   meetingScheduled?: string | null;
   meetingDateTime?: string | null;

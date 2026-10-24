@@ -189,6 +189,35 @@ export const leadsApi = baseApi.injectEndpoints({
         { type: "Lead", id: "STATS" },
       ],
     }),
+
+    uploadLeadDocuments: builder.mutation<
+      ApiResponse<any>,
+      { leadId: string; formData: FormData }
+    >({
+      query: ({ leadId, formData }) => ({
+        url: `/leads/${leadId}/documents`,
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: (_result, _error, { leadId }) => [
+        { type: "Lead", id: leadId },
+        { type: "Lead", id: "LIST" },
+      ],
+    }),
+
+    deleteLeadDocument: builder.mutation<
+      ApiResponse<{ id: string; deleted: boolean }>,
+      { documentId: string; leadId: string }
+    >({
+      query: ({ documentId }) => ({
+        url: `/leads/documents/${documentId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, { leadId }) => [
+        { type: "Lead", id: leadId },
+        { type: "Lead", id: "LIST" },
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -205,4 +234,6 @@ export const {
   useDeleteLeadActivityMutation,
   useCompleteFollowUpMutation,
   useDeleteLeadMutation,
+  useUploadLeadDocumentsMutation,
+  useDeleteLeadDocumentMutation,
 } = leadsApi;

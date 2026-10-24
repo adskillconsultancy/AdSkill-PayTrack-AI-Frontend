@@ -30,6 +30,8 @@ import {
   Copy,
   Clock,
   ShieldAlert,
+  MoreVertical,
+  Calendar,
 } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ROUTES } from "@/constants";
@@ -234,8 +236,34 @@ export function LeadListView({
     }
   };
 
-  // Table Columns (Matching ClientListView exact styling)
+  const [activeMenuId, setActiveMenuId] = React.useState<string | null>(null);
+
+  // Close dropdown on outside click
+  React.useEffect(() => {
+    const handleOutsideClick = () => setActiveMenuId(null);
+    window.addEventListener("click", handleOutsideClick);
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, []);
+
+  // Table Columns
   const columns: ColumnDef<BackendLead>[] = [
+    {
+      key: "created",
+      header: "CREATED DATE",
+      cell: (lead: BackendLead) => (
+        <div className="space-y-0.5 whitespace-nowrap">
+          <div className="text-xs font-bold text-[#0a0a0a]">
+            {formatExplicitDate(lead.createdAt)}
+          </div>
+          {lead.updatedAt && (
+            <div className="text-[10px] text-[#64748B] flex items-center gap-1 font-medium">
+              <Clock className="h-3 w-3 text-slate-400 shrink-0" />
+              <span>Upd: {formatExplicitDate(lead.updatedAt)}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
     {
       key: "fullName",
       header: "LEAD CONTACT",
@@ -276,20 +304,36 @@ export function LeadListView({
             {lead.email && (
               <div className="text-[11px] text-[#64748B]">{lead.email}</div>
             )}
-            {lead.resumeUrl && (
+            {((lead.documents && lead.documents.length > 0) || (lead._count?.documents && lead._count.documents > 0)) && (
               <div className="pt-0.5">
-                <a
-                  href={lead.resumeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline">
-                  <span>📄 View CV / Documents</span>
-                </a>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                  <span>📄 {lead.documents?.length || lead._count?.documents} Document(s)</span>
+                </span>
               </div>
             )}
           </div>
         );
       },
+    },
+    {
+      key: "status",
+      header: "STATUS & MEETING",
+      cell: (lead: BackendLead) => (
+        <div className="space-y-1">
+          <span
+            className={cn(
+              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
+              statusClass[lead.status] || "bg-slate-100 text-slate-700",
+            )}>
+            {statusLabel[lead.status] || lead.status}
+          </span>
+          {lead.meetingDateTimeStr && (
+            <div className="text-[11px] font-medium text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded flex items-center gap-1">
+              <span>📅 {lead.meetingDateTimeStr}</span>
+            </div>
+          )}
+        </div>
+      ),
     },
     {
       key: "service",
@@ -324,26 +368,6 @@ export function LeadListView({
       },
     },
     {
-      key: "status",
-      header: "STATUS & MEETING",
-      cell: (lead: BackendLead) => (
-        <div className="space-y-1">
-          <span
-            className={cn(
-              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
-              statusClass[lead.status] || "bg-slate-100 text-slate-700",
-            )}>
-            {statusLabel[lead.status] || lead.status}
-          </span>
-          {lead.meetingDateTimeStr && (
-            <div className="text-[11px] font-medium text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded flex items-center gap-1">
-              <span>📅 {lead.meetingDateTimeStr}</span>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
       key: "assignedTo",
       header: "ASSIGNED STAFF",
       cell: (lead: BackendLead) => {
@@ -366,23 +390,6 @@ export function LeadListView({
       },
     },
     {
-      key: "created",
-      header: "CREATED & UPDATED",
-      cell: (lead: BackendLead) => (
-        <div className="space-y-0.5">
-          <div className="text-sm font-semibold text-[#0a0a0a]">
-            {formatExplicitDate(lead.createdAt)}
-          </div>
-          {lead.updatedAt && (
-            <div className="text-[11px] text-[#64748B] flex items-center gap-1 font-medium">
-              <Clock className="h-3 w-3 text-slate-400 shrink-0" />
-              <span>Updated {formatExplicitDate(lead.updatedAt)}</span>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
       key: "actions",
       header: "ACTIONS",
       align: "right",
@@ -393,49 +400,79 @@ export function LeadListView({
         )}`;
 
         return (
-          <div className="flex justify-end items-center gap-1.5">
-            {/* WhatsApp Quick Action Button */}
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="rounded-full bg-[#FAF8F5] p-2 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 cursor-pointer transition-colors"
-              title="Chat on WhatsApp">
-              <MessageSquare className="h-4 w-4 text-emerald-600" />
-            </a>
-
-            {/* Copy Phone */}
+          <div
+            className="relative flex justify-end items-center"
+            onClick={(e) => e.stopPropagation()}>
+            {/* Action Dropdown Trigger (3 dots) */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                navigator.clipboard?.writeText(lead.phone);
+                setActiveMenuId(activeMenuId === lead.id ? null : lead.id);
               }}
-              className="rounded-full bg-[#FAF8F5] p-2 hover:bg-[#F1ECE4] cursor-pointer transition-colors text-slate-700"
-              title="Copy Phone Number">
-              <Copy className="h-4 w-4" />
+              className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FAF8F5] hover:bg-[#F1ECE4] border border-[#EAE6DF] text-slate-700 transition-colors cursor-pointer"
+              title="Actions Menu">
+              <MoreVertical className="h-4 w-4" />
             </button>
 
-            {/* View Details / Timeline on dedicated page */}
-            <Link
-              href={`/leads/${lead.id}`}
-              className="rounded-full bg-[#FAF8F5] p-2 hover:bg-[#F1ECE4] cursor-pointer transition-colors text-slate-700"
-              title="View Lead Details & Timeline">
-              <Eye className="h-4 w-4" />
-            </Link>
+            {/* Dropdown Menu Popup */}
+            {activeMenuId === lead.id && (
+              <div className="absolute right-0 top-9 z-30 w-48 rounded-2xl border border-[#EAE6DF] bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150">
+                {/* View Details */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMenuId(null);
+                    router.push(`/leads/${lead.id}`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer">
+                  <Eye className="h-3.5 w-3.5 text-sky-600" />
+                  <span>View Details & Dossier</span>
+                </button>
 
-            {/* Delete Lead */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteLead(lead.id, lead.fullName);
-              }}
-              className="rounded-full bg-[#FAF8F5] p-2 hover:bg-rose-50 text-slate-700 hover:text-rose-600 cursor-pointer transition-colors"
-              title="Delete Lead">
-              <Trash2 className="h-4 w-4" />
-            </button>
+                {/* WhatsApp Chat */}
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setActiveMenuId(null)}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer">
+                  <MessageSquare className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Chat on WhatsApp</span>
+                </a>
+
+                {/* Copy Phone */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMenuId(null);
+                    navigator.clipboard?.writeText(lead.phone);
+                    alert({
+                      title: "Phone Copied",
+                      message: `Copied ${lead.phone} to clipboard.`,
+                      variant: "success",
+                    });
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-[#0a0a0a] hover:bg-[#FAF8F5] cursor-pointer">
+                  <Copy className="h-3.5 w-3.5 text-slate-500" />
+                  <span>Copy Phone Number</span>
+                </button>
+
+                <div className="my-1 border-t border-[#F0ECE6]" />
+
+                {/* Delete Lead */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMenuId(null);
+                    handleDeleteLead(lead.id, lead.fullName);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer">
+                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                  <span>Delete Lead</span>
+                </button>
+              </div>
+            )}
           </div>
         );
       },

@@ -11,6 +11,8 @@ import {
   useGetLeadByIdQuery,
   useUpdateLeadActivityMutation,
   useUpdateLeadMutation,
+  useUploadLeadDocumentsMutation,
+  useDeleteLeadDocumentMutation,
 } from "@/services/api/leads/leadsApi";
 import { useGetServicesQuery } from "@/services/api/services/servicesApi";
 import { useGetUsersQuery } from "@/services/api/users/usersApi";
@@ -22,6 +24,8 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Download,
+  ExternalLink,
   FileText,
   Globe,
   Loader2,
@@ -33,6 +37,7 @@ import {
   RefreshCw,
   Share2,
   Trash2,
+  Upload,
   Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -145,6 +150,57 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
   const [deleteLead] = useDeleteLeadMutation();
   const [deleteLeadActivity] = useDeleteLeadActivityMutation();
   const [updateLeadActivity] = useUpdateLeadActivityMutation();
+  const [uploadLeadDocs, { isLoading: isUploadingDocs }] = useUploadLeadDocumentsMutation();
+  const [deleteLeadDoc, { isLoading: isDeletingDoc }] = useDeleteLeadDocumentMutation();
+
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      const fd = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        fd.append("files", files[i]);
+      }
+      fd.append("documentType", "SUPPORTING");
+
+      await uploadLeadDocs({
+        leadId,
+        formData: fd,
+      }).unwrap();
+
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (err: any) {
+      alert({
+        title: "Upload Failed",
+        message: err?.data?.message || "Failed to upload lead document.",
+        variant: "danger",
+      });
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string, docName: string) => {
+    const confirmed = await confirm({
+      title: "Delete Document",
+      message: `Are you sure you want to permanently delete "${docName}" from this lead?`,
+      confirmText: "Delete",
+      variant: "danger",
+    });
+
+    if (confirmed) {
+      try {
+        await deleteLeadDoc({ documentId: docId, leadId }).unwrap();
+      } catch (err: any) {
+        alert({
+          title: "Deletion Failed",
+          message: err?.data?.message || "Failed to delete document.",
+          variant: "danger",
+        });
+      }
+    }
+  };
 
   // Form state
   const [activityType, setActivityType] =
@@ -516,35 +572,13 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                 </span>
               )}
 
-              {/* Quick Interactive Status Pill */}
-              <div className="relative inline-flex items-center">
-                <select
-                  value={lead.status}
-                  disabled={isUpdatingStatus}
-                  onChange={(e) =>
-                    handleQuickStatusChange(e.target.value as LeadStatus)
-                  }
-                  className={cn(
-                    "h-6 pl-2.5 pr-6 rounded-full text-xs font-bold border transition-all cursor-pointer appearance-none shadow-2xs hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-black/10 disabled:opacity-60",
-                    statusClass[lead.status] || "bg-slate-100 text-slate-700",
-                  )}>
-                  {Object.entries(statusLabel).map(([key, label]) => (
-                    <option
-                      key={key}
-                      value={key}
-                      className="bg-white text-slate-900 font-semibold py-1">
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-current opacity-70">
-                  {isUpdatingStatus ? (
-                    <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3" />
-                  )}
-                </div>
-              </div>
+              <span
+                className={cn(
+                  "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border",
+                  statusClass[lead.status] || "bg-slate-100 text-slate-700",
+                )}>
+                {statusLabel[lead.status] || lead.status}
+              </span>
             </div>
           </div>
         </div>
@@ -721,22 +755,96 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                 </div>
               )}
 
-              {/* Resume / Documents */}
-              {lead.resumeUrl && (
-                <div className="pt-2 border-t border-[#F0ECE6]">
-                  <a
-                    href={lead.resumeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200 transition-colors text-amber-900 font-bold text-xs">
-                    <span className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-amber-700" />
-                      <span>Google Drive Resume / Portfolio</span>
-                    </span>
-                    <span className="text-[11px] underline">Open ↗</span>
-                  </a>
+              {/* Lead Documents / Dossier Files */}
+              <div className="pt-3 border-t border-[#F0ECE6] space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#0a0a0a] flex items-center gap-1.5">
+                    <FileText className="h-3.5 w-3.5 text-primary" />
+                    <span>Lead Documents ({lead.documents?.length || 0})</span>
+                  </span>
+                  <div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      multiple
+                      className="hidden"
+                      id="lead-doc-upload-input"
+                    />
+                    <button
+                      type="button"
+                      disabled={isUploadingDocs}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/15 px-2.5 py-1 rounded-xl transition-colors cursor-pointer">
+                      {isUploadingDocs ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Upload className="h-3 w-3" />
+                      )}
+                      <span>Upload Doc</span>
+                    </button>
+                  </div>
                 </div>
-              )}
+
+                {lead.documents && lead.documents.length > 0 ? (
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    {lead.documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-2.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] hover:border-[#D5CFC5] transition-colors group">
+                        <div className="flex items-center gap-2 min-w-0 pr-2">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                            <FileText className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-[#0a0a0a] truncate" title={doc.fileName}>
+                              {doc.fileName}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : "File"} • {doc.documentType || "DOCUMENT"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          {doc.downloadUrl ? (
+                            <a
+                              href={doc.downloadUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-primary/10 text-[#64748B] hover:text-primary transition-colors"
+                              title="Download / Open">
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          ) : (
+                            <a
+                              href={`/api/v1/leads/documents/${doc.id}/download`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-primary/10 text-[#64748B] hover:text-primary transition-colors"
+                              title="Download">
+                              <Download className="h-3.5 w-3.5" />
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            disabled={isDeletingDoc}
+                            onClick={() => handleDeleteDocument(doc.id, doc.fileName)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-rose-50 text-[#64748B] hover:text-rose-600 transition-colors"
+                            title="Delete file">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-2xl border border-dashed border-[#EAE6DF] bg-[#FAF8F5]/50 text-center">
+                    <p className="text-xs text-muted-foreground">No documents uploaded yet</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Click "Upload Doc" to add resume, passport, or forms.</p>
+                  </div>
+                )}
+              </div>
 
               {/* Created Date */}
               <div className="flex items-center justify-between pt-2 border-t border-[#F0ECE6]">

@@ -18,9 +18,11 @@ import {
   FileText,
   CheckCircle2,
   Clock,
+  Upload,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
-import { useUpdateLeadMutation } from "@/services/api/leads/leadsApi";
+import { useUpdateLeadMutation, useUploadLeadDocumentsMutation } from "@/services/api/leads/leadsApi";
 import { useConfirm } from "@/hooks/useConfirm";
 import type { BackendLead, LeadStatus } from "../types";
 
@@ -89,6 +91,9 @@ export function EditLeadModal({
 }: EditLeadModalProps) {
   const { alert } = useConfirm();
   const [updateLead, { isLoading }] = useUpdateLeadMutation();
+  const [uploadLeadDocs] = useUploadLeadDocumentsMutation();
+
+  const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]);
 
   const [formData, setFormData] = React.useState({
     clientCode: "",
@@ -105,7 +110,6 @@ export function EditLeadModal({
     meetingScheduled: "No",
     meetingDateTime: "",
     meetingDateTimeStr: "",
-    resumeUrl: "",
     whatClientWants: "",
     evaluationNotes: "",
     remarks: "",
@@ -134,7 +138,6 @@ export function EditLeadModal({
         meetingScheduled: lead.meetingScheduled || (lead.meetingDateTime || lead.meetingDateTimeStr ? "Yes" : "No"),
         meetingDateTime: formatInitialDate(lead.meetingDateTime),
         meetingDateTimeStr: lead.meetingDateTimeStr || "",
-        resumeUrl: lead.resumeUrl || "",
         whatClientWants: lead.whatClientWants || "",
         evaluationNotes: lead.evaluationNotes || "",
         remarks: lead.remarks || "",
@@ -198,11 +201,9 @@ export function EditLeadModal({
           meetingScheduled: hasMeeting ? "Yes" : (formData.meetingScheduled || null),
           meetingDateTime: formData.meetingDateTime ? new Date(formData.meetingDateTime).toISOString() : null,
           meetingDateTimeStr: formData.meetingDateTimeStr.trim() ? formData.meetingDateTimeStr.trim() : null,
-          resumeUrl: formData.resumeUrl.trim() ? formData.resumeUrl.trim() : null,
           whatClientWants: formData.whatClientWants.trim() ? formData.whatClientWants.trim() : null,
           evaluationNotes: formData.evaluationNotes.trim() ? formData.evaluationNotes.trim() : null,
           remarks: formData.remarks.trim() ? formData.remarks.trim() : null,
-          status: formData.status,
           assignedToId: formData.assignedToId ? formData.assignedToId : null,
           nextFollowUpDate: formData.nextFollowUpDate
             ? new Date(formData.nextFollowUpDate).toISOString()
@@ -210,6 +211,19 @@ export function EditLeadModal({
         },
       }).unwrap();
 
+      // If additional files selected, upload them to the lead
+      if (selectedFiles.length > 0) {
+        try {
+          const fd = new FormData();
+          selectedFiles.forEach((file) => fd.append("files", file));
+          fd.append("documentType", "SUPPORTING");
+          await uploadLeadDocs({ leadId: lead.id, formData: fd }).unwrap();
+        } catch (uploadErr) {
+          console.error("Document upload after lead update failed:", uploadErr);
+        }
+      }
+
+      setSelectedFiles([]);
       onSuccess?.();
       onClose();
 
@@ -446,24 +460,8 @@ export function EditLeadModal({
               </div>
             </div>
 
-            {/* Google Drive Link & Meeting */}
+            {/* Meeting Date & Time Picker */}
             <div className="grid grid-cols-1 gap-4 pt-2 border-t border-[#F0ECE6]">
-              <div>
-                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5 flex items-center gap-1.5">
-                  <FileText className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Google Drive Resume / Portfolio Link</span>
-                </label>
-                <input
-                  type="url"
-                  value={formData.resumeUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, resumeUrl: e.target.value })
-                  }
-                  placeholder="https://drive.google.com/..."
-                  className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] placeholder:text-slate-400 focus:outline-none focus:border-[#0a0a0a] transition-colors"
-                />
-              </div>
-
               {/* Meeting Date & Time Picker */}
               <div className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -657,6 +655,76 @@ export function EditLeadModal({
                   placeholder="Inquiry notes..."
                   className="w-full p-3 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-medium text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
                 />
+              </div>
+            </div>
+
+            {/* Attached Documents & Add More */}
+            <div className="pt-2 border-t border-[#F0ECE6] space-y-2">
+              <label className="text-xs font-bold text-[#0a0a0a] flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-primary" />
+                  <span>Lead Documents ({lead?.documents?.length || 0})</span>
+                </span>
+                {selectedFiles.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFiles([])}
+                    className="text-[10px] text-rose-500 hover:underline font-normal">
+                    Clear Selection
+                  </button>
+                )}
+              </label>
+
+              {/* Existing documents if any */}
+              {lead?.documents && lead.documents.length > 0 && (
+                <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                  {lead.documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex items-center justify-between p-2 rounded-xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs">
+                      <span className="truncate max-w-[260px] font-medium text-[#0a0a0a]" title={doc.fileName}>
+                        📄 {doc.fileName}
+                      </span>
+                      {doc.downloadUrl && (
+                        <a
+                          href={doc.downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] text-blue-600 hover:underline font-bold shrink-0 ml-2">
+                          View ↗
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Upload additional files */}
+              <div className="p-3 rounded-xl border border-dashed border-[#EAE6DF] bg-[#FAF8F5]/60 space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-700 block">
+                  Add New Document(s) to this Lead:
+                </span>
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setSelectedFiles(Array.from(e.target.files));
+                    }
+                  }}
+                  className="w-full text-xs text-foreground file:mr-2.5 file:py-1 file:px-2.5 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                />
+                {selectedFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {selectedFiles.map((f, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[10px] bg-white border border-[#EAE6DF] px-2 py-0.5 rounded-md text-emerald-700 font-medium truncate max-w-[180px]">
+                        + {f.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

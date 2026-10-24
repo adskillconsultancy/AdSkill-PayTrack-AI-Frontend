@@ -3,7 +3,7 @@
 import * as React from "react";
 import { X, UserPlus, Sparkles, Building, Phone, Mail, MapPin, Globe, Share2, UserCheck, Shield, Calendar, Flame, FileText, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/common/Button";
-import { useCreateLeadMutation } from "@/services/api/leads/leadsApi";
+import { useCreateLeadMutation, useUploadLeadDocumentsMutation } from "@/services/api/leads/leadsApi";
 import type { LeadStatus } from "../types";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -61,6 +61,9 @@ export function CreateLeadModal({
   const { user } = useAuth();
   const { alert } = useConfirm();
   const [createLead, { isLoading }] = useCreateLeadMutation();
+  const [uploadLeadDocs] = useUploadLeadDocumentsMutation();
+
+  const [selectedFiles, setSelectedFiles] = React.useState<File[]>([]);
 
   const [formData, setFormData] = React.useState({
     clientCode: "",
@@ -77,7 +80,6 @@ export function CreateLeadModal({
     meetingScheduled: "No",
     meetingDateTime: "",
     meetingDateTimeStr: "",
-    resumeUrl: "",
     whatClientWants: "",
     status: "NEW" as LeadStatus,
     assignedToId: "",
@@ -119,7 +121,7 @@ export function CreateLeadModal({
 
     try {
       const hasMeeting = Boolean(formData.meetingDateTime || formData.meetingDateTimeStr.trim());
-      await createLead({
+      const newLead = await createLead({
         clientCode: formData.clientCode.trim() || undefined,
         fullName: formData.fullName.trim(),
         phone: formData.phone.trim(),
@@ -134,16 +136,29 @@ export function CreateLeadModal({
         meetingScheduled: hasMeeting ? "Yes" : (formData.meetingScheduled || undefined),
         meetingDateTime: formData.meetingDateTime ? new Date(formData.meetingDateTime).toISOString() : undefined,
         meetingDateTimeStr: formData.meetingDateTimeStr.trim() || undefined,
-        resumeUrl: formData.resumeUrl.trim() || undefined,
         whatClientWants: formData.whatClientWants.trim() || undefined,
         status: formData.status,
         assignedToId: formData.assignedToId || undefined,
         nextFollowUpDate: formData.nextFollowUpDate ? new Date(formData.nextFollowUpDate).toISOString() : undefined,
       }).unwrap();
 
+      // If files selected, upload them to the created lead
+      const createdLeadId = newLead?.data?.id;
+      if (createdLeadId && selectedFiles.length > 0) {
+        try {
+          const fd = new FormData();
+          selectedFiles.forEach((file) => fd.append("files", file));
+          fd.append("documentType", "SUPPORTING");
+          await uploadLeadDocs({ leadId: createdLeadId, formData: fd }).unwrap();
+        } catch (uploadErr) {
+          console.error("Document upload after lead create failed:", uploadErr);
+        }
+      }
+
       const createdName = formData.fullName.trim();
 
       // Reset & close
+      setSelectedFiles([]);
       setFormData({
         clientCode: "",
         fullName: "",
@@ -159,7 +174,6 @@ export function CreateLeadModal({
         meetingScheduled: "No",
         meetingDateTime: "",
         meetingDateTimeStr: "",
-        resumeUrl: "",
         whatClientWants: "",
         status: "NEW",
         assignedToId: "",
@@ -396,24 +410,8 @@ export function CreateLeadModal({
             </div>
           </div>
 
-          {/* Row 4.6: Google Drive Link & Consultation Meeting */}
+          {/* Consultation Meeting Picker */}
           <div className="grid grid-cols-1 gap-4">
-            <div>
-              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5 mb-1.5">
-                <FileText className="h-3.5 w-3.5 text-blue-600" />
-                Google Drive Resume / Portfolio Link
-              </label>
-              <input
-                type="url"
-                value={formData.resumeUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, resumeUrl: e.target.value })
-                }
-                placeholder="https://drive.google.com/..."
-                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground focus:border-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
             {/* Meeting Date & Time Picker */}
             <div className="rounded-2xl border border-sky-500/20 bg-sky-500/5 p-3.5">
               <div className="flex items-center justify-between mb-2">
@@ -604,6 +602,47 @@ export function CreateLeadModal({
               placeholder="Brief summary of client's goal or inquiry..."
               className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2 text-xs text-foreground focus:border-primary focus:outline-hidden"
             />
+          </div>
+
+          {/* Row 5.8: Attach Documents (Resume / Passports / Portfolio) */}
+          <div className="rounded-xl border border-dashed border-border/90 bg-muted/10 p-3.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                <span>Attach Documents</span>
+                <span className="text-[10px] text-muted-foreground font-normal">(Optional — PDF, DOCX, Images)</span>
+              </label>
+              {selectedFiles.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedFiles([])}
+                  className="text-[10px] text-rose-500 hover:underline">
+                  Clear All
+                </button>
+              )}
+            </div>
+            <input
+              type="file"
+              multiple
+              onChange={(e) => {
+                if (e.target.files) {
+                  setSelectedFiles(Array.from(e.target.files));
+                }
+              }}
+              className="w-full text-xs text-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+            />
+            {selectedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {selectedFiles.map((f, idx) => (
+                  <span
+                    key={idx}
+                    className="inline-flex items-center gap-1 text-[11px] font-medium bg-background border border-border px-2 py-0.5 rounded-lg text-foreground truncate max-w-[200px]"
+                    title={f.name}>
+                    📄 {f.name}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Row 6: Automated Follow-Up Reminder & Quick Presets */}
