@@ -107,7 +107,6 @@ export function EditLeadModal({
     meetingDateTimeStr: "",
     resumeUrl: "",
     whatClientWants: "",
-    whatEmployeeDiscussed: "",
     evaluationNotes: "",
     remarks: "",
     status: "NEW" as LeadStatus,
@@ -137,7 +136,6 @@ export function EditLeadModal({
         meetingDateTimeStr: lead.meetingDateTimeStr || "",
         resumeUrl: lead.resumeUrl || "",
         whatClientWants: lead.whatClientWants || "",
-        whatEmployeeDiscussed: lead.whatEmployeeDiscussed || "",
         evaluationNotes: lead.evaluationNotes || "",
         remarks: lead.remarks || "",
         status: lead.status || "NEW",
@@ -202,7 +200,6 @@ export function EditLeadModal({
           meetingDateTimeStr: formData.meetingDateTimeStr.trim() ? formData.meetingDateTimeStr.trim() : null,
           resumeUrl: formData.resumeUrl.trim() ? formData.resumeUrl.trim() : null,
           whatClientWants: formData.whatClientWants.trim() ? formData.whatClientWants.trim() : null,
-          whatEmployeeDiscussed: formData.whatEmployeeDiscussed.trim() ? formData.whatEmployeeDiscussed.trim() : null,
           evaluationNotes: formData.evaluationNotes.trim() ? formData.evaluationNotes.trim() : null,
           remarks: formData.remarks.trim() ? formData.remarks.trim() : null,
           status: formData.status,
@@ -645,8 +642,8 @@ export function EditLeadModal({
               </div>
             </div>
 
-            {/* What Client Wants & What Staff Discussed */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#F0ECE6]">
+            {/* What Client Wants */}
+            <div className="pt-2 border-t border-[#F0ECE6]">
               <div>
                 <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5">
                   What Client Wants
@@ -658,21 +655,6 @@ export function EditLeadModal({
                     setFormData({ ...formData, whatClientWants: e.target.value })
                   }
                   placeholder="Inquiry notes..."
-                  className="w-full p-3 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-medium text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5">
-                  What Staff Discussed / Advised
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.whatEmployeeDiscussed}
-                  onChange={(e) =>
-                    setFormData({ ...formData, whatEmployeeDiscussed: e.target.value })
-                  }
-                  placeholder="Advice given..."
                   className="w-full p-3 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-medium text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
                 />
               </div>

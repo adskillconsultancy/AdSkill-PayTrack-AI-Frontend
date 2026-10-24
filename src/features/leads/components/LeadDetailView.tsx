@@ -6,8 +6,10 @@ import { useConfirm } from "@/hooks/useConfirm";
 import { cn, formatExplicitDate, formatExplicitDateTime } from "@/lib/utils";
 import {
   useAddLeadActivityMutation,
+  useDeleteLeadActivityMutation,
   useDeleteLeadMutation,
   useGetLeadByIdQuery,
+  useUpdateLeadActivityMutation,
   useUpdateLeadMutation,
 } from "@/services/api/leads/leadsApi";
 import { useGetServicesQuery } from "@/services/api/services/servicesApi";
@@ -17,6 +19,7 @@ import {
   Building,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock,
   FileText,
@@ -140,6 +143,8 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
     useAddLeadActivityMutation();
   const [updateLead, { isLoading: isUpdatingLead }] = useUpdateLeadMutation();
   const [deleteLead] = useDeleteLeadMutation();
+  const [deleteLeadActivity] = useDeleteLeadActivityMutation();
+  const [updateLeadActivity] = useUpdateLeadActivityMutation();
 
   // Form state
   const [activityType, setActivityType] =
@@ -226,6 +231,36 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
     }
   };
 
+  // Quick Status Change Handler
+  const [isUpdatingStatus, setIsUpdatingStatus] = React.useState(false);
+
+  const handleQuickStatusChange = async (newStatus: LeadStatus) => {
+    if (!lead || newStatus === lead.status) return;
+
+    setIsUpdatingStatus(true);
+    try {
+      await updateLead({
+        id: leadId,
+        data: {
+          status: newStatus,
+        },
+      }).unwrap();
+
+      await refetch();
+    } catch (err: any) {
+      await alert({
+        title: "Status Update Failed",
+        message:
+          err?.data?.message ||
+          err?.message ||
+          "Failed to update lead status",
+        variant: "danger",
+      });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!lead) return;
     const isConfirmed = await confirm({
@@ -251,6 +286,77 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
         message: err?.data?.message || "Failed to delete lead",
         variant: "danger",
       });
+    }
+  };
+
+  // Activity edit / delete state
+  const [editingActivityId, setEditingActivityId] = React.useState<string | null>(null);
+  const [editingNotes, setEditingNotes] = React.useState("");
+  const [isUpdatingActivity, setIsUpdatingActivity] = React.useState(false);
+  const [isDeletingActivityId, setIsDeletingActivityId] = React.useState<string | null>(null);
+
+  const handleDeleteActivity = async (activityId: string) => {
+    const isConfirmed = await confirm({
+      title: "Delete Activity Log",
+      message: "Are you sure you want to delete this interaction log? This action cannot be undone.",
+      confirmText: "Yes, Delete Log",
+      cancelText: "Cancel",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
+
+    setIsDeletingActivityId(activityId);
+    try {
+      await deleteLeadActivity({
+        activityId,
+        leadId,
+      }).unwrap();
+
+      await refetch();
+      await alert({
+        title: "Activity Deleted",
+        message: "Interaction log has been removed from timeline.",
+        variant: "success",
+      });
+    } catch (err: any) {
+      await alert({
+        title: "Delete Failed",
+        message: err?.data?.message || err?.message || "Failed to delete activity log",
+        variant: "danger",
+      });
+    } finally {
+      setIsDeletingActivityId(null);
+    }
+  };
+
+  const handleSaveEditedActivity = async () => {
+    if (!editingActivityId) return;
+
+    setIsUpdatingActivity(true);
+    try {
+      await updateLeadActivity({
+        activityId: editingActivityId,
+        leadId,
+        data: {
+          notes: editingNotes.trim(),
+        },
+      }).unwrap();
+
+      setEditingActivityId(null);
+      await refetch();
+      await alert({
+        title: "Note Updated",
+        message: "Activity log has been updated successfully.",
+        variant: "success",
+      });
+    } catch (err: any) {
+      await alert({
+        title: "Update Failed",
+        message: err?.data?.message || err?.message || "Failed to update activity notes",
+        variant: "danger",
+      });
+    } finally {
+      setIsUpdatingActivity(false);
     }
   };
 
@@ -409,6 +515,36 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   {lead.profileAssessment}
                 </span>
               )}
+
+              {/* Quick Interactive Status Pill */}
+              <div className="relative inline-flex items-center">
+                <select
+                  value={lead.status}
+                  disabled={isUpdatingStatus}
+                  onChange={(e) =>
+                    handleQuickStatusChange(e.target.value as LeadStatus)
+                  }
+                  className={cn(
+                    "h-6 pl-2.5 pr-6 rounded-full text-xs font-bold border transition-all cursor-pointer appearance-none shadow-2xs hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-black/10 disabled:opacity-60",
+                    statusClass[lead.status] || "bg-slate-100 text-slate-700",
+                  )}>
+                  {Object.entries(statusLabel).map(([key, label]) => (
+                    <option
+                      key={key}
+                      value={key}
+                      className="bg-white text-slate-900 font-semibold py-1">
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-current opacity-70">
+                  {isUpdatingStatus ? (
+                    <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3" />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -473,13 +609,35 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <span
-                className={cn(
-                  "inline-flex rounded-full px-3 py-1 text-xs font-bold",
-                  statusClass[lead.status] || "bg-slate-100 text-slate-700",
-                )}>
-                {statusLabel[lead.status] || lead.status}
-              </span>
+              {/* Quick Status Selector */}
+              <div className="relative inline-flex items-center">
+                <select
+                  value={lead.status}
+                  disabled={isUpdatingStatus}
+                  onChange={(e) =>
+                    handleQuickStatusChange(e.target.value as LeadStatus)
+                  }
+                  className={cn(
+                    "h-8 pl-3 pr-7 rounded-full text-xs font-bold border transition-all cursor-pointer appearance-none shadow-2xs hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-black/10 disabled:opacity-60",
+                    statusClass[lead.status] || "bg-slate-100 text-slate-700",
+                  )}>
+                  {Object.entries(statusLabel).map(([key, label]) => (
+                    <option
+                      key={key}
+                      value={key}
+                      className="bg-white text-slate-900 font-semibold py-1">
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-current opacity-70">
+                  {isUpdatingStatus ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-3 text-sm">
@@ -655,34 +813,24 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
             </div>
           </div>
 
-          {/* B. Consultation Inquiries & Discussion Notes */}
-          {(lead.whatClientWants || lead.whatEmployeeDiscussed) && (
-            <div className="rounded-3xl border border-[#EAE6DF] bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.02)] space-y-4">
-              <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] block pb-2 border-b border-[#F0ECE6]">
-                Consultation Inquiry & Discussion
-              </span>
-
-              {lead.whatClientWants && (
-                <div className="space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
-                    What Client Wants
-                  </span>
-                  <div className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#0a0a0a] leading-relaxed">
-                    {lead.whatClientWants}
-                  </div>
-                </div>
-              )}
-
-              {lead.whatEmployeeDiscussed && (
-                <div className="space-y-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
-                    What Staff Discussed / Advised
-                  </span>
-                  <div className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#0a0a0a] leading-relaxed">
-                    {lead.whatEmployeeDiscussed}
-                  </div>
-                </div>
-              )}
+          {/* B. What Client Wants */}
+          {lead.whatClientWants && (
+            <div className="rounded-3xl border border-[#EAE6DF] bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.02)] space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#F0ECE6]">
+                <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
+                  What Client Wants
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#FAF8F5] hover:bg-[#0a0a0a] border border-[#EAE6DF] hover:border-[#0a0a0a] text-[#64748B] hover:text-white transition-all cursor-pointer shadow-2xs group"
+                  title="Edit Client Goal">
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#0a0a0a] leading-relaxed">
+                {lead.whatClientWants}
+              </div>
             </div>
           )}
 
@@ -690,9 +838,18 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
           {(lead.evaluationNotes || lead.remarks) && (
             <div className="rounded-3xl border border-[#EAE6DF] bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.02)] space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-[#F0ECE6]">
-                <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
-                  Profile Assessment & Evaluation
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
+                    Profile Assessment & Evaluation
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#FAF8F5] hover:bg-[#0a0a0a] border border-[#EAE6DF] hover:border-[#0a0a0a] text-[#64748B] hover:text-white transition-all cursor-pointer shadow-2xs group"
+                    title="Edit Profile Assessment">
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                </div>
                 {lead.profileAssessment && (
                   <span
                     className={cn(
@@ -966,13 +1123,42 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   <div
                     key={act.id}
                     className="rounded-2xl border border-[#EAE6DF] bg-[#FAF8F5]/60 p-4 shadow-[0_2px_10px_rgb(0,0,0,0.01)] space-y-2.5 transition-all hover:bg-white hover:shadow-xs">
-                    {/* Top Row: Date & Time on left, Activity Badge on right */}
+                    {/* Top Row: Date & Time on left, Activity Badge + Actions on right */}
                     <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#F0ECE6]">
                       <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white border border-[#EAE6DF] text-xs font-black text-[#0a0a0a] shadow-2xs font-mono">
                         <Clock className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                         <span>{formatExplicitDateTime(act.createdAt)}</span>
                       </div>
-                      <div>{getActivityBadge(act)}</div>
+                      <div className="flex items-center gap-1.5">
+                        {getActivityBadge(act)}
+
+                        {/* Action buttons: Edit and Delete */}
+                        <div className="flex items-center gap-1 pl-1 border-l border-[#EAE6DF]">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingActivityId(act.id);
+                              setEditingNotes(act.notes || "");
+                            }}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white hover:bg-slate-100 border border-[#EAE6DF] text-slate-600 hover:text-slate-900 transition-colors cursor-pointer shadow-2xs"
+                            title="Edit Activity Notes">
+                            <Pencil className="h-3 w-3" />
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isDeletingActivityId === act.id}
+                            onClick={() => handleDeleteActivity(act.id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white hover:bg-rose-50 border border-[#EAE6DF] hover:border-rose-200 text-slate-600 hover:text-rose-600 transition-colors cursor-pointer shadow-2xs disabled:opacity-50"
+                            title="Delete Activity Log">
+                            {isDeletingActivityId === act.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-rose-600" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Next Row: Acting Staff Attribution */}
@@ -990,11 +1176,45 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                       </span>
                     </div>
 
-                    {/* Notes content */}
-                    {act.notes && (
-                      <p className="text-xs text-[#0a0a0a] leading-relaxed pt-0.5 whitespace-pre-wrap">
-                        {act.notes}
-                      </p>
+                    {/* Notes content or Inline Edit Form */}
+                    {editingActivityId === act.id ? (
+                      <div className="space-y-2 pt-1">
+                        <textarea
+                          value={editingNotes}
+                          onChange={(e) => setEditingNotes(e.target.value)}
+                          rows={4}
+                          placeholder="Edit activity notes..."
+                          className="w-full p-3 rounded-xl border border-[#EAE6DF] bg-white text-xs text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a] leading-relaxed resize-y"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={isUpdatingActivity}
+                            onClick={() => setEditingActivityId(null)}
+                            className="h-8 rounded-xl text-xs">
+                            Cancel
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={isUpdatingActivity}
+                            onClick={handleSaveEditedActivity}
+                            className="h-8 rounded-xl bg-[#0a0a0a] hover:bg-[#262626] text-white text-xs font-bold">
+                            {isUpdatingActivity ? (
+                              <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                            ) : null}
+                            Save Changes
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      act.notes && (
+                        <p className="text-xs text-[#0a0a0a] leading-relaxed pt-0.5 whitespace-pre-wrap">
+                          {act.notes}
+                        </p>
+                      )
                     )}
 
                     {/* Scheduled Follow-up */}

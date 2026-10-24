@@ -79,7 +79,6 @@ export function CreateLeadModal({
     meetingDateTimeStr: "",
     resumeUrl: "",
     whatClientWants: "",
-    whatEmployeeDiscussed: "",
     status: "NEW" as LeadStatus,
     assignedToId: "",
     nextFollowUpDate: getPresetIsoString(3),
@@ -137,7 +136,6 @@ export function CreateLeadModal({
         meetingDateTimeStr: formData.meetingDateTimeStr.trim() || undefined,
         resumeUrl: formData.resumeUrl.trim() || undefined,
         whatClientWants: formData.whatClientWants.trim() || undefined,
-        whatEmployeeDiscussed: formData.whatEmployeeDiscussed.trim() || undefined,
         status: formData.status,
         assignedToId: formData.assignedToId || undefined,
         nextFollowUpDate: formData.nextFollowUpDate ? new Date(formData.nextFollowUpDate).toISOString() : undefined,
@@ -163,7 +161,6 @@ export function CreateLeadModal({
         meetingDateTimeStr: "",
         resumeUrl: "",
         whatClientWants: "",
-        whatEmployeeDiscussed: "",
         status: "NEW",
         assignedToId: "",
         nextFollowUpDate: getPresetIsoString(3),
@@ -593,36 +590,20 @@ export function CreateLeadModal({
             </div>
           </div>
 
-          {/* Row 5.5: What Client Wants & What Employee Discussed */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="text-xs font-semibold text-foreground block mb-1.5">
-                What Client Wants
-              </label>
-              <textarea
-                rows={2}
-                value={formData.whatClientWants}
-                onChange={(e) =>
-                  setFormData({ ...formData, whatClientWants: e.target.value })
-                }
-                placeholder="Brief summary of client's goal or inquiry..."
-                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2 text-xs text-foreground focus:border-primary focus:outline-hidden"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-foreground block mb-1.5">
-                What Staff Discussed / Advised
-              </label>
-              <textarea
-                rows={2}
-                value={formData.whatEmployeeDiscussed}
-                onChange={(e) =>
-                  setFormData({ ...formData, whatEmployeeDiscussed: e.target.value })
-                }
-                placeholder="Summary of discussion and advice given..."
-                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2 text-xs text-foreground focus:border-primary focus:outline-hidden"
-              />
-            </div>
+          {/* Row 5.5: What Client Wants */}
+          <div>
+            <label className="text-xs font-semibold text-foreground block mb-1.5">
+              What Client Wants
+            </label>
+            <textarea
+              rows={2}
+              value={formData.whatClientWants}
+              onChange={(e) =>
+                setFormData({ ...formData, whatClientWants: e.target.value })
+              }
+              placeholder="Brief summary of client's goal or inquiry..."
+              className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2 text-xs text-foreground focus:border-primary focus:outline-hidden"
+            />
           </div>
 
           {/* Row 6: Automated Follow-Up Reminder & Quick Presets */}

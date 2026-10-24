@@ -61,7 +61,6 @@ export interface BackendLead {
   status: LeadStatus;
   leadSource?: string | null;
   whatClientWants?: string | null;
-  whatEmployeeDiscussed?: string | null;
   resumeUrl?: string | null;
   profileAssessment?: string | null;
   meetingScheduled?: string | null;
@@ -133,7 +132,6 @@ export interface CreateLeadPayload {
   entryNumber?: number | null;
   leadSource?: string | null;
   whatClientWants?: string | null;
-  whatEmployeeDiscussed?: string | null;
   resumeUrl?: string | null;
   profileAssessment?: string | null;
   meetingScheduled?: string | null;
@@ -161,7 +159,6 @@ export interface UpdateLeadPayload {
   entryNumber?: number | null;
   leadSource?: string | null;
   whatClientWants?: string | null;
-  whatEmployeeDiscussed?: string | null;
   resumeUrl?: string | null;
   profileAssessment?: string | null;
   meetingScheduled?: string | null;

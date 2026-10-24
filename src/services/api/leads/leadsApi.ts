@@ -129,6 +129,37 @@ export const leadsApi = baseApi.injectEndpoints({
       ],
     }),
 
+    updateLeadActivity: builder.mutation<
+      ApiResponse<LeadActivity>,
+      { activityId: string; leadId: string; data: Partial<CreateLeadActivityPayload> }
+    >({
+      query: ({ activityId, data }) => ({
+        url: `/leads/activities/${activityId}`,
+        method: "PATCH",
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { leadId }) => [
+        { type: "Lead", id: leadId },
+        { type: "Lead", id: "FOLLOW_UPS" },
+        { type: "Lead", id: "STATS" },
+      ],
+    }),
+
+    deleteLeadActivity: builder.mutation<
+      ApiResponse<any>,
+      { activityId: string; leadId: string }
+    >({
+      query: ({ activityId }) => ({
+        url: `/leads/activities/${activityId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, { leadId }) => [
+        { type: "Lead", id: leadId },
+        { type: "Lead", id: "FOLLOW_UPS" },
+        { type: "Lead", id: "STATS" },
+      ],
+    }),
+
     completeFollowUp: builder.mutation<
       ApiResponse<{ lead: BackendLead; activity: LeadActivity }>,
       { leadId: string; data: CompleteFollowUpPayload }
@@ -170,6 +201,8 @@ export const {
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useAddLeadActivityMutation,
+  useUpdateLeadActivityMutation,
+  useDeleteLeadActivityMutation,
   useCompleteFollowUpMutation,
   useDeleteLeadMutation,
 } = leadsApi;
