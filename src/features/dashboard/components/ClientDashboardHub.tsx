@@ -714,21 +714,25 @@ export function ClientDashboardHub() {
             <MapPin className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
               <span className="font-bold text-foreground">Registered Office</span>
-              <p className="text-muted-foreground leading-snug">
-                {summary?.adskillContact?.address || "1234 Innovation Drive, Suite 400, New York, NY 10001"}
-              </p>
+              <a
+                href="https://maps.google.com/?q=37-13+74th+Street+Jackson+Heights+NY+11372"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary leading-snug block">
+                {summary?.adskillContact?.address || "37-13 74th Street, Floor 2, Jackson Heights, NY 11372"}
+              </a>
             </div>
           </div>
 
           <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
             <Mail className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
-              <span className="font-bold text-foreground">Billing Department</span>
+              <span className="font-bold text-foreground">Official Inquiries</span>
               <a
-                href={`mailto:${summary?.adskillContact?.email || "billing@adskillconsultancy.com"}`}
+                href={`mailto:${summary?.adskillContact?.email || "admin@adskillconsultancy.com"}`}
                 className="text-muted-foreground hover:text-[#F3A712] block truncate"
               >
-                {summary?.adskillContact?.email || "billing@adskillconsultancy.com"}
+                {summary?.adskillContact?.email || "admin@adskillconsultancy.com"}
               </a>
             </div>
           </div>
@@ -737,9 +741,16 @@ export function ClientDashboardHub() {
             <Phone className="h-4 w-4 text-purple-500 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
               <span className="font-bold text-foreground">Direct Assistance</span>
-              <p className="text-muted-foreground">
-                {summary?.adskillContact?.phone || "+1 (800) 235-7454"}
-              </p>
+              <a
+                href="tel:+14255407996"
+                className="text-muted-foreground hover:text-primary block font-mono">
+                {summary?.adskillContact?.phone || "+1 425-540-7996"}
+              </a>
+              <a
+                href="tel:+16468818711"
+                className="text-muted-foreground hover:text-primary block font-mono text-[11px]">
+                +1 646-881-8711
+              </a>
             </div>
           </div>
 

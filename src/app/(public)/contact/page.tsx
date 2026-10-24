@@ -67,27 +67,85 @@ export default function ContactPage() {
               </div>
 
               <div className="space-y-4 text-xs">
+                {/* Office Address */}
+                <div className="flex items-start gap-4 rounded-2xl border border-[#EAE6DF] bg-white p-5 shadow-xs">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF]">
+                    <Clock className="h-5 w-5 text-[#F3A712]" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#0a0a0a] text-sm">Official Headquarters</div>
+                    <a
+                      href="https://maps.google.com/?q=37-13+74th+Street+Jackson+Heights+NY+11372"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#475569] hover:text-[#B47B00] mt-0.5 block transition-colors leading-relaxed">
+                      37-13 74th Street, Floor 2<br />
+                      Jackson Heights, NY 11372
+                    </a>
+                    <a
+                      href="https://maps.google.com/?q=37-13+74th+Street+Jackson+Heights+NY+11372"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#B47B00] font-semibold text-[11px] mt-1 inline-block hover:underline">
+                      View on Google Maps &rarr;
+                    </a>
+                  </div>
+                </div>
+
                 {/* Email */}
                 <div className="flex items-start gap-4 rounded-2xl border border-[#EAE6DF] bg-white p-5 shadow-xs">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF]">
                     <Mail className="h-5 w-5 text-[#F3A712]" />
                   </div>
                   <div>
-                    <div className="font-bold text-[#0a0a0a] text-sm">Official Billing & Inquiries</div>
-                    <div className="text-[#475569] mt-0.5">billing@adskillconsultancy.com</div>
+                    <div className="font-bold text-[#0a0a0a] text-sm">Official Inquiries & Billing</div>
+                    <a
+                      href="mailto:admin@adskillconsultancy.com"
+                      className="text-[#475569] hover:text-[#B47B00] mt-0.5 block transition-colors">
+                      admin@adskillconsultancy.com
+                    </a>
                     <div className="text-[#64748B] text-[11px] mt-1">Average response time: 2-4 hours</div>
                   </div>
                 </div>
 
-                {/* WhatsApp & Phone */}
+                {/* Phone Numbers */}
                 <div className="flex items-start gap-4 rounded-2xl border border-[#EAE6DF] bg-white p-5 shadow-xs">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF]">
                     <Phone className="h-5 w-5 text-[#F3A712]" />
                   </div>
                   <div>
-                    <div className="font-bold text-[#0a0a0a] text-sm">WhatsApp & Client Support</div>
-                    <div className="text-[#475569] mt-0.5">+1 (555) ADSKILL-AI</div>
-                    <div className="text-[#64748B] text-[11px] mt-1">Direct coordinator chat available</div>
+                    <div className="font-bold text-[#0a0a0a] text-sm">Direct Phone Numbers</div>
+                    <div className="space-y-0.5 mt-1">
+                      <a
+                        href="tel:+14255407996"
+                        className="text-[#475569] hover:text-[#B47B00] block font-mono text-xs transition-colors">
+                        +1 425-540-7996
+                      </a>
+                      <a
+                        href="tel:+16468818711"
+                        className="text-[#475569] hover:text-[#B47B00] block font-mono text-xs transition-colors">
+                        +1 646-881-8711
+                      </a>
+                    </div>
+                    <div className="text-[#64748B] text-[11px] mt-1">Direct advisory line</div>
+                  </div>
+                </div>
+
+                {/* WhatsApp Support */}
+                <div className="flex items-start gap-4 rounded-2xl border border-[#EAE6DF] bg-white p-5 shadow-xs">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FAF8F5] text-[#0a0a0a] border border-[#EAE6DF]">
+                    <MessageSquare className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-[#0a0a0a] text-sm">WhatsApp Assistance</div>
+                    <a
+                      href="https://wa.me/16467728544"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-700 hover:text-emerald-800 font-bold mt-0.5 block transition-colors font-mono">
+                      +1 646-772-8544
+                    </a>
+                    <div className="text-[#64748B] text-[11px] mt-1">Direct chat coordinator available</div>
                   </div>
                 </div>
 

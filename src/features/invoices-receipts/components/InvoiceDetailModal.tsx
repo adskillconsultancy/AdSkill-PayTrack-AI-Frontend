@@ -335,8 +335,8 @@ export function InvoiceDetailModal({ invoice, apiBaseUrl, token, onClose }: Prop
                         <span className="font-black text-amber-600 text-sm tracking-wider"> PAYTRACK</span>
                       </div>
                     </div>
-                    <p className="text-[9px] text-slate-500 mt-1">1234 Innovation Drive, Suite 400, New York, NY 10001</p>
-                    <p className="text-[9px] text-slate-500">billing@adskillconsultancy.com • EIN: 47-8921034</p>
+                    <p className="text-[9px] text-slate-500 mt-1">37-13 74th Street, Floor 2, Jackson Heights, NY 11372</p>
+                    <p className="text-[9px] text-slate-500">admin@adskillconsultancy.com • EIN: 47-8921034</p>
                   </div>
                   <div className="bg-[#0b192c] text-white p-3 rounded-xl text-center min-w-[130px]">
                     <p className="text-[8px] font-black uppercase tracking-wider text-slate-300">TAX INVOICE</p>
