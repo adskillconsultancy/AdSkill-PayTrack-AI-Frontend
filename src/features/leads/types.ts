@@ -235,6 +235,8 @@ export interface GetFollowUpQueryParams {
   urgency?: FollowUpUrgency;
   assignedToId?: string;
   search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 export interface CompleteFollowUpPayload {
