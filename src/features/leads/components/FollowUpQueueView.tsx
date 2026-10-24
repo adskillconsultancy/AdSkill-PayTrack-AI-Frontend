@@ -107,6 +107,7 @@ export function FollowUpQueueView({
 
   const queueData = queueResponse?.data;
   const items = queueData?.items || [];
+  const meta = queueResponse?.meta;
   const counts = queueData?.counts || {
     overdue: 0,
     today: 0,
@@ -115,7 +116,8 @@ export function FollowUpQueueView({
     total: 0,
   };
   const totalItems =
-    selectedUrgency === "OVERDUE"
+    meta?.total ??
+    (selectedUrgency === "OVERDUE"
       ? counts.overdue
       : selectedUrgency === "TODAY"
       ? counts.today
@@ -123,8 +125,9 @@ export function FollowUpQueueView({
       ? counts.upcoming
       : selectedUrgency === "COMPLETED"
       ? (counts.completed ?? 0)
-      : counts.total;
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+      : counts.total);
+  const totalPages =
+    meta?.totalPage ?? Math.max(1, Math.ceil(totalItems / pageSize));
 
   const handleCopyPhone = (e: React.MouseEvent, phone: string, id: string) => {
     e.stopPropagation();
@@ -671,46 +674,23 @@ export function FollowUpQueueView({
         </div>
       </div>
 
-      {/* DataTable */}
-      <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
-        <DataTable<FollowUpQueueLead>
-          title="FOLLOW-UP QUEUE"
-          columns={columns}
-          data={items}
-          isLoading={isLoading}
-          keyExtractor={(lead) => lead.id}
-          onRowClick={(lead) => router.push(`/leads/${lead.id}`)}
-          emptyTitle="No leads requiring follow-up"
-          emptyDescription="No leads currently match this filter criteria."
-        />
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-border/60 px-6 py-4 bg-muted/10">
-            <span className="text-xs text-muted-foreground">
-              Showing Page {currentPage} of {totalPages} ({totalItems} leads)
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="rounded-xl h-8 px-3 text-xs">
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="rounded-xl h-8 px-3 text-xs">
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* DataTable matching ServiceListView standard */}
+      <DataTable<FollowUpQueueLead>
+        title="FOLLOW-UP QUEUE"
+        columns={columns}
+        data={items}
+        isLoading={isLoading || isFetching}
+        keyExtractor={(lead) => lead.id}
+        totalCount={totalItems}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        itemLabel="leads"
+        onPageChange={(page) => setCurrentPage(page)}
+        onRowClick={(lead) => router.push(`/leads/${lead.id}`)}
+        emptyTitle="No leads requiring follow-up"
+        emptyDescription="No leads currently match this filter criteria."
+      />
 
       {/* Completion Modal */}
       <CompleteFollowUpModal
