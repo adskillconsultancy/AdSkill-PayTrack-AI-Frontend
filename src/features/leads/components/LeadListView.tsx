@@ -41,24 +41,49 @@ interface LeadListViewProps {
 }
 
 const statusClass: Record<LeadStatus, string> = {
-  NEW: "bg-[#EBF8FF] text-[#0284C7]",
-  CONTACTED: "bg-[#F3E8FF] text-[#9333EA]",
-  IN_PROGRESS: "bg-[#E0E7FF] text-[#4338CA]",
-  FOLLOW_UP: "bg-[#FEF3C7] text-[#B45309]",
-  QUALIFIED: "bg-[#CCFBF1] text-[#0F766E]",
-  CONVERTED: "bg-[#ECFDF5] text-[#059669]",
-  LOST: "bg-[#FFF1F2] text-[#E11D48]",
+  NEW: "bg-[#EBF8FF] text-[#0284C7] border border-[#BAE6FD]",
+  CONTACTED: "bg-[#F3E8FF] text-[#9333EA] border border-[#E9D5FF]",
+  IN_PROGRESS: "bg-[#E0E7FF] text-[#4338CA] border border-[#C7D2FE]",
+  FOLLOW_UP: "bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A]",
+  DOCUMENTS_PENDING: "bg-[#FEF9C3] text-[#A16207] border border-[#FDE047]",
+  MEETING_SCHEDULED: "bg-[#E0F2FE] text-[#0369A1] border border-[#7DD3FC]",
+  QUALIFIED: "bg-[#CCFBF1] text-[#0F766E] border border-[#99F6E4]",
+  ENGAGED: "bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]",
+  CONVERTED: "bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]",
+  LOST: "bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3]",
+  NOT_INTERESTED: "bg-[#F3F4F6] text-[#6B7280] border border-[#E5E7EB]",
 };
 
 const statusLabel: Record<LeadStatus, string> = {
   NEW: "New Lead",
   CONTACTED: "Contacted",
-  IN_PROGRESS: "In Progress",
-  FOLLOW_UP: "Follow-Up",
+  IN_PROGRESS: "In Discussion",
+  FOLLOW_UP: "Follow-Up Required",
+  DOCUMENTS_PENDING: "Documents Pending",
+  MEETING_SCHEDULED: "Meeting Scheduled",
   QUALIFIED: "Qualified",
-  CONVERTED: "Converted",
-  LOST: "Lost",
+  ENGAGED: "Converted - Engaged",
+  CONVERTED: "Closed - Won",
+  LOST: "Closed - Lost",
+  NOT_INTERESTED: "Not Interested",
 };
+
+const assessmentBadgeClass = (assessment?: string | null) => {
+  if (!assessment) return "bg-slate-100 text-slate-600 border-slate-200";
+  if (assessment.includes("Strong")) return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (assessment.includes("Moderate")) return "bg-amber-50 text-amber-700 border-amber-200";
+  if (assessment.includes("Weak")) return "bg-rose-50 text-rose-700 border-rose-200";
+  if (assessment.includes("Review")) return "bg-purple-50 text-purple-700 border-purple-200";
+  return "bg-sky-50 text-sky-700 border-sky-200";
+};
+
+const priorityBadgeClass = (priority?: string | null) => {
+  const p = (priority || "MEDIUM").toUpperCase();
+  if (p === "HIGH") return "bg-red-50 text-red-700 border-red-200 font-bold";
+  if (p === "LOW") return "bg-slate-50 text-slate-600 border-slate-200";
+  return "bg-amber-50 text-amber-700 border-amber-200";
+};
+
 
 export function LeadListView({
   pageTitle = "Leads Management",
@@ -216,19 +241,51 @@ export function LeadListView({
       header: "LEAD CONTACT",
       cell: (lead: BackendLead) => {
         return (
-          <div>
-            <Link
-              href={`/leads/${lead.id}`}
-              className="text-sm font-bold text-[#0a0a0a] hover:underline">
-              {lead.fullName}
-            </Link>
-            <div className="flex items-center gap-1.5 text-xs text-[#64748B] mt-0.5 font-medium">
-              <Phone className="h-3 w-3 text-emerald-600" />
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {lead.clientCode && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-900 text-white shadow-xs">
+                  {lead.clientCode}
+                </span>
+              )}
+              {lead.priority && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-1.5 py-0.2 rounded text-[10px] uppercase font-bold border",
+                    priorityBadgeClass(lead.priority),
+                  )}>
+                  {lead.priority}
+                </span>
+              )}
+              <Link
+                href={`/leads/${lead.id}`}
+                className="text-sm font-bold text-[#0a0a0a] hover:underline">
+                {lead.fullName}
+              </Link>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-[#64748B] font-medium">
+              <Phone className="h-3 w-3 text-emerald-600 shrink-0" />
               <span>{lead.phone}</span>
               {lead.country && <span>• {lead.country}</span>}
+              {lead.leadSource && (
+                <span className="text-[10px] bg-slate-100 text-slate-600 px-1 rounded">
+                  via {lead.leadSource}
+                </span>
+              )}
             </div>
             {lead.email && (
               <div className="text-[11px] text-[#64748B]">{lead.email}</div>
+            )}
+            {lead.resumeUrl && (
+              <div className="pt-0.5">
+                <a
+                  href={lead.resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                  <span>📄 View CV / Documents</span>
+                </a>
+              </div>
             )}
           </div>
         );
@@ -236,35 +293,54 @@ export function LeadListView({
     },
     {
       key: "service",
-      header: "SERVICE INTENDED",
+      header: "SERVICE & ASSESSMENT",
       cell: (lead: BackendLead) => {
         const service = lead.service;
-        if (!service) {
-          return (
-            <span className="text-sm font-semibold text-[#64748B] italic">
-              Not specified
-            </span>
-          );
-        }
         return (
-          <div>
-            <div className="text-sm font-bold text-[#0a0a0a]">{service.name}</div>
-            <div className="text-xs text-[#64748B] font-mono">{service.code}</div>
+          <div className="space-y-1">
+            {service ? (
+              <div>
+                <div className="text-sm font-bold text-[#0a0a0a]">{service.name}</div>
+                <div className="text-xs text-[#64748B] font-mono">{service.code}</div>
+              </div>
+            ) : (
+              <span className="text-xs font-semibold text-[#64748B] italic">
+                General
+              </span>
+            )}
+            {lead.profileAssessment && (
+              <div className="pt-0.5">
+                <span
+                  className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border",
+                    assessmentBadgeClass(lead.profileAssessment),
+                  )}>
+                  {lead.profileAssessment}
+                </span>
+              </div>
+            )}
           </div>
         );
       },
     },
     {
       key: "status",
-      header: "STATUS",
+      header: "STATUS & MEETING",
       cell: (lead: BackendLead) => (
-        <span
-          className={cn(
-            "inline-flex rounded-full px-3 py-1 text-xs font-bold",
-            statusClass[lead.status] || "bg-slate-100 text-slate-700",
-          )}>
-          {statusLabel[lead.status] || lead.status}
-        </span>
+        <div className="space-y-1">
+          <span
+            className={cn(
+              "inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold",
+              statusClass[lead.status] || "bg-slate-100 text-slate-700",
+            )}>
+            {statusLabel[lead.status] || lead.status}
+          </span>
+          {lead.meetingDateTimeStr && (
+            <div className="text-[11px] font-medium text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded flex items-center gap-1">
+              <span>📅 {lead.meetingDateTimeStr}</span>
+            </div>
+          )}
+        </div>
       ),
     },
     {

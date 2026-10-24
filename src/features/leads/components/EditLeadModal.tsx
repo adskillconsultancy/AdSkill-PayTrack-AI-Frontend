@@ -14,6 +14,10 @@ import {
   Shield,
   Loader2,
   Calendar,
+  Flame,
+  FileText,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { useUpdateLeadMutation } from "@/services/api/leads/leadsApi";
@@ -26,6 +30,33 @@ const getPresetIsoString = (daysAhead: number) => {
   d.setHours(10, 0, 0, 0);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const getMeetingPreset = (daysAhead: number, hour = 14) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(hour, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const formatMeetingDisplay = (isoLocalStr: string) => {
+  if (!isoLocalStr) return "";
+  try {
+    const d = new Date(isoLocalStr);
+    if (isNaN(d.getTime())) return isoLocalStr;
+    return d.toLocaleString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return isoLocalStr;
+  }
 };
 
 const formatInitialDate = (isoStr?: string | null) => {
@@ -60,6 +91,7 @@ export function EditLeadModal({
   const [updateLead, { isLoading }] = useUpdateLeadMutation();
 
   const [formData, setFormData] = React.useState({
+    clientCode: "",
     fullName: "",
     phone: "",
     email: "",
@@ -67,6 +99,17 @@ export function EditLeadModal({
     country: "",
     serviceId: "",
     referralName: "",
+    leadSource: "WhatsApp",
+    priority: "MEDIUM",
+    profileAssessment: "Pending Evaluation",
+    meetingScheduled: "No",
+    meetingDateTime: "",
+    meetingDateTimeStr: "",
+    resumeUrl: "",
+    whatClientWants: "",
+    whatEmployeeDiscussed: "",
+    evaluationNotes: "",
+    remarks: "",
     status: "NEW" as LeadStatus,
     assignedToId: "",
     nextFollowUpDate: "",
@@ -78,6 +121,7 @@ export function EditLeadModal({
   React.useEffect(() => {
     if (lead && isOpen) {
       setFormData({
+        clientCode: lead.clientCode || "",
         fullName: lead.fullName || "",
         phone: lead.phone || "",
         email: lead.email || "",
@@ -85,6 +129,17 @@ export function EditLeadModal({
         country: lead.country || "",
         serviceId: lead.serviceId || "",
         referralName: lead.referralName || "",
+        leadSource: lead.leadSource || "WhatsApp",
+        priority: lead.priority || "MEDIUM",
+        profileAssessment: lead.profileAssessment || "Pending Evaluation",
+        meetingScheduled: lead.meetingScheduled || (lead.meetingDateTime || lead.meetingDateTimeStr ? "Yes" : "No"),
+        meetingDateTime: formatInitialDate(lead.meetingDateTime),
+        meetingDateTimeStr: lead.meetingDateTimeStr || "",
+        resumeUrl: lead.resumeUrl || "",
+        whatClientWants: lead.whatClientWants || "",
+        whatEmployeeDiscussed: lead.whatEmployeeDiscussed || "",
+        evaluationNotes: lead.evaluationNotes || "",
+        remarks: lead.remarks || "",
         status: lead.status || "NEW",
         assignedToId: lead.assignedToId || "",
         nextFollowUpDate: formatInitialDate(lead.nextFollowUpDate),
@@ -125,9 +180,11 @@ export function EditLeadModal({
     }
 
     try {
+      const hasMeeting = Boolean(formData.meetingDateTime || formData.meetingDateTimeStr.trim());
       await updateLead({
         id: lead.id,
         data: {
+          clientCode: formData.clientCode.trim() ? formData.clientCode.trim() : null,
           fullName: formData.fullName.trim(),
           phone: formData.phone.trim(),
           email: formData.email.trim() ? formData.email.trim() : null,
@@ -137,6 +194,17 @@ export function EditLeadModal({
           referralName: formData.referralName.trim()
             ? formData.referralName.trim()
             : null,
+          leadSource: formData.leadSource || null,
+          priority: formData.priority || "MEDIUM",
+          profileAssessment: formData.profileAssessment || null,
+          meetingScheduled: hasMeeting ? "Yes" : (formData.meetingScheduled || null),
+          meetingDateTime: formData.meetingDateTime ? new Date(formData.meetingDateTime).toISOString() : null,
+          meetingDateTimeStr: formData.meetingDateTimeStr.trim() ? formData.meetingDateTimeStr.trim() : null,
+          resumeUrl: formData.resumeUrl.trim() ? formData.resumeUrl.trim() : null,
+          whatClientWants: formData.whatClientWants.trim() ? formData.whatClientWants.trim() : null,
+          whatEmployeeDiscussed: formData.whatEmployeeDiscussed.trim() ? formData.whatEmployeeDiscussed.trim() : null,
+          evaluationNotes: formData.evaluationNotes.trim() ? formData.evaluationNotes.trim() : null,
+          remarks: formData.remarks.trim() ? formData.remarks.trim() : null,
           status: formData.status,
           assignedToId: formData.assignedToId ? formData.assignedToId : null,
           nextFollowUpDate: formData.nextFollowUpDate
@@ -318,17 +386,210 @@ export function EditLeadModal({
               <div>
                 <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5 flex items-center gap-1.5">
                   <Share2 className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Referral Source / Channel</span>
+                  <span>Lead Channel / Source</span>
+                </label>
+                <select
+                  value={formData.leadSource}
+                  onChange={(e) =>
+                    setFormData({ ...formData, leadSource: e.target.value })
+                  }
+                  className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a] transition-colors"
+                >
+                  <option value="WhatsApp">WhatsApp</option>
+                  <option value="Facebook/Instagram Ads">Facebook/Instagram Ads</option>
+                  <option value="Google Ads">Google Ads</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="Cold Email Campaign">Cold Email Campaign</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Walk-in">Walk-in</option>
+                  <option value="Website">Website</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Priority & Assessment */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#F0ECE6]">
+              <div>
+                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5 flex items-center gap-1.5">
+                  <Flame className="h-3.5 w-3.5 text-rose-600" />
+                  <span>Priority Level</span>
+                </label>
+                <select
+                  value={formData.priority}
+                  onChange={(e) =>
+                    setFormData({ ...formData, priority: e.target.value })
+                  }
+                  className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-bold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a] transition-colors"
+                >
+                  <option value="HIGH">High Priority (Urgent Morning Call)</option>
+                  <option value="MEDIUM">Medium Priority (Standard Follow-up)</option>
+                  <option value="LOW">Low Priority (General / Inactive)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5 flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  <span>Profile Assessment (Eligibility)</span>
+                </label>
+                <select
+                  value={formData.profileAssessment}
+                  onChange={(e) =>
+                    setFormData({ ...formData, profileAssessment: e.target.value })
+                  }
+                  className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a] transition-colors"
+                >
+                  <option value="Strong - Eligible">Strong - Eligible</option>
+                  <option value="Moderate - Needs More Documentation">Moderate - Needs More Documentation</option>
+                  <option value="Weak - Not Currently Eligible">Weak - Not Currently Eligible</option>
+                  <option value="Needs Further Review">Needs Further Review</option>
+                  <option value="Pending Evaluation">Pending Evaluation</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Google Drive Link & Meeting */}
+            <div className="grid grid-cols-1 gap-4 pt-2 border-t border-[#F0ECE6]">
+              <div>
+                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5 flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-blue-600" />
+                  <span>Google Drive Resume / Portfolio Link</span>
                 </label>
                 <input
-                  type="text"
-                  value={formData.referralName}
+                  type="url"
+                  value={formData.resumeUrl}
                   onChange={(e) =>
-                    setFormData({ ...formData, referralName: e.target.value })
+                    setFormData({ ...formData, resumeUrl: e.target.value })
                   }
-                  placeholder="e.g. Google Ads, WhatsApp, Partner"
+                  placeholder="https://drive.google.com/..."
                   className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] placeholder:text-slate-400 focus:outline-none focus:border-[#0a0a0a] transition-colors"
                 />
+              </div>
+
+              {/* Meeting Date & Time Picker */}
+              <div className="rounded-2xl border border-sky-200 bg-sky-50/50 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-bold text-[#0a0a0a] flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-sky-600" />
+                    <span>Meeting Date & Time</span>
+                    <span className="text-[10px] font-normal text-slate-500">(Scheduled Consultation)</span>
+                  </label>
+                  {(formData.meetingDateTime || formData.meetingDateTimeStr) && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          meetingDateTime: "",
+                          meetingDateTimeStr: "",
+                          meetingScheduled: "No",
+                        })
+                      }
+                      className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer">
+                      Clear Meeting
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Pick Presets */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                  <span className="text-[11px] font-medium text-slate-500 mr-0.5">Quick Pick:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const dt = getMeetingPreset(0, 16);
+                      setFormData({
+                        ...formData,
+                        meetingDateTime: dt,
+                        meetingDateTimeStr: formatMeetingDisplay(dt),
+                        meetingScheduled: "Yes",
+                      });
+                    }}
+                    className="rounded-xl border border-[#EAE6DF] bg-white hover:bg-sky-100 hover:border-sky-300 px-2.5 py-1 text-[11px] font-semibold text-[#0a0a0a] transition-colors cursor-pointer">
+                    Today 4 PM
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const dt = getMeetingPreset(1, 14);
+                      setFormData({
+                        ...formData,
+                        meetingDateTime: dt,
+                        meetingDateTimeStr: formatMeetingDisplay(dt),
+                        meetingScheduled: "Yes",
+                      });
+                    }}
+                    className="rounded-xl border border-[#EAE6DF] bg-white hover:bg-sky-100 hover:border-sky-300 px-2.5 py-1 text-[11px] font-semibold text-[#0a0a0a] transition-colors cursor-pointer">
+                    Tomorrow 2 PM
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const dt = getMeetingPreset(2, 11);
+                      setFormData({
+                        ...formData,
+                        meetingDateTime: dt,
+                        meetingDateTimeStr: formatMeetingDisplay(dt),
+                        meetingScheduled: "Yes",
+                      });
+                    }}
+                    className="rounded-xl border border-[#EAE6DF] bg-white hover:bg-sky-100 hover:border-sky-300 px-2.5 py-1 text-[11px] font-semibold text-[#0a0a0a] transition-colors cursor-pointer">
+                    In 2 Days 11 AM
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const dt = getMeetingPreset(4, 15);
+                      setFormData({
+                        ...formData,
+                        meetingDateTime: dt,
+                        meetingDateTimeStr: formatMeetingDisplay(dt),
+                        meetingScheduled: "Yes",
+                      });
+                    }}
+                    className="rounded-xl border border-[#EAE6DF] bg-white hover:bg-sky-100 hover:border-sky-300 px-2.5 py-1 text-[11px] font-semibold text-[#0a0a0a] transition-colors cursor-pointer">
+                    In 4 Days 3 PM
+                  </button>
+                </div>
+
+                {/* Date & Time Picker Input */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="relative flex items-center">
+                    <Calendar className="absolute left-3.5 h-4 w-4 text-sky-600 pointer-events-none" />
+                    <input
+                      type="datetime-local"
+                      value={formData.meetingDateTime}
+                      onClick={(e) => (e.target as any).showPicker?.()}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFormData({
+                          ...formData,
+                          meetingDateTime: val,
+                          meetingDateTimeStr: val ? formatMeetingDisplay(val) : "",
+                          meetingScheduled: val ? "Yes" : "No",
+                        });
+                      }}
+                      className="w-full h-11 pl-10 pr-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-sky-500 cursor-pointer hover:border-sky-400 transition-colors"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.meetingDateTimeStr}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        meetingDateTimeStr: e.target.value,
+                        meetingScheduled: e.target.value.trim() ? "Yes" : (formData.meetingDateTime ? "Yes" : "No"),
+                      })
+                    }
+                    placeholder="e.g. Saturday, 15 Aug 1:15 PM BST / Zoom"
+                    className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs text-[#0a0a0a] placeholder:text-slate-400 focus:outline-none focus:border-[#0a0a0a]"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-2">
+                  Staff will automatically receive automated 4-day & day-of meeting reminders for scheduled consultations.
+                </p>
               </div>
             </div>
 
@@ -351,11 +612,14 @@ export function EditLeadModal({
                 >
                   <option value="NEW">New Lead</option>
                   <option value="CONTACTED">Contacted</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="FOLLOW_UP">Follow-Up Needed</option>
-                  <option value="QUALIFIED">Qualified</option>
-                  <option value="CONVERTED">Converted</option>
-                  <option value="LOST">Lost</option>
+                  <option value="IN_PROGRESS">In Discussion</option>
+                  <option value="FOLLOW_UP">Follow-Up Required</option>
+                  <option value="DOCUMENTS_PENDING">Documents Pending</option>
+                  <option value="MEETING_SCHEDULED">Meeting Scheduled</option>
+                  <option value="ENGAGED">Converted - Engaged</option>
+                  <option value="CONVERTED">Closed - Won</option>
+                  <option value="LOST">Closed - Lost</option>
+                  <option value="NOT_INTERESTED">Not Interested</option>
                 </select>
               </div>
 
@@ -378,6 +642,72 @@ export function EditLeadModal({
                     </option>
                   ))}
                 </select>
+              </div>
+            </div>
+
+            {/* What Client Wants & What Staff Discussed */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#F0ECE6]">
+              <div>
+                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5">
+                  What Client Wants
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.whatClientWants}
+                  onChange={(e) =>
+                    setFormData({ ...formData, whatClientWants: e.target.value })
+                  }
+                  placeholder="Inquiry notes..."
+                  className="w-full p-3 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-medium text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5">
+                  What Staff Discussed / Advised
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.whatEmployeeDiscussed}
+                  onChange={(e) =>
+                    setFormData({ ...formData, whatEmployeeDiscussed: e.target.value })
+                  }
+                  placeholder="Advice given..."
+                  className="w-full p-3 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-medium text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
+                />
+              </div>
+            </div>
+
+            {/* Evaluation Notes & Remarks */}
+            <div className="space-y-3 pt-2 border-t border-[#F0ECE6]">
+              <div>
+                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5">
+                  Evaluation Summary / Draft Assessment
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.evaluationNotes}
+                  onChange={(e) =>
+                    setFormData({ ...formData, evaluationNotes: e.target.value })
+                  }
+                  placeholder="Preliminary review findings, quotation details, proposed endeavor..."
+                  className="w-full p-3 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-medium text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-[#0a0a0a] block mb-1.5">
+                  Internal Remarks / Notes
+                </label>
+                <input
+                  type="text"
+                  value={formData.remarks}
+                  onChange={(e) =>
+                    setFormData({ ...formData, remarks: e.target.value })
+                  }
+                  placeholder="Any internal office remarks..."
+                  className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]"
+                />
               </div>
             </div>
 

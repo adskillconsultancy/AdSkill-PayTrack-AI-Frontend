@@ -1,39 +1,27 @@
 "use client";
 
-import * as React from "react";
-import {
-  X,
-  Phone,
-  MessageSquare,
-  FileText,
-  Users,
-  Calendar,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  ExternalLink,
-  ChevronRight,
-  Shield,
-  Send,
-  Building,
-  MapPin,
-  Globe,
-  Share2,
-} from "lucide-react";
 import { Button } from "@/components/common/Button";
+import { useAuth } from "@/hooks/useAuth";
+import { useConfirm } from "@/hooks/useConfirm";
+import { cn } from "@/lib/utils";
 import {
   useAddLeadActivityMutation,
   useGetLeadByIdQuery,
   useUpdateLeadMutation,
 } from "@/services/api/leads/leadsApi";
-import type {
-  CallOutcome,
-  LeadActivityType,
-  LeadStatus,
-} from "../types";
-import { useAuth } from "@/hooks/useAuth";
-import { cn } from "@/lib/utils";
-import { useConfirm } from "@/hooks/useConfirm";
+import {
+  Calendar,
+  CheckCircle2,
+  Clock,
+  FileText,
+  MessageSquare,
+  Phone,
+  Send,
+  Users,
+  X,
+} from "lucide-react";
+import * as React from "react";
+import type { CallOutcome, LeadActivityType, LeadStatus } from "../types";
 
 const getPresetIsoString = (daysAhead: number) => {
   const d = new Date();
@@ -74,8 +62,7 @@ export function LeadActivityDrawer({
   // Activity form state
   const [activityType, setActivityType] =
     React.useState<LeadActivityType>("CALL");
-  const [callOutcome, setCallOutcome] =
-    React.useState<CallOutcome>("ANSWERED");
+  const [callOutcome, setCallOutcome] = React.useState<CallOutcome>("ANSWERED");
   const [notes, setNotes] = React.useState("");
   const [nextFollowUp, setNextFollowUp] = React.useState("");
   const [statusUpdate, setStatusUpdate] = React.useState<LeadStatus | "">("");
@@ -177,7 +164,9 @@ export function LeadActivityDrawer({
       }).unwrap();
       await alert({
         title: "Lead Reassigned",
-        message: staffId ? `Lead assigned to ${staffName}.` : "Lead has been unassigned.",
+        message: staffId
+          ? `Lead assigned to ${staffName}.`
+          : "Lead has been unassigned.",
         variant: "success",
       });
     } catch (err: any) {
@@ -523,19 +512,25 @@ export function LeadActivityDrawer({
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => setNextFollowUp(getPresetIsoString(1))}
+                            onClick={() =>
+                              setNextFollowUp(getPresetIsoString(1))
+                            }
                             className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted hover:bg-muted/80 text-foreground cursor-pointer">
                             +1d
                           </button>
                           <button
                             type="button"
-                            onClick={() => setNextFollowUp(getPresetIsoString(3))}
+                            onClick={() =>
+                              setNextFollowUp(getPresetIsoString(3))
+                            }
                             className="rounded px-1.5 py-0.5 text-[10px] font-semibold bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer">
                             +3d
                           </button>
                           <button
                             type="button"
-                            onClick={() => setNextFollowUp(getPresetIsoString(7))}
+                            onClick={() =>
+                              setNextFollowUp(getPresetIsoString(7))
+                            }
                             className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-muted hover:bg-muted/80 text-foreground cursor-pointer">
                             +7d
                           </button>
@@ -629,7 +624,9 @@ export function LeadActivityDrawer({
                           <div className="flex items-center gap-2">
                             {/* Staff Avatar / Initials */}
                             <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                              {(act.performedByName || act.performedBy?.name || "S")[0].toUpperCase()}
+                              {(act.performedByName ||
+                                act.performedBy?.name ||
+                                "S")[0].toUpperCase()}
                             </div>
                             <div>
                               <span className="text-xs font-bold text-foreground">
@@ -681,7 +678,8 @@ export function LeadActivityDrawer({
                   </div>
                 ) : (
                   <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-xs text-muted-foreground">
-                    No activity logs recorded yet. Use the form above to log your first call or WhatsApp chat!
+                    No activity logs recorded yet. Use the form above to log
+                    your first call or WhatsApp chat!
                   </div>
                 )}
               </div>

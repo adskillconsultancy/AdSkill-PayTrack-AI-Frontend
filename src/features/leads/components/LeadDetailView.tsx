@@ -1,51 +1,43 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  Phone,
-  MessageSquare,
-  FileText,
-  Users,
-  Clock,
-  CheckCircle2,
-  Calendar,
-  Building,
-  MapPin,
-  Globe,
-  Share2,
-  Mail,
-  UserCheck,
-  Send,
-  Trash2,
-  Copy,
-  ChevronRight,
-  Shield,
-  Loader2,
-  RefreshCw,
-  Pencil,
-} from "lucide-react";
 import { Button } from "@/components/common/Button";
-import {
-  useGetLeadByIdQuery,
-  useAddLeadActivityMutation,
-  useUpdateLeadMutation,
-  useDeleteLeadMutation,
-} from "@/services/api/leads/leadsApi";
-import { useGetUsersQuery } from "@/services/api/users/usersApi";
-import { useGetServicesQuery } from "@/services/api/services/servicesApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useConfirm } from "@/hooks/useConfirm";
-import { LeadDetailSkeleton } from "./LeadDetailSkeleton";
-import { EditLeadModal } from "./EditLeadModal";
-import type {
-  CallOutcome,
-  LeadActivityType,
-  LeadStatus,
-} from "../types";
 import { cn, formatExplicitDate, formatExplicitDateTime } from "@/lib/utils";
+import {
+  useAddLeadActivityMutation,
+  useDeleteLeadMutation,
+  useGetLeadByIdQuery,
+  useUpdateLeadMutation,
+} from "@/services/api/leads/leadsApi";
+import { useGetServicesQuery } from "@/services/api/services/servicesApi";
+import { useGetUsersQuery } from "@/services/api/users/usersApi";
+import {
+  ArrowLeft,
+  Building,
+  Calendar,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  FileText,
+  Globe,
+  Loader2,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Pencil,
+  Phone,
+  RefreshCw,
+  Share2,
+  Trash2,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import type { CallOutcome, LeadActivityType, LeadStatus } from "../types";
+import { EditLeadModal } from "./EditLeadModal";
+import { LeadDetailSkeleton } from "./LeadDetailSkeleton";
 
 const getPresetIsoString = (daysAhead: number) => {
   const d = new Date();
@@ -60,23 +52,51 @@ interface LeadDetailViewProps {
 }
 
 const statusClass: Record<LeadStatus, string> = {
-  NEW: "bg-[#EBF8FF] text-[#0284C7]",
-  CONTACTED: "bg-[#F3E8FF] text-[#9333EA]",
-  IN_PROGRESS: "bg-[#E0E7FF] text-[#4338CA]",
-  FOLLOW_UP: "bg-[#FEF3C7] text-[#B45309]",
-  QUALIFIED: "bg-[#CCFBF1] text-[#0F766E]",
-  CONVERTED: "bg-[#ECFDF5] text-[#059669]",
-  LOST: "bg-[#FFF1F2] text-[#E11D48]",
+  NEW: "bg-[#EBF8FF] text-[#0284C7] border border-[#BAE6FD]",
+  CONTACTED: "bg-[#F3E8FF] text-[#9333EA] border border-[#E9D5FF]",
+  IN_PROGRESS: "bg-[#E0E7FF] text-[#4338CA] border border-[#C7D2FE]",
+  FOLLOW_UP: "bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A]",
+  DOCUMENTS_PENDING: "bg-[#FEF9C3] text-[#A16207] border border-[#FDE047]",
+  MEETING_SCHEDULED: "bg-[#E0F2FE] text-[#0369A1] border border-[#7DD3FC]",
+  QUALIFIED: "bg-[#CCFBF1] text-[#0F766E] border border-[#99F6E4]",
+  ENGAGED: "bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]",
+  CONVERTED: "bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]",
+  LOST: "bg-[#FFF1F2] text-[#E11D48] border border-[#FECDD3]",
+  NOT_INTERESTED: "bg-[#F3F4F6] text-[#6B7280] border border-[#E5E7EB]",
 };
 
 const statusLabel: Record<LeadStatus, string> = {
   NEW: "New Lead",
   CONTACTED: "Contacted",
-  IN_PROGRESS: "In Progress",
-  FOLLOW_UP: "Follow-Up",
+  IN_PROGRESS: "In Discussion",
+  FOLLOW_UP: "Follow-Up Required",
+  DOCUMENTS_PENDING: "Documents Pending",
+  MEETING_SCHEDULED: "Meeting Scheduled",
   QUALIFIED: "Qualified",
-  CONVERTED: "Converted",
-  LOST: "Lost",
+  ENGAGED: "Converted - Engaged",
+  CONVERTED: "Closed - Won",
+  LOST: "Closed - Lost",
+  NOT_INTERESTED: "Not Interested",
+};
+
+const assessmentBadgeClass = (assessment?: string | null) => {
+  if (!assessment) return "bg-slate-100 text-slate-600 border-slate-200";
+  if (assessment.includes("Strong"))
+    return "bg-emerald-50 text-emerald-700 border-emerald-200";
+  if (assessment.includes("Moderate"))
+    return "bg-amber-50 text-amber-700 border-amber-200";
+  if (assessment.includes("Weak"))
+    return "bg-rose-50 text-rose-700 border-rose-200";
+  if (assessment.includes("Review"))
+    return "bg-purple-50 text-purple-700 border-purple-200";
+  return "bg-sky-50 text-sky-700 border-sky-200";
+};
+
+const priorityBadgeClass = (priority?: string | null) => {
+  const p = (priority || "MEDIUM").toUpperCase();
+  if (p === "HIGH") return "bg-red-50 text-red-700 border-red-200 font-bold";
+  if (p === "LOW") return "bg-slate-50 text-slate-600 border-slate-200";
+  return "bg-amber-50 text-amber-700 border-amber-200";
 };
 
 export function LeadDetailView({ leadId }: LeadDetailViewProps) {
@@ -124,8 +144,7 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
   // Form state
   const [activityType, setActivityType] =
     React.useState<LeadActivityType>("CALL");
-  const [callOutcome, setCallOutcome] =
-    React.useState<CallOutcome>("ANSWERED");
+  const [callOutcome, setCallOutcome] = React.useState<CallOutcome>("ANSWERED");
   const [notes, setNotes] = React.useState("");
   const [nextFollowUp, setNextFollowUp] = React.useState("");
   const [statusUpdate, setStatusUpdate] = React.useState<LeadStatus | "">("");
@@ -197,7 +216,9 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
       await alert({
         title: "Assignment Failed",
         message:
-          err?.data?.message || err?.message || "Failed to update staff assignment",
+          err?.data?.message ||
+          err?.message ||
+          "Failed to update staff assignment",
         variant: "danger",
       });
     } finally {
@@ -285,7 +306,8 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
       <div className="rounded-3xl border border-[#FECACA] bg-white p-10 text-center space-y-3 max-w-lg mx-auto my-12">
         <p className="text-base font-bold text-[#B91C1C]">Lead not found</p>
         <p className="text-xs text-[#64748B]">
-          The prospective client lead could not be located or may have been removed.
+          The prospective client lead could not be located or may have been
+          removed.
         </p>
         <div className="pt-2 flex justify-center gap-2">
           <Link href="/leads">
@@ -360,9 +382,34 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
               <ChevronRight className="h-3 w-3" />
               <span className="font-bold text-[#0a0a0a]">{lead.fullName}</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a] mt-0.5">
-              {lead.fullName}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap mt-0.5">
+              {lead.clientCode && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold bg-slate-900 text-white shadow-xs">
+                  {lead.clientCode}
+                </span>
+              )}
+              <h1 className="text-xl sm:text-2xl font-black text-[#0a0a0a]">
+                {lead.fullName}
+              </h1>
+              {lead.priority && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase border",
+                    priorityBadgeClass(lead.priority),
+                  )}>
+                  {lead.priority} Priority
+                </span>
+              )}
+              {lead.profileAssessment && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border",
+                    assessmentBadgeClass(lead.profileAssessment),
+                  )}>
+                  {lead.profileAssessment}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -488,15 +535,50 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                 </span>
               </div>
 
-              {/* Referral */}
+              {/* Lead Source */}
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-[#64748B] flex items-center gap-1.5">
-                  <Share2 className="h-3.5 w-3.5" /> Referral Source
+                  <Share2 className="h-3.5 w-3.5" /> Lead Source
                 </span>
                 <span className="font-semibold text-[#0a0a0a]">
-                  {lead.referralName || "Direct / None"}
+                  {lead.leadSource || lead.referralName || "Direct Inquiry"}
                 </span>
               </div>
+
+              {/* Consultation Meeting */}
+              {(lead.meetingDateTimeStr || lead.meetingScheduled === "Yes") && (
+                <div className="p-3 rounded-2xl bg-sky-50 border border-sky-200 space-y-1">
+                  <div className="flex items-center justify-between text-xs font-bold text-sky-900">
+                    <span className="flex items-center gap-1.5">
+                      <Calendar className="h-4 w-4 text-sky-700" /> Consultation
+                      Meeting
+                    </span>
+                    <span className="bg-sky-200/80 px-2 py-0.5 rounded-full text-[10px]">
+                      {lead.meetingScheduled || "Scheduled"}
+                    </span>
+                  </div>
+                  <div className="text-xs font-semibold text-sky-800">
+                    {lead.meetingDateTimeStr || "Date & Time Pending"}
+                  </div>
+                </div>
+              )}
+
+              {/* Resume / Documents */}
+              {lead.resumeUrl && (
+                <div className="pt-2 border-t border-[#F0ECE6]">
+                  <a
+                    href={lead.resumeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between p-3 rounded-2xl bg-amber-50 hover:bg-amber-100/80 border border-amber-200 transition-colors text-amber-900 font-bold text-xs">
+                    <span className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-amber-700" />
+                      <span>Google Drive Resume / Portfolio</span>
+                    </span>
+                    <span className="text-[11px] underline">Open ↗</span>
+                  </a>
+                </div>
+              )}
 
               {/* Created Date */}
               <div className="flex items-center justify-between pt-2 border-t border-[#F0ECE6]">
@@ -523,7 +605,8 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
               {/* Next Scheduled Follow-Up */}
               <div className="flex items-center justify-between pt-1 border-t border-[#F0ECE6]">
                 <span className="text-xs font-semibold text-[#64748B] flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-primary" /> Next Follow-Up
+                  <Calendar className="h-3.5 w-3.5 text-primary" /> Next
+                  Follow-Up
                 </span>
                 <span
                   className={cn(
@@ -549,29 +632,103 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   value={assignedStaffId}
                   disabled={isSavingStaff || isUpdatingLead}
                   onChange={(e) => setAssignedStaffId(e.target.value)}
-                  className="flex-1 h-10 px-3 rounded-xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]">
-                  <option value="">-- Unassigned --</option>
-                  {staffList.map((st) => (
-                    <option key={st.id} value={st.id}>
-                      {st.name}
+                  className="w-full h-10 px-3 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-hidden focus:border-[#0a0a0a]">
+                  <option value="">Unassigned</option>
+                  {staffList.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.email})
                     </option>
                   ))}
                 </select>
                 <Button
-                  type="button"
                   size="sm"
-                  disabled={!hasStaffChanged || isSavingStaff || isUpdatingLead}
                   onClick={handleSaveStaffAssignment}
-                  className="h-10 px-4 rounded-xl bg-[#0a0a0a] hover:bg-black text-white text-xs font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                  {isSavingStaff || isUpdatingLead ? (
+                  disabled={isSavingStaff || isUpdatingLead || !hasStaffChanged}
+                  className="rounded-2xl shrink-0">
+                  {isSavingStaff ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    "Assign Staff"
+                    "Save"
                   )}
                 </Button>
               </div>
             </div>
           </div>
+
+          {/* B. Consultation Inquiries & Discussion Notes */}
+          {(lead.whatClientWants || lead.whatEmployeeDiscussed) && (
+            <div className="rounded-3xl border border-[#EAE6DF] bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.02)] space-y-4">
+              <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a] block pb-2 border-b border-[#F0ECE6]">
+                Consultation Inquiry & Discussion
+              </span>
+
+              {lead.whatClientWants && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
+                    What Client Wants
+                  </span>
+                  <div className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#0a0a0a] leading-relaxed">
+                    {lead.whatClientWants}
+                  </div>
+                </div>
+              )}
+
+              {lead.whatEmployeeDiscussed && (
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block">
+                    What Staff Discussed / Advised
+                  </span>
+                  <div className="p-3 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-medium text-[#0a0a0a] leading-relaxed">
+                    {lead.whatEmployeeDiscussed}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* C. Evaluation Summary & Legal Assessment Notes */}
+          {(lead.evaluationNotes || lead.remarks) && (
+            <div className="rounded-3xl border border-[#EAE6DF] bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.02)] space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-[#F0ECE6]">
+                <span className="text-xs font-black uppercase tracking-wider text-[#0a0a0a]">
+                  Profile Assessment & Evaluation
+                </span>
+                {lead.profileAssessment && (
+                  <span
+                    className={cn(
+                      "inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold border",
+                      assessmentBadgeClass(lead.profileAssessment),
+                    )}>
+                    {lead.profileAssessment}
+                  </span>
+                )}
+              </div>
+
+              {lead.remarks && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] block">
+                    Internal Remarks
+                  </span>
+                  <p className="text-xs text-slate-800 font-medium bg-amber-50/50 p-2.5 rounded-xl border border-amber-100">
+                    {lead.remarks}
+                  </p>
+                </div>
+              )}
+
+              {lead.evaluationNotes && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] block">
+                    Preliminary Evaluation & Action Plan
+                  </span>
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 whitespace-pre-line leading-relaxed max-h-[350px] overflow-y-auto">
+                    {lead.evaluationNotes}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Record Interaction Form */}
 
           {/* B. Record Interaction Form */}
           <div className="rounded-3xl border border-[#EAE6DF] bg-white p-5 sm:p-6 shadow-[0_4px_20px_rgb(0,0,0,0.02)] space-y-4">
@@ -616,7 +773,11 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                 <div className="grid grid-cols-4 gap-1.5">
                   {[
                     { type: "CALL", label: "Phone Call", icon: Phone },
-                    { type: "WHATSAPP", label: "WhatsApp", icon: MessageSquare },
+                    {
+                      type: "WHATSAPP",
+                      label: "WhatsApp",
+                      icon: MessageSquare,
+                    },
                     { type: "NOTE", label: "Note", icon: FileText },
                     { type: "MEETING", label: "Meeting", icon: Users },
                   ].map((item) => {
@@ -772,7 +933,9 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                   type="submit"
                   disabled={isAddingActivity}
                   className="w-full h-11 rounded-2xl bg-[#0a0a0a] hover:bg-[#262626] text-white text-xs sm:text-sm font-bold shadow-[0_4px_14px_rgba(0,0,0,0.12)]">
-                  {isAddingActivity ? "Saving Activity..." : "Save Activity Log"}
+                  {isAddingActivity
+                    ? "Saving Activity..."
+                    : "Save Activity Log"}
                 </Button>
               </div>
             </form>
@@ -816,11 +979,9 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
                     <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
                       <span>by</span>
                       <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0a0a0a] text-white text-[10px] font-bold shrink-0">
-                        {(
-                          act.performedByName ||
+                        {(act.performedByName ||
                           act.performedBy?.name ||
-                          "S"
-                        )[0].toUpperCase()}
+                          "S")[0].toUpperCase()}
                       </div>
                       <span className="font-bold text-[#0a0a0a]">
                         {act.performedByName ||

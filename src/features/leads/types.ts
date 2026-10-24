@@ -5,9 +5,13 @@ export type LeadStatus =
   | "CONTACTED"
   | "IN_PROGRESS"
   | "FOLLOW_UP"
+  | "DOCUMENTS_PENDING"
+  | "MEETING_SCHEDULED"
   | "QUALIFIED"
+  | "ENGAGED"
   | "CONVERTED"
-  | "LOST";
+  | "LOST"
+  | "NOT_INTERESTED";
 
 export type LeadActivityType =
   | "CALL"
@@ -46,6 +50,8 @@ export interface LeadActivity {
 
 export interface BackendLead {
   id: string;
+  clientCode?: string | null;
+  entryNumber?: number | null;
   fullName: string;
   phone: string;
   email?: string | null;
@@ -53,6 +59,18 @@ export interface BackendLead {
   country?: string | null;
   referralName?: string | null;
   status: LeadStatus;
+  leadSource?: string | null;
+  whatClientWants?: string | null;
+  whatEmployeeDiscussed?: string | null;
+  resumeUrl?: string | null;
+  profileAssessment?: string | null;
+  meetingScheduled?: string | null;
+  meetingDateTime?: string | null;
+  meetingDateTimeStr?: string | null;
+  meetingLocation?: string | null;
+  priority?: "HIGH" | "MEDIUM" | "LOW" | string | null;
+  remarks?: string | null;
+  evaluationNotes?: string | null;
   serviceId?: string | null;
   service?: {
     id: string;
@@ -111,6 +129,20 @@ export interface CreateLeadPayload {
   assignedToId?: string;
   createdByName?: string;
   nextFollowUpDate?: string | null;
+  clientCode?: string | null;
+  entryNumber?: number | null;
+  leadSource?: string | null;
+  whatClientWants?: string | null;
+  whatEmployeeDiscussed?: string | null;
+  resumeUrl?: string | null;
+  profileAssessment?: string | null;
+  meetingScheduled?: string | null;
+  meetingDateTime?: string | null;
+  meetingDateTimeStr?: string | null;
+  meetingLocation?: string | null;
+  priority?: string | null;
+  remarks?: string | null;
+  evaluationNotes?: string | null;
 }
 
 export interface UpdateLeadPayload {
@@ -125,7 +157,22 @@ export interface UpdateLeadPayload {
   assignedToId?: string | null;
   nextFollowUpDate?: string | null;
   isFollowUpDone?: boolean;
+  clientCode?: string | null;
+  entryNumber?: number | null;
+  leadSource?: string | null;
+  whatClientWants?: string | null;
+  whatEmployeeDiscussed?: string | null;
+  resumeUrl?: string | null;
+  profileAssessment?: string | null;
+  meetingScheduled?: string | null;
+  meetingDateTime?: string | null;
+  meetingDateTimeStr?: string | null;
+  meetingLocation?: string | null;
+  priority?: string | null;
+  remarks?: string | null;
+  evaluationNotes?: string | null;
 }
+
 
 export interface CreateLeadActivityPayload {
   activityType: LeadActivityType;
