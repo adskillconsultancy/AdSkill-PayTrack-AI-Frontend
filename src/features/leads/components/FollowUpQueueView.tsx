@@ -225,6 +225,23 @@ export function FollowUpQueueView({
   // Table columns definition
   const columns: ColumnDef<FollowUpQueueLead>[] = [
     {
+      key: "date",
+      header: "Date",
+      accessorKey: "createdAt",
+      className: "w-[120px]",
+      cell: (lead) => (
+        <div className="space-y-0.5 whitespace-nowrap">
+          <div className="text-xs font-bold text-foreground">
+            {formatExplicitDate(lead.createdAt)}
+          </div>
+          <div className="text-[10px] text-muted-foreground flex items-center gap-1 font-medium">
+            <Clock className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+            <span>Added</span>
+          </div>
+        </div>
+      ),
+    },
+    {
       key: "urgency",
       header: "Urgency / Due",
       accessorKey: "nextFollowUpDate",
