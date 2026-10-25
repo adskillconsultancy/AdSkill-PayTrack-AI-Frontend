@@ -299,10 +299,10 @@ export default function SupportPage() {
               OFFICIAL HOTLINE
             </div>
             <div className="text-sm font-bold text-foreground truncate mt-1">
-              {central?.hotline || "+1 (800) 555-SKILL"}
+              {central?.hotline || "+1 425-540-7996"}
             </div>
             <div className="text-[11px] text-muted-foreground truncate">
-              Toll-free verification desk
+              Direct line &bull; Alt: +1 646-881-8711
             </div>
           </div>
           <div className="h-10 w-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 shadow-2xs">
@@ -317,7 +317,7 @@ export default function SupportPage() {
               DIRECT WHATSAPP
             </div>
             <div className="text-sm font-bold text-foreground truncate mt-1">
-              {overview?.assignedConsultant?.whatsapp || central?.whatsapp || "+1 (212) 555-0199"}
+              {overview?.assignedConsultant?.whatsapp || central?.whatsapp || "+1 646-772-8544"}
             </div>
             <div className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold truncate">
               Online for urgent queries
