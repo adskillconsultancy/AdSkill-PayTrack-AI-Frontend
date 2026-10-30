@@ -383,8 +383,8 @@ export function InvoiceDetailModal({ invoice, apiBaseUrl, token, onClose }: Prop
                       </tr>
                     )}
                     <tr className="bg-slate-100 font-bold">
-                      <td className="p-2 text-[#0b192c]">TOTAL CONTRACTED FEE</td>
-                      <td className="p-2 text-right text-base text-[#0b192c]">{fmt(contractedFee, currency)}</td>
+                      <td className="p-2 text-[#0b192c]">TOTAL INVOICE (INCL. REGULATORY)</td>
+                      <td className="p-2 text-right text-base text-[#0b192c]">{fmt(contractedFee + (govFee || 0), currency)}</td>
                     </tr>
                   </tbody>
                 </table>
