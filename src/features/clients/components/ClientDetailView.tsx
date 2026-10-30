@@ -1,28 +1,45 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
+import { Button } from "@/components/common/Button";
+import { Input } from "@/components/common/Input";
+import { SkeletonDetailView } from "@/components/common/Skeleton";
+import { ROUTES } from "@/constants";
+import { PaymentDetailModal } from "@/features/payments/components/PaymentDetailModal";
+import { useConfirm } from "@/hooks/useConfirm";
+import { usePermissions } from "@/hooks/usePermissions";
+import { downloadAndPrintCaseInvoice } from "@/lib/documentDownload";
+import { cn, formatCurrencyWithCode, formatExplicitDate } from "@/lib/utils";
+import { useGetClientCaseQuery, useUpdateClientCaseMutation } from "@/services/api/clients/clientCasesApi";
+import {
+  useDeleteDocumentMutation,
+  useGetCaseDocumentsQuery,
+  useLazyGetDocumentDownloadQuery,
+  useUploadCaseDocumentsMutation,
+} from "@/services/api/documents/documentsApi";
+import { useCreatePaymentPlanMutation, useGetCasePaymentPlansQuery } from "@/services/api/payment-plans/paymentPlansApi";
+import {
+  useCreatePaymentMutation,
+  useGetCasePaymentsQuery,
+  useVerifyPaymentMutation,
+} from "@/services/api/payments/paymentsApi";
+import { useGetUsersQuery, useUpdateUserMutation } from "@/services/api/users/usersApi";
+import type { CaseStatus, DocumentType, Payment } from "@/types/client-case.types";
 import {
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
   Briefcase,
-  Building2,
-  Calendar,
   Check,
   CheckCircle2,
   ChevronDown,
   Clock,
   CreditCard,
   Download,
-  ExternalLink,
-  File,
   FileCheck,
   FileText,
   FolderOpen,
   Globe,
   Loader2,
-  Lock,
   Mail,
   MapPin,
   MessageCircle,
@@ -33,9 +50,8 @@ import {
   Receipt,
   RefreshCw,
   Search,
-  Shield,
+  ShieldAlert,
   ShieldCheck,
-  Sparkles,
   Trash2,
   Upload,
   UploadCloud,
@@ -44,36 +60,11 @@ import {
   UserRound,
   UserX,
   Wallet,
-  X,
-  ShieldAlert,
+  X
 } from "lucide-react";
-import { Button } from "@/components/common/Button";
-import { formatExplicitDate, formatCurrencyWithCode } from "@/lib/utils";
-import { ROUTES } from "@/constants";
-import { SkeletonDetailView } from "@/components/common/Skeleton";
-import { RichTextEditor } from "@/components/common/RichTextEditor";
+import Link from "next/link";
+import * as React from "react";
 import { CaseNotesTimeline } from "./CaseNotesTimeline";
-import { PaymentDetailModal } from "@/features/payments/components/PaymentDetailModal";
-import { Input } from "@/components/common/Input";
-import { useGetClientCaseQuery, useUpdateClientCaseMutation } from "@/services/api/clients/clientCasesApi";
-import {
-  useGetCaseDocumentsQuery,
-  useUploadCaseDocumentsMutation,
-  useLazyGetDocumentDownloadQuery,
-  useDeleteDocumentMutation,
-} from "@/services/api/documents/documentsApi";
-import { useGetCasePaymentPlansQuery } from "@/services/api/payment-plans/paymentPlansApi";
-import {
-  useGetCasePaymentsQuery,
-  useCreatePaymentMutation,
-  useVerifyPaymentMutation,
-} from "@/services/api/payments/paymentsApi";
-import { useUpdateUserMutation, useGetUsersQuery } from "@/services/api/users/usersApi";
-import { usePermissions } from "@/hooks/usePermissions";
-import type { CaseStatus, DocumentType, Payment } from "@/types/client-case.types";
-import { cn } from "@/lib/utils";
-import { downloadAndPrintCaseInvoice } from "@/lib/documentDownload";
-import { useConfirm } from "@/hooks/useConfirm";
 
 const labels: Record<CaseStatus, string> = {
   INTAKE: "Intake",
@@ -196,7 +187,74 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
     );
   }, [usersResponse]);
 
-  const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
+  const [createPaymentPlan] = useCreatePaymentPlanMutation();
+  const [isPlanModalOpen, setIsPlanModalOpen] = React.useState(false);
+  const [isCreatingPlan, setIsCreatingPlan] = React.useState(false);
+  const [planForm, setPlanForm] = React.useState({
+    currency: "USD",
+    contractedFee: "",
+    scheduleType: "single",
+    installmentCount: "1",
+  });
+
+  const handleCreatePlanForCase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const feeNum = Number(planForm.contractedFee);
+    if (!feeNum || feeNum <= 0) {
+      await alert({
+        title: "Invalid Amount",
+        message: "Please enter a valid contracted fee greater than 0.",
+        variant: "danger",
+      });
+      return;
+    }
+
+    setIsCreatingPlan(true);
+    try {
+      const count = Math.max(1, parseInt(planForm.installmentCount, 10) || 1);
+      const instAmt = Math.round((feeNum / count) * 100) / 100;
+      const installments = [];
+
+      for (let i = 1; i <= count; i++) {
+        const dueDate = new Date();
+        dueDate.setMonth(dueDate.getMonth() + (i - 1));
+        installments.push({
+          sequenceNumber: i,
+          title: count === 1 ? "Full Contracted Professional Fee" : `Milestone #${i}`,
+          amount: i === count ? Math.round((feeNum - instAmt * (count - 1)) * 100) / 100 : instAmt,
+          dueDate: dueDate.toISOString(),
+        });
+      }
+
+      await createPaymentPlan({
+        caseId: clientId,
+        body: {
+          currency: planForm.currency,
+          scheduleType: planForm.scheduleType,
+          installments,
+        },
+      }).unwrap();
+
+      setIsPlanModalOpen(false);
+      const successMsg = `Payment plan of ${money(feeNum, planForm.currency)} created successfully.`;
+      setNotice(successMsg);
+      await alert({
+        title: "Payment Plan Created",
+        message: successMsg,
+        variant: "success",
+      });
+    } catch (err: unknown) {
+      const errStr = errorText(err);
+      setNotice(errStr);
+      await alert({
+        title: "Failed to Create Payment Plan",
+        message: errStr,
+        variant: "danger",
+      });
+    } finally {
+      setIsCreatingPlan(false);
+    }
+  };
   const [staffSearchQuery, setStaffSearchQuery] = React.useState("");
   const [isAssigningStaff, setIsAssigningStaff] = React.useState(false);
 
@@ -306,6 +364,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
   const paidPercent = contractedAmount > 0 ? Math.min(100, Math.round((paid / contractedAmount) * 100)) : 100;
 
   const canEditProfile = hasPermission("user:update") && Boolean(profile?.id);
+  const canManagePlans = hasPermission("plan:create") || isSuperAdmin;
   const canEditCase = hasPermission("case:update") && !isClientAccount;
   const canVerify = hasPermission("payment:verify");
   const canRecordPayment = hasPermission("payment:record");
@@ -1269,7 +1328,31 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
           </Panel>
 
           {/* PAYMENT PLAN PANEL */}
-          <Panel title="Milestone Schedule" icon={<Receipt className="h-4.5 w-4.5 text-blue-600" />}>
+          <Panel
+            title="Milestone Schedule"
+            icon={<Receipt className="h-4.5 w-4.5 text-blue-600" />}
+            action={
+              canManagePlans && !plan && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const defaultFee = String(service?.baseFee || 15000);
+                    const defaultCurr = service?.currency || "USD";
+                    setPlanForm({
+                      currency: defaultCurr,
+                      contractedFee: defaultFee,
+                      scheduleType: "single",
+                      installmentCount: "1",
+                    });
+                    setIsPlanModalOpen(true);
+                  }}
+                  className="h-8 gap-1.5 rounded-xl border-amber-300 bg-amber-50 text-amber-900 text-xs font-bold hover:bg-amber-100 cursor-pointer">
+                  <CreditCard className="h-3.5 w-3.5 text-amber-700" />
+                  Set Payment Plan
+                </Button>
+              )
+            }>
             <div className="flex items-center justify-between text-xs pb-3 border-b border-slate-100">
               <span className="font-bold text-slate-700">Schedule Type</span>
               <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-800">
@@ -1290,7 +1373,28 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                 </div>
               ))}
               {!plan?.installments?.length && (
-                <p className="py-3 text-center text-xs text-slate-400">No installment schedule active.</p>
+                <div className="py-4 text-center space-y-2">
+                  <p className="text-xs text-slate-400">No installment schedule active.</p>
+                  {canManagePlans && (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const defaultFee = String(service?.baseFee || 15000);
+                        const defaultCurr = service?.currency || "USD";
+                        setPlanForm({
+                          currency: defaultCurr,
+                          contractedFee: defaultFee,
+                          scheduleType: "single",
+                          installmentCount: "1",
+                        });
+                        setIsPlanModalOpen(true);
+                      }}
+                      className="h-8 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs gap-1.5 cursor-pointer">
+                      <CreditCard className="h-3.5 w-3.5" />
+                      Set Active Payment Plan
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           </Panel>
@@ -1556,6 +1660,105 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
                 Close
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* CREATE PAYMENT PLAN MODAL */}
+      {isPlanModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl border border-slate-100 overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-amber-600" />
+                  Set Client Payment Plan
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Establish active financial contract terms for this case.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPlanModalOpen(false)}
+                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 cursor-pointer">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreatePlanForCase} className="p-5 space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Contract Billing Currency</label>
+                <select
+                  value={planForm.currency}
+                  onChange={(e) => setPlanForm((prev) => ({ ...prev, currency: e.target.value }))}
+                  className="w-full h-10 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                  {["USD", "CAD", "GBP", "EUR", "AUD"].map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Total Contracted Professional Fee *</label>
+                <Input
+                  type="number"
+                  step="any"
+                  placeholder="e.g. 15000"
+                  value={planForm.contractedFee}
+                  onChange={(e) => setPlanForm((prev) => ({ ...prev, contractedFee: e.target.value }))}
+                  className="h-10 rounded-xl bg-white border-slate-200 text-xs font-extrabold text-slate-900 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Payment Milestones / Installments</label>
+                <select
+                  value={planForm.installmentCount}
+                  onChange={(e) => {
+                    const cnt = e.target.value;
+                    setPlanForm((prev) => ({
+                      ...prev,
+                      installmentCount: cnt,
+                      scheduleType: cnt === "1" ? "single" : `deposit_${cnt}_milestones`,
+                    }));
+                  }}
+                  className="w-full h-10 px-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                  <option value="1">100% Full Payment (1 Installment)</option>
+                  <option value="2">Split in 2 Milestones (50% / 50%)</option>
+                  <option value="3">Split in 3 Milestones (33% / 33% / 34%)</option>
+                  <option value="4">Split in 4 Milestones (25% quarterly)</option>
+                </select>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-relaxed">
+                Setting this plan creates the official financial ledger contract, allowing immediate official PDF Invoice generation and settlement tracking.
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsPlanModalOpen(false)}
+                  className="h-9 px-4 rounded-xl border-slate-200 text-slate-700 font-bold text-xs cursor-pointer">
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isCreatingPlan}
+                  className="h-9 px-5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-2xs cursor-pointer">
+                  {isCreatingPlan ? (
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Creating Plan...
+                    </span>
+                  ) : (
+                    "Save & Activate Plan"
+                  )}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}

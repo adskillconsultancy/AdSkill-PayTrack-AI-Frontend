@@ -567,6 +567,13 @@ Please log in and update your password upon your first visit. If you have any qu
       setActiveTab("service");
       return;
     }
+    if (!data.contractedFee || data.contractedFee <= 0) {
+      setErrorNotice("Section 3: A valid Base Professional Fee / Contracted Fee (> 0) is required to establish the client's payment terms.");
+      setActiveTab("finance");
+      const financeEl = document.getElementById("section-finance");
+      if (financeEl) financeEl.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
     setErrorNotice("");
     setIsSubmitting(true);
 
