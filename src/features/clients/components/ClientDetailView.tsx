@@ -187,6 +187,7 @@ export function ClientDetailView({ clientId }: { clientId: string }) {
     );
   }, [usersResponse]);
 
+  const [isAssignModalOpen, setIsAssignModalOpen] = React.useState(false);
   const [createPaymentPlan] = useCreatePaymentPlanMutation();
   const [isPlanModalOpen, setIsPlanModalOpen] = React.useState(false);
   const [isCreatingPlan, setIsCreatingPlan] = React.useState(false);
