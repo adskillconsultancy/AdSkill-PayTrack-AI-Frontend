@@ -336,7 +336,7 @@ export function InvoiceDetailModal({ invoice, apiBaseUrl, token, onClose }: Prop
                       </div>
                     </div>
                     <p className="text-[9px] text-slate-500 mt-1">37-13 74th Street, Floor 2, Jackson Heights, NY 11372</p>
-                    <p className="text-[9px] text-slate-500">admin@adskillconsultancy.com • EIN: 47-8921034</p>
+                    <p className="text-[9px] text-slate-500">admin@adskillconsultancy.com • paytrack.adskillconsultancy.com</p>
                   </div>
                   <div className="bg-[#0b192c] text-white p-3 rounded-xl text-center min-w-[130px]">
                     <p className="text-[8px] font-black uppercase tracking-wider text-slate-300">TAX INVOICE</p>
@@ -394,7 +394,7 @@ export function InvoiceDetailModal({ invoice, apiBaseUrl, token, onClose }: Prop
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-[9px] space-y-1">
                     <p className="font-bold text-blue-800">REMITTANCE OPTIONS</p>
                     <p className="text-slate-600">• Online Portal: paytrack.adskillconsultancy.com</p>
-                    <p className="text-slate-600">• Wire: JPMorgan Chase (Account #8492019482)</p>
+                    <p className="text-slate-600">• Bank Wire / ACH: Contact via WhatsApp (+1 646-772-8544)</p>
                   </div>
                   <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
                     <div className="h-12 w-12 rounded-full border-2 border-[#1e3a8a] flex flex-col items-center justify-center text-[6px] font-bold text-[#1e3a8a] text-center">
