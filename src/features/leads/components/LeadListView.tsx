@@ -458,19 +458,22 @@ export function LeadListView({
                   <span>Copy Phone Number</span>
                 </button>
 
-                <div className="my-1 border-t border-[#F0ECE6]" />
-
-                {/* Delete Lead */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveMenuId(null);
-                    handleDeleteLead(lead.id, lead.fullName);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer">
-                  <Trash2 className="h-3.5 w-3.5 text-rose-600" />
-                  <span>Delete Lead</span>
-                </button>
+                {/* Delete Lead (Super Admin only) */}
+                {isSuperAdmin && (
+                  <>
+                    <div className="my-1 border-t border-[#F0ECE6]" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveMenuId(null);
+                        handleDeleteLead(lead.id, lead.fullName);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 cursor-pointer">
+                      <Trash2 className="h-3.5 w-3.5 text-rose-600" />
+                      <span>Delete Lead</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -559,6 +562,8 @@ export function LeadListView({
         }}
         onResetFilters={handleResetFilters}
         onOpenCreateModal={() => setIsCreateModalOpen(true)}
+        canCreateLead={isSuperAdmin}
+        canFilterStaff={isSuperAdmin}
         servicesList={servicesList}
         staffList={staffList}
       />

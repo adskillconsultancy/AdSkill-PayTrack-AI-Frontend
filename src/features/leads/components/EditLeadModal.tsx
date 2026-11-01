@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/common/Button";
 import { useUpdateLeadMutation, useUploadLeadDocumentsMutation } from "@/services/api/leads/leadsApi";
 import { useConfirm } from "@/hooks/useConfirm";
+import { usePermissions } from "@/hooks/usePermissions";
 import type { BackendLead, LeadStatus } from "../types";
 
 const getPresetIsoString = (daysAhead: number) => {
@@ -90,6 +91,7 @@ export function EditLeadModal({
   onSuccess,
 }: EditLeadModalProps) {
   const { alert } = useConfirm();
+  const { isSuperAdmin } = usePermissions();
   const [updateLead, { isLoading }] = useUpdateLeadMutation();
   const [uploadLeadDocs] = useUploadLeadDocumentsMutation();
 
@@ -623,20 +625,28 @@ export function EditLeadModal({
                   <UserCheck className="h-3.5 w-3.5 text-slate-400" />
                   <span>Assigned Staff Member</span>
                 </label>
-                <select
-                  value={formData.assignedToId}
-                  onChange={(e) =>
-                    setFormData({ ...formData, assignedToId: e.target.value })
-                  }
-                  className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a] transition-colors"
-                >
-                  <option value="">-- Unassigned --</option>
-                  {staffList.map((st) => (
-                    <option key={st.id} value={st.id}>
-                      {st.name} ({st.email})
-                    </option>
-                  ))}
-                </select>
+                {isSuperAdmin ? (
+                  <select
+                    value={formData.assignedToId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, assignedToId: e.target.value })
+                    }
+                    className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a] transition-colors"
+                  >
+                    <option value="">-- Unassigned --</option>
+                    {staffList.map((st) => (
+                      <option key={st.id} value={st.id}>
+                        {st.name} ({st.email})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="w-full h-11 px-3.5 rounded-2xl border border-[#EAE6DF] bg-[#FAF8F5] flex items-center text-xs font-semibold text-[#0a0a0a]">
+                    {staffList.find((st) => st.id === formData.assignedToId)?.name ||
+                      lead.assignedTo?.name ||
+                      "Unassigned"}
+                  </div>
+                )}
               </div>
             </div>
 

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/common/Button";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useConfirm } from "@/hooks/useConfirm";
 import { cn, formatExplicitDate, formatExplicitDateTime } from "@/lib/utils";
 import {
@@ -110,6 +111,7 @@ const priorityBadgeClass = (priority?: string | null) => {
 export function LeadDetailView({ leadId }: LeadDetailViewProps) {
   const router = useRouter();
   const { user } = useAuth();
+  const { isSuperAdmin } = usePermissions();
   const { confirm, alert } = useConfirm();
 
   // 1. Fetch full lead details with activities
@@ -613,14 +615,16 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
             <span>Edit</span>
           </button>
 
-          {/* Delete Lead */}
-          <button
-            type="button"
-            onClick={handleDelete}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FAF8F5] hover:bg-rose-50 border border-[#EAE6DF] hover:border-rose-200 text-slate-600 hover:text-rose-600 transition-colors"
-            title="Delete Lead">
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {/* Delete Lead (Super Admin only) */}
+          {isSuperAdmin && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#FAF8F5] hover:bg-rose-50 border border-[#EAE6DF] hover:border-rose-200 text-slate-600 hover:text-rose-600 transition-colors"
+              title="Delete Lead">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -893,31 +897,45 @@ export function LeadDetailView({ leadId }: LeadDetailViewProps) {
               <label className="text-[10px] font-extrabold uppercase tracking-wider text-[#64748B] block">
                 Assigned Staff Member
               </label>
-              <div className="flex gap-2">
-                <select
-                  value={assignedStaffId}
-                  disabled={isSavingStaff || isUpdatingLead}
-                  onChange={(e) => setAssignedStaffId(e.target.value)}
-                  className="w-full h-10 px-3 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-hidden focus:border-[#0a0a0a]">
-                  <option value="">Unassigned</option>
-                  {staffList.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.email})
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  size="sm"
-                  onClick={handleSaveStaffAssignment}
-                  disabled={isSavingStaff || isUpdatingLead || !hasStaffChanged}
-                  className="rounded-2xl shrink-0">
-                  {isSavingStaff ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    "Save"
+              {isSuperAdmin ? (
+                <div className="flex gap-2">
+                  <select
+                    value={assignedStaffId}
+                    disabled={isSavingStaff || isUpdatingLead}
+                    onChange={(e) => setAssignedStaffId(e.target.value)}
+                    className="w-full h-10 px-3 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF] text-xs font-bold text-[#0a0a0a] focus:outline-hidden focus:border-[#0a0a0a]">
+                    <option value="">Unassigned</option>
+                    {staffList.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name} ({s.email})
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveStaffAssignment}
+                    disabled={isSavingStaff || isUpdatingLead || !hasStaffChanged}
+                    className="rounded-2xl shrink-0">
+                    {isSavingStaff ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      "Save"
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-2 rounded-2xl bg-[#FAF8F5] border border-[#EAE6DF]">
+                  <Users className="h-4 w-4 text-[#64748B]" />
+                  <span className="text-xs font-bold text-[#0a0a0a]">
+                    {lead.assignedTo?.name || "Unassigned"}
+                  </span>
+                  {lead.assignedTo?.email && (
+                    <span className="text-[11px] text-[#64748B]">
+                      ({lead.assignedTo.email})
+                    </span>
                   )}
-                </Button>
-              </div>
+                </div>
+              )}
             </div>
           </div>
 

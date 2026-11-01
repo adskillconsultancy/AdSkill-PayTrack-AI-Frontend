@@ -1,19 +1,19 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import {
-  Search,
-  SlidersHorizontal,
-  Plus,
-  X,
-  RotateCcw,
-  Clock,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { DatePresetFilter } from "@/components/common/DatePresetFilter";
+import { cn } from "@/lib/utils";
 import { useGetFollowUpQueueQuery } from "@/services/api/leads/leadsApi";
+import {
+  Clock,
+  Plus,
+  RotateCcw,
+  Search,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
 import type { LeadStatus } from "../types";
 
 interface LeadSearchBarProps {
@@ -32,7 +32,9 @@ interface LeadSearchBarProps {
   sortOption: string;
   onSortChange: (sort: string) => void;
   onResetFilters: () => void;
-  onOpenCreateModal: () => void;
+  onOpenCreateModal?: () => void;
+  canCreateLead?: boolean;
+  canFilterStaff?: boolean;
   servicesList?: { id: string; name: string }[];
   staffList?: { id: string; name: string }[];
   className?: string;
@@ -66,6 +68,8 @@ export function LeadSearchBar({
   onSortChange,
   onResetFilters,
   onOpenCreateModal,
+  canCreateLead = true,
+  canFilterStaff = true,
   servicesList = [],
   staffList = [],
   className,
@@ -97,7 +101,7 @@ export function LeadSearchBar({
   const activeFiltersCount =
     (statusFilter !== "ALL" ? 1 : 0) +
     (serviceFilter !== "ALL" ? 1 : 0) +
-    (assignedFilter !== "ALL" ? 1 : 0) +
+    (canFilterStaff && assignedFilter !== "ALL" ? 1 : 0) +
     (startDate || endDate ? 1 : 0);
 
   const clearAllFilters = () => {
@@ -211,24 +215,26 @@ export function LeadSearchBar({
                   </select>
                 </div>
 
-                {/* Assigned Staff Filter */}
-                <div>
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block mb-1.5">
-                    Assigned Staff
-                  </label>
-                  <select
-                    value={assignedFilter}
-                    onChange={(e) => onAssignedChange(e.target.value)}
-                    className="w-full h-10 px-3 rounded-xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]">
-                    <option value="ALL">All Staff</option>
-                    <option value="UNASSIGNED">Unassigned Only</option>
-                    {staffList.map((st) => (
-                      <option key={st.id} value={st.id}>
-                        {st.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Assigned Staff Filter (Super Admin only) */}
+                {canFilterStaff && (
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] block mb-1.5">
+                      Assigned Staff
+                    </label>
+                    <select
+                      value={assignedFilter}
+                      onChange={(e) => onAssignedChange(e.target.value)}
+                      className="w-full h-10 px-3 rounded-xl border border-[#EAE6DF] bg-white text-xs font-semibold text-[#0a0a0a] focus:outline-none focus:border-[#0a0a0a]">
+                      <option value="ALL">All Staff</option>
+                      <option value="UNASSIGNED">Unassigned Only</option>
+                      {staffList.map((st) => (
+                        <option key={st.id} value={st.id}>
+                          {st.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 {/* Date Filter Section */}
                 {onStartDateChange && onEndDateChange && (
@@ -273,14 +279,16 @@ export function LeadSearchBar({
           </Button>
         </Link>
 
-        {/* Create Lead Primary Button (Matching New Client button) */}
-        <Button
-          type="button"
-          onClick={onOpenCreateModal}
-          className="h-12 px-5 rounded-2xl bg-[#0a0a0a] hover:bg-[#262626] text-white text-xs sm:text-sm font-bold shadow-[0_4px_14px_rgba(0,0,0,0.12)] gap-2 cursor-pointer transition-all">
-          <Plus className="h-4 w-4 stroke-[3]" />
-          <span>New Lead</span>
-        </Button>
+        {/* Create Lead Primary Button (Super Admin only) */}
+        {canCreateLead && onOpenCreateModal && (
+          <Button
+            type="button"
+            onClick={onOpenCreateModal}
+            className="h-12 px-5 rounded-2xl bg-[#0a0a0a] hover:bg-[#262626] text-white text-xs sm:text-sm font-bold shadow-[0_4px_14px_rgba(0,0,0,0.12)] gap-2 cursor-pointer transition-all">
+            <Plus className="h-4 w-4 stroke-[3]" />
+            <span>New Lead</span>
+          </Button>
+        )}
       </div>
     </div>
   );
