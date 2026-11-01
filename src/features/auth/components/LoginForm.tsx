@@ -1,26 +1,24 @@
-"use client";
-
-import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Lock,
-  Mail,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  ShieldCheck,
-  AlertCircle,
-  Plane,
-} from "lucide-react";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { ROUTES } from "@/constants";
-import { loginSchema, type LoginFormValues } from "@/validations/auth.schema";
-import { useLoginMutation, useVerifyMfaLoginMutation } from "@/services/api/auth/authApi";
+import {
+  useLoginMutation,
+  useVerifyMfaLoginMutation,
+} from "@/services/api/auth/authApi";
 import { useAuthStore } from "@/stores/auth.store";
+import { loginSchema, type LoginFormValues } from "@/validations/auth.schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  AlertCircle,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  Plane,
+  ShieldCheck,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
 
 export function LoginForm() {
   const router = useRouter();
@@ -28,7 +26,8 @@ export function LoginForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [loginUser, { isLoading }] = useLoginMutation();
-  const [verifyMfaLogin, { isLoading: isMfaLoading }] = useVerifyMfaLoginMutation();
+  const [verifyMfaLogin, { isLoading: isMfaLoading }] =
+    useVerifyMfaLoginMutation();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const [mfaToken, setMfaToken] = useState<string | null>(null);
@@ -93,11 +92,11 @@ export function LoginForm() {
       document.cookie = `accessToken=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
       router.push(ROUTES.DASHBOARD);
     } catch (err: any) {
-      const msg = err?.data?.message || "Invalid verification code. Please try again.";
+      const msg =
+        err?.data?.message || "Invalid verification code. Please try again.";
       setErrorMessage(msg);
     }
   };
-
 
   if (mfaToken) {
     return (
@@ -106,9 +105,12 @@ export function LoginForm() {
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FAF8F5] border border-[#EAE6DF] text-[#F3A712]">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <h2 className="text-xl font-bold text-[#0a0a0a]">Two-Factor Authentication</h2>
+          <h2 className="text-xl font-bold text-[#0a0a0a]">
+            Two-Factor Authentication
+          </h2>
           <p className="text-xs text-[#64748B] mt-1">
-            Enter the 6-digit verification code from your authenticator app (Google Authenticator, Authy, etc.)
+            Enter the 6-digit verification code from your authenticator app
+            (Google Authenticator, Authy, etc.)
           </p>
         </div>
 
@@ -139,8 +141,7 @@ export function LoginForm() {
           <Button
             type="submit"
             disabled={isMfaLoading || mfaCode.length !== 6}
-            className="w-full gap-2"
-          >
+            className="w-full gap-2">
             {isMfaLoading ? (
               <span>Verifying Code...</span>
             ) : (
@@ -159,8 +160,7 @@ export function LoginForm() {
               setMfaToken(null);
               setMfaCode("");
               setErrorMessage(null);
-            }}
-          >
+            }}>
             Back to regular login
           </Button>
         </form>
@@ -213,13 +213,10 @@ export function LoginForm() {
         {/* Password Input */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-bold text-[#0a0a0a]">
-              Password
-            </label>
+            <label className="text-xs font-bold text-[#0a0a0a]">Password</label>
             <Link
               href={ROUTES.FORGOT_PASSWORD}
-              className="text-xs font-semibold text-[#B47B00] hover:underline"
-            >
+              className="text-xs font-semibold text-[#B47B00] hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -238,8 +235,7 @@ export function LoginForm() {
               variant="ghost"
               size="icon"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-1.5 top-1 h-8 w-8 text-[#94A3B8] hover:text-[#0a0a0a] hover:bg-transparent"
-            >
+              className="absolute right-1.5 top-1 h-8 w-8 text-[#94A3B8] hover:text-[#0a0a0a] hover:bg-transparent">
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
               ) : (
@@ -267,11 +263,7 @@ export function LoginForm() {
         </div>
 
         {/* Submit Button */}
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full gap-2"
-        >
+        <Button type="submit" disabled={isLoading} className="w-full gap-2">
           {isLoading ? (
             <>
               <Plane className="h-4 w-4 text-[#F3A712] fill-[#F3A712] animate-plane-fly drop-shadow-xs" />
