@@ -16,7 +16,6 @@ import {
   Users,
   ChevronRight,
   Eye,
-  RefreshCw,
   Copy,
   Check,
   Building,
@@ -481,17 +480,6 @@ export function FollowUpQueueView({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              disabled={isFetching}
-              className="rounded-xl h-9 px-3 gap-1.5 text-xs">
-              <RefreshCw
-                className={cn("h-3.5 w-3.5", isFetching && "animate-spin")}
-              />
-              <span>Refresh</span>
-            </Button>
             <Link href="/leads">
               <Button
                 variant="outline"
